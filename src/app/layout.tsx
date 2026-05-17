@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Plus_Jakarta_Sans, Fira_Code } from 'next/font/google'
 import './globals.css'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
-const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
-const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
+const jakarta = Plus_Jakarta_Sans({ variable: '--font-jakarta', subsets: ['latin'] })
+const firaCode = Fira_Code({ variable: '--font-fira-code', subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Resume',
@@ -12,9 +13,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {children}
+    <html lang="en" suppressHydrationWarning className={`${jakarta.variable} ${firaCode.variable}`}>
+      <body className="antialiased">
+        <TooltipProvider>
+          {children}
+        </TooltipProvider>
       </body>
     </html>
   )
