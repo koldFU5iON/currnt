@@ -20,6 +20,8 @@ export type ApplicationProgressType = typeof ApplicationProgress[keyof typeof Ap
 
 export interface GridItemProps {
   id: string,
+  jobFit?: JobFit,
+  jobNumber?: string,
   title: string,
   url?: string,
   company: string,
@@ -28,6 +30,13 @@ export interface GridItemProps {
   status: ApplicationStatusType,
   progress: ApplicationProgressType,
   lastUpdated: Date,
+
+}
+
+export type JobFit = {
+  rating: number,
+  label: "poor" | "ok" | "stretch" | "good" | "excellent",
+  justification: string
 }
 
 

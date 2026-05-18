@@ -1,61 +1,72 @@
+'use client'
+
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import clsx from "clsx";
-import { ApplicationProgress } from "../types/job-application";
+import React from "react";
+import { ApplicationProgress, ApplicationProgressType } from "../types/job-application";
 
+const stages = Object.values(ApplicationProgress)
 
-export function AppProgressBar({ progress }: { progress: string }) {
+type NodeState = "past" | "active" | "future"
+
+export function AppProgressBar({ progress }: { progress: ApplicationProgressType }) {
+  const activeIndex = stages.indexOf(progress)
+
   return (
-    <div className="flex-col items-center justify-center">
-      <span className="text-xs">progress:</span>
-      <div className="flex justify-between items-center w-28">
-        {Object.values(ApplicationProgress).map(stage => (
-          <>
-            {stage === progress ?
-              <AppProgressBarNode stage={stage} key={stage} color="green" /> :
-              <AppProgressBarNode stage={stage} key={stage} />}
-            <AppProgressBarConnector />
-          </>))}
+    <div className="flex flex-col items-center justify-center">
+      <span className="text-xs text-muted-foreground">progress:</span>
+      <div className="flex items-center w-28">
+        {stages.map((stage, index) => {
+          const state: NodeState = index < activeIndex ? "past" : index === activeIndex ? "active" : "future"
+          return (
+            <React.Fragment key={stage}>
+              <AppProgressBarNode stage={stage} state={state} />
+              {index < stages.length - 1 && (
+                <AppProgressBarConnector filled={index < activeIndex} />
+              )}
+            </React.Fragment>
+          )
+        })}
       </div>
-    </div >
+    </div>
   )
 }
 
 type AppProgressBarNodeProps = {
-  stage?: string,
-  color?: string,
-  className?: string,
+  stage: string
+  state: NodeState
 }
 
-function AppProgressBarNode({ stage, color, className }: AppProgressBarNodeProps) {
-  const nodeColor = color ? `bg-${color}-500` : "bg-primary"
-
+function AppProgressBarNode({ stage, state }: AppProgressBarNodeProps) {
   return (
-    <HoverCard >
+    <HoverCard>
       <HoverCardTrigger className="cursor-pointer">
-        <div className={clsx(
-          "size-3  hover:border-amber-500 rounded-full border border-primary transition-transform ease-in-out py-1",
-          className,
-          nodeColor
-        )} />
-      </HoverCardTrigger>
-      <HoverCardContent className="w-fit">
-        {stage}
-        {/* TODO:add date change */}
-        <div className="text-xs font-semibold">
-          03-05-2025
+        <div className="relative flex items-center justify-center size-3">
+          {state === "active" && (
+            <div className="absolute inset-0 rounded-full bg-green-500 animate-ping opacity-40" />
+          )}
+          <div className={clsx(
+            "size-3 rounded-full border transition-colors duration-300",
+            {
+              "bg-primary border-primary": state === "past",
+              "bg-green-500 border-green-500": state === "active",
+              "bg-background border-border": state === "future",
+            }
+          )} />
         </div>
+      </HoverCardTrigger>
+      <HoverCardContent className="w-fit text-sm capitalize">
+        {stage}
       </HoverCardContent>
     </HoverCard>
   )
 }
 
-function AppProgressBarConnector({ color, className }: AppProgressBarNodeProps) {
-  return <div className={clsx("flex-1 h-0.5 bg-primary last:hidden", className, color)} />
+function AppProgressBarConnector({ filled }: { filled: boolean }) {
+  return (
+    <div className={clsx(
+      "flex-1 h-0.5 transition-colors duration-300",
+      filled ? "bg-primary" : "bg-border"
+    )} />
+  )
 }
-
-type ProgressPopoeverType = {
-  label: string
-  children: React.ReactNode
-}
-

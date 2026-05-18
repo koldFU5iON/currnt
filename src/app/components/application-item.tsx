@@ -7,29 +7,31 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Archive, Calendar, Check, FilePlus, LucideIcon, Pencil, SquareArrowOutUpRight, Trash } from "lucide-react";
 import { useState } from "react";
 import { type ApplicationStatusType, ApplicationStatus, GridItemProps } from "../types/job-application";
 import { AppProgressBar } from "./AppProgressBar";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { AppControls } from "@/components/AppItemMenu";
+import { Calendar, Check, Flame, SquareArrowOutUpRight } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { Label } from "@/components/ui/label";
 
-export function GridItem({ id, title, company, countries, url, applied, lastUpdated, status, progress }: GridItemProps) {
+export function GridItem(props: GridItemProps) {
+  const { id, title, jobFit, jobNumber, company, countries, url, applied, lastUpdated, status, progress } = props
   return (
-    <div className="flex items-center justify-between space-x-2 hover:bg-amber-400/50 transition-colors ease-in-out w-full rounded-md p-2">
+    <div className="grid grid-cols-[1.5fr_40px_1fr_1fr_1fr_120px_40px] items-center justify-between space-x-2 hover:bg-amber-400/50 transition-colors ease-in-out w-full rounded-md p-2">
       <ApplicationHeader
-        title={title}
-        company={company}
-        countries={countries}
-        url={url}
+        {...props}
       />
+      <div>
+        {/* TODO: add here the job fit variables */}
+        <Flame className="fill-amber-500 " />
+      </div>
       <AppProgressBar progress={progress} />
       <ApplicationDateBlock label="Applied" date={applied} />
       <ApplicationDateBlock label="Last Update" date={lastUpdated} />
-      <div>
-        <StatusDropdown status={status} />
-      </div>
+      <StatusDropdown status={status} />
       <div className="flex">
         <AppControls />
       </div>
@@ -39,19 +41,27 @@ export function GridItem({ id, title, company, countries, url, applied, lastUpda
 
 type ApplicationHeaderProps = {
   title: string
+  jobNumber?: string
   url?: string
   company: string
   countries: string[]
 }
-function ApplicationHeader({ title, company, countries, url }: ApplicationHeaderProps) {
+function ApplicationHeader({ title, jobNumber, company, countries, url }: ApplicationHeaderProps) {
   return (
     <div>
-      <div className="flex items-center gap-1">
-        <h1 className="font-bold">{title}</h1>
-        {url && <a href={url} target="_blank">
-          <SquareArrowOutUpRight size={14} />
-        </a>}
-      </div>
+      <HoverCard>
+        <HoverCardTrigger>
+          <div className="flex items-center gap-1">
+            <Label className="text-md font-bold">{title}</Label>
+            {url && <a href={url} target="_blank">
+              <SquareArrowOutUpRight size={14} />
+            </a>}
+          </div>
+        </HoverCardTrigger>
+        <HoverCardContent className="w-fit text-xs">
+          {jobNumber ?? "no job number found?"}
+        </HoverCardContent>
+      </HoverCard>
       <div className="flex space-x-1.5 text-xs">
         <p className="text-xs">{company}</p>
         <div className="flex">{countries.join(" | ")}</div>
@@ -90,31 +100,6 @@ function ApplicationDateBlock({ label, date }: ApplicationDateBlockProps) {
     </div>
   )
 }
-
-function AppControls() {
-  return (
-    <div className="flex items-center space-x-2 p-2 justify-between border rounded-md">
-      <AppControlsItem Icon={FilePlus} />
-      <AppControlsItem Icon={Pencil} />
-      <AppControlsItem Icon={Archive} />
-      <AppControlsItem Icon={Trash} color="red" />
-    </div>
-  )
-}
-
-type AppControlsItemProps = {
-  Icon: LucideIcon
-  color?: string
-}
-
-function AppControlsItem({ Icon, color }: AppControlsItemProps) {
-  return (
-    <Button variant="outline">
-      {Icon && <Icon color={color} className="size-4" />}
-    </Button>
-  )
-}
-
 
 function StatusDropdown({ status }: { status: ApplicationStatusType }) {
   const [value, setValue] = useState(status)
