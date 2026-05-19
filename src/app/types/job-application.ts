@@ -26,9 +26,10 @@ export interface Job {
   url?: string,
   company: string,
   countries: string[],
-  applied: Date,
+  dateApplied?: Date,
   status: ApplicationStatusType,
   progress: ApplicationProgressType,
+  datePublished?: Date,
   lastUpdated: Date,
 
 }

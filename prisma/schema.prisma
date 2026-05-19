@@ -218,8 +218,6 @@ model CVDocument {
   templateId       String
   jobDescription   String?
   jobTitle         String?
-  countries        String[]
-  applied          DateTime @default(now())
   company          String?
   generatedContent String   @default("{}")
   status           String   @default("draft")
@@ -271,13 +269,14 @@ model JobApplication {
   company        String
   url            String?
   countries      String[]
-  applied        DateTime?
+  dateApplied    DateTime?
   status         String    @default("not started")
   progress       String    @default("awaiting response")
   jobFit         Json?
   jobDescription String?
   notes          String?
   tags           String[]
+  datePublished  DateTime? @default(now())
   lastUpdated    DateTime  @updatedAt
 
   profile      Profile               @relation(fields: [profileId], references: [id], onDelete: Cascade)

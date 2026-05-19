@@ -18,7 +18,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import { Label } from "@/components/ui/label";
 
 export function JobRow(props: Job) {
-  const { id, title, jobFit, jobNumber, company, countries, url, applied, lastUpdated, status, progress } = props
+  const { id, title, jobFit, jobNumber, company, countries, url, dateApplied, lastUpdated, status, progress } = props
   return (
     <div className="grid grid-cols-[1.5fr_40px_1fr_1fr_1fr_120px_40px] items-center justify-between space-x-2 hover:bg-amber-400/50 transition-colors ease-in-out w-full rounded-md p-2">
       <ApplicationHeader
@@ -29,7 +29,7 @@ export function JobRow(props: Job) {
         <Flame className="fill-amber-500 " />
       </div>
       <AppProgressBar progress={progress} />
-      <ApplicationDateBlock label="Applied" date={applied} />
+      <ApplicationDateBlock label="Applied" date={dateApplied} />
       <ApplicationDateBlock label="Last Update" date={lastUpdated} />
       <StatusDropdown status={status} />
       <div className="flex">
@@ -79,12 +79,17 @@ function ApplicationHeader({ title, jobNumber, company, countries, url }: Applic
 }
 
 type ApplicationDateBlockProps = {
-  date: Date,
+  date?: Date,
   label: string,
 }
 
 function ApplicationDateBlock({ label, date }: ApplicationDateBlockProps) {
   const today = new Date()
+
+  if (!date) {
+    return 'no date'
+  }
+
   const daysAgo = Math.floor((Number(today) - Number(date)) / (1000 * 60 * 60 * 24))
   return (
     <div className="flex flex-col">

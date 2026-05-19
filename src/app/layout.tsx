@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Plus_Jakarta_Sans, Fira_Code } from 'next/font/google'
+import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 import { TooltipProvider } from '@/components/ui/tooltip'
 
@@ -18,6 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <TooltipProvider>
           {children}
         </TooltipProvider>
+        <Toaster />
       </body>
     </html>
   )
