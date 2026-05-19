@@ -33,7 +33,7 @@ export function JobRow(props: Job) {
       <ApplicationDateBlock label="Last Update" date={lastUpdated} />
       <StatusDropdown status={status} />
       <div className="flex">
-        <AppControls />
+        <AppControls id={id} />
       </div>
     </div>
   )

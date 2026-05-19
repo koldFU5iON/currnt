@@ -5,3 +5,10 @@ export async function getActiveJobs() {
     orderBy: { dateApplied: 'desc' }
   })
 }
+
+
+export async function getJobApplicationById(id: string) {
+  return prisma.jobApplication.findUnique({
+    where: { id }
+  })
+}
