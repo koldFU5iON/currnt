@@ -34,7 +34,8 @@ import {
   User,
 } from "lucide-react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { authClient, useSession } from "@/lib/auth-client"
 
 type NavItem = {
   destination: string
@@ -86,41 +87,7 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <SidebarMenuButton size="lg" tooltip="Devon Stanton">
-                    <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-muted">
-                      <User className="size-4" />
-                    </div>
-                    <div className="flex flex-col text-left flex-1">
-                      <span className="font-medium text-sm">Devon Stanton</span>
-                      <span className="text-xs text-muted-foreground">devon.stanton@gmail.com</span>
-                    </div>
-                    <ChevronsUpDown className="size-4 ml-auto" />
-                  </SidebarMenuButton>
-                }
-              />
-              <DropdownMenuContent side="right" align="end" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuGroup>
-                  <DropdownMenuItem>
-                    <Settings className="size-4" />
-                    Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <User className="size-4" />
-                    Profile
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <LogOut className="size-4" />
-                  Log out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <UserMenu />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
@@ -146,5 +113,58 @@ function NavMenuItem({ destination, label, Icon }: NavItem) {
         </SidebarMenuButton>
       </Link>
     </SidebarMenuItem>
+  )
+}
+
+function UserMenu() {
+  const router = useRouter()
+  const { data: session, isPending } = useSession()
+
+  const handleSignOut = async () => {
+    await authClient.signOut()
+    router.push("/sign-in")
+    router.refresh()
+  }
+
+  const name = session?.user.name ?? (isPending ? "Loading..." : "Signed out")
+  const email = session?.user.email ?? ""
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <SidebarMenuButton size="lg" tooltip={name}>
+            <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-muted">
+              <User className="size-4" />
+            </div>
+            <div className="flex flex-col text-left flex-1 overflow-hidden">
+              <span className="font-medium text-sm truncate">{name}</span>
+              {email && <span className="text-xs text-muted-foreground truncate">{email}</span>}
+            </div>
+            <ChevronsUpDown className="size-4 ml-auto" />
+          </SidebarMenuButton>
+        }
+      />
+      <DropdownMenuContent side="right" align="end" className="w-56">
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>My Account</DropdownMenuLabel>
+          <DropdownMenuItem disabled>
+            <Settings className="size-4" />
+            Settings
+          </DropdownMenuItem>
+          <DropdownMenuItem disabled>
+            <User className="size-4" />
+            Profile
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem onClick={handleSignOut}>
+            <LogOut className="size-4" />
+            Log out
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

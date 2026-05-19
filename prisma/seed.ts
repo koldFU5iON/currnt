@@ -1,13 +1,12 @@
-import { PrismaClient } from '@prisma/client'
-import { PrismaPg } from '@prisma/adapter-pg'
-import { Pool } from 'pg'
-import { jobApplications } from './seeds/job.seed'
-
 // tsx doesn't auto-load .env.local — load it manually for the seed script
+// This must happen BEFORE importing modules that read process.env at module init time
 try { process.loadEnvFile('.env.local') } catch {}
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL })
-const prisma = new PrismaClient({ adapter: new PrismaPg(pool) })
+import { jobApplications } from './seeds/job.seed'
+
+const TEST_EMAIL = 'test@example.com'
+const TEST_PASSWORD = 'password'
+const TEST_NAME = 'Test User'
 
 const defaultTemplate = {
   name: 'Standard CV',
@@ -26,39 +25,42 @@ const defaultTemplate = {
 }
 
 async function main() {
+  // Dynamic imports so .env.local is loaded before these modules initialize
+  const { prisma } = await import('../src/lib/db')
+  const { auth } = await import('../src/lib/auth')
+
   console.log('Seeding...')
 
-  const existing = await prisma.cVTemplate.findFirst({ where: { isDefault: true } })
-  if (!existing) {
+  const existingTemplate = await prisma.cVTemplate.findFirst({ where: { isDefault: true } })
+  if (!existingTemplate) {
     await prisma.cVTemplate.create({ data: defaultTemplate })
     console.log('Created default CV template')
   }
 
-  const profile = await prisma.profile.findFirst()
-  if (!profile) {
-    await prisma.profile.create({
-      data: {
-        name: 'Your Name',
-        headline: 'Your professional headline',
-      },
+  const existingUser = await prisma.user.findUnique({ where: { email: TEST_EMAIL } })
+  if (!existingUser) {
+    await auth.api.signUpEmail({
+      body: { email: TEST_EMAIL, password: TEST_PASSWORD, name: TEST_NAME },
     })
-    console.log('Created default profile')
+    console.log(`Created test user: ${TEST_EMAIL} / ${TEST_PASSWORD}`)
   }
 
-  // Seed dummy job applications
-  const existingJobs = await prisma.jobApplication.count()
-  if (existingJobs === 0) {
-    const profileId = (await prisma.profile.findFirst())!.id
+  const profile = await prisma.profile.findFirst({ where: { user: { email: TEST_EMAIL } } })
+  if (!profile) throw new Error(`Profile not auto-created for ${TEST_EMAIL}`)
 
+  const existingJobs = await prisma.jobApplication.count({ where: { profileId: profile.id } })
+  if (existingJobs === 0) {
     await prisma.jobApplication.createMany({
-      data: jobApplications.map(job => ({ ...job, profileId })),
+      data: jobApplications.map((job) => ({ ...job, profileId: profile.id })),
     })
-    console.log('Created dummy job applications')
+    console.log(`Created ${jobApplications.length} dummy job applications for test user`)
   }
 
   console.log('Done')
+  await prisma.$disconnect()
 }
 
-main()
-  .catch(console.error)
-  .finally(() => prisma.$disconnect())
+main().catch((err) => {
+  console.error(err)
+  process.exitCode = 1
+})

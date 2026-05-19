@@ -16,7 +16,7 @@ npm run lint         # next lint
 
 npm run db:push      # push schema to Postgres (no migration file)
 npm run db:migrate   # create + apply a named migration
-npm run db:seed      # seed default CV template and blank profile
+npm run db:seed      # seed default CV template + test user (test@example.com/password) + dummy jobs
 npm run db:reset     # force-reset DB then re-seed
 npm run db:studio    # open Prisma Studio in browser
 
@@ -89,9 +89,21 @@ await prisma.skill.create({ data: { ...data, tags: JSON.stringify(data.tags) } }
 
 Keys are encrypted (AES-GCM via `src/lib/encryption.ts`) before DB storage. Never log or return raw keys. Return `hasApiKey: Boolean(llmApiKey)` from API routes instead.
 
-### Single-user mode
+---
 
-No authentication. All data belongs to the one `Profile` row created by the seed. Routes use `prisma.profile.findFirst()`.
+## Authentication
+
+Better Auth (`src/lib/auth.ts`) owns the user identity. Each user has exactly one `Profile` row via `Profile.userId` (1:1), auto-created by a `databaseHooks.user.create.after` hook in `auth.ts` on sign-up.
+
+- **Email/password** sign-up is enabled; email verification is **off** for now (flip `requireEmailVerification: true` to enable once a mail provider is wired up)
+- **Social providers** (Google, LinkedIn, X via the `twitter` provider key) are scaffolded but each only activates when its `*_CLIENT_ID` + `*_CLIENT_SECRET` env vars are present — see `getEnabledSocialProviders()` in `src/lib/auth.ts`
+- **Proxy** (`src/proxy.ts`, formerly `middleware.ts` — renamed for the Next.js 16 convention) gates `/dashboard/:path*` — unauthenticated requests redirect to `/sign-in?callbackUrl=<original>`
+- **Server-side session access**: import `requireProfile()` from `src/lib/session.ts` — throws if not signed in, returns `{ session, profile }`. All mutations and queries that touch user-owned data **must** filter by `profile.id`
+- **Client-side session access**: `useSession()` from `src/lib/auth-client.ts`
+- **Auth API route**: `src/app/api/auth/[...all]/route.ts` (Better Auth catch-all)
+- **Auth pages**: `src/app/(auth)/sign-in` and `/sign-up` (route group so they skip dashboard chrome)
+
+Dev login: `test@example.com` / `password` (created by `npm run db:reset`).
 
 ---
 
@@ -99,10 +111,21 @@ No authentication. All data belongs to the one `Profile` row created by the seed
 
 ```env
 DATABASE_URL="postgresql://taiilrd:taiilrd@localhost:5435/taiilrd"
-NEXTAUTH_SECRET="dev-secret-change-in-production"
-NEXTAUTH_URL="http://localhost:3000"
+
+# Better Auth
+BETTER_AUTH_SECRET=""              # openssl rand -base64 32
+BETTER_AUTH_URL="http://localhost:3000"
+
+# Social providers (each only enables if both ID + SECRET are set)
+GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_SECRET=""
+LINKEDIN_CLIENT_ID=""
+LINKEDIN_CLIENT_SECRET=""
+TWITTER_CLIENT_ID=""               # X uses the "twitter" provider key in Better Auth
+TWITTER_CLIENT_SECRET=""
+
 ENCRYPTION_KEY="dev-encryption-key-32-bytes-long!!"
-ANTHROPIC_API_KEY=""        # optional server-side fallback
+ANTHROPIC_API_KEY=""               # optional server-side fallback
 ```
 
 Copy `.env.example` → `.env.local`. Never commit `.env.local`.
