@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
+import { jobApplications } from './seeds/job.seed'
 
 // tsx doesn't auto-load .env.local — load it manually for the seed script
 try { process.loadEnvFile('.env.local') } catch {}
@@ -42,6 +43,17 @@ async function main() {
       },
     })
     console.log('Created default profile')
+  }
+
+  // Seed dummy job applications
+  const existingJobs = await prisma.jobApplication.count()
+  if (existingJobs === 0) {
+    const profileId = (await prisma.profile.findFirst())!.id
+
+    await prisma.jobApplication.createMany({
+      data: jobApplications.map(job => ({ ...job, profileId })),
+    })
+    console.log('Created dummy job applications')
   }
 
   console.log('Done')

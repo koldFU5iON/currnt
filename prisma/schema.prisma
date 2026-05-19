@@ -218,6 +218,8 @@ model CVDocument {
   templateId       String
   jobDescription   String?
   jobTitle         String?
+  countries        String[]
+  applied          DateTime @default(now())
   company          String?
   generatedContent String   @default("{}")
   status           String   @default("draft")
@@ -264,21 +266,19 @@ model CoverLetterDocument {
 model JobApplication {
   id             String    @id @default(cuid())
   profileId      String
-  jobTitle       String
+  jobNumber      String?
+  title          String
   company        String
+  url            String?
+  countries      String[]
+  applied        DateTime?
+  status         String    @default("not started")
+  progress       String    @default("awaiting response")
+  jobFit         Json?
   jobDescription String?
-  jobUrl         String?
-  location       String?
-  remote         Boolean?
-  salaryMin      Float?
-  salaryMax      Float?
-  currency       String?
-  status         String    @default("saved")
-  appliedAt      DateTime?
   notes          String?
-  tags           String    @default("[]")
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  tags           String[]
+  lastUpdated    DateTime  @updatedAt
 
   profile      Profile               @relation(fields: [profileId], references: [id], onDelete: Cascade)
   contacts     ApplicationContact[]

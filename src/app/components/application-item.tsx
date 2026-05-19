@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
-import { type ApplicationStatusType, ApplicationStatus, GridItemProps } from "../types/job-application";
+import { type ApplicationStatusType, ApplicationStatus, type Job } from "../types/job-application";
 import { AppProgressBar } from "./AppProgressBar";
 import { Badge } from "@/components/ui/badge";
 import { AppControls } from "@/components/AppItemMenu";
@@ -17,7 +17,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Label } from "@/components/ui/label";
 
-export function GridItem(props: GridItemProps) {
+export function JobRow(props: Job) {
   const { id, title, jobFit, jobNumber, company, countries, url, applied, lastUpdated, status, progress } = props
   return (
     <div className="grid grid-cols-[1.5fr_40px_1fr_1fr_1fr_120px_40px] items-center justify-between space-x-2 hover:bg-amber-400/50 transition-colors ease-in-out w-full rounded-md p-2">
@@ -49,19 +49,19 @@ type ApplicationHeaderProps = {
 function ApplicationHeader({ title, jobNumber, company, countries, url }: ApplicationHeaderProps) {
   return (
     <div>
-      <HoverCard>
-        <HoverCardTrigger>
-          <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1">
+        <HoverCard>
+          <HoverCardTrigger className="cursor-pointer">
             <Label className="text-md font-bold">{title}</Label>
-            {url && <a href={url} target="_blank">
-              <SquareArrowOutUpRight size={14} />
-            </a>}
-          </div>
-        </HoverCardTrigger>
-        <HoverCardContent className="w-fit text-xs">
-          {jobNumber ?? "no job number found?"}
-        </HoverCardContent>
-      </HoverCard>
+          </HoverCardTrigger>
+          <HoverCardContent className="w-fit text-xs">
+            {jobNumber ?? "no job number found?"}
+          </HoverCardContent>
+        </HoverCard>
+        {url && <a href={url} target="_blank">
+          <SquareArrowOutUpRight size={14} />
+        </a>}
+      </div>
       <div className="flex space-x-1.5 text-xs">
         <p className="text-xs">{company}</p>
         <div className="flex">{countries.join(" | ")}</div>

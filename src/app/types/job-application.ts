@@ -18,7 +18,7 @@ export const ApplicationProgress = {
 
 export type ApplicationProgressType = typeof ApplicationProgress[keyof typeof ApplicationProgress]
 
-export interface GridItemProps {
+export interface Job {
   id: string,
   jobFit?: JobFit,
   jobNumber?: string,
