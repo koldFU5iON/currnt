@@ -3,7 +3,7 @@
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import clsx from "clsx";
 import React from "react";
-import { ApplicationProgress, ApplicationProgressType } from "../types/job-application";
+import { ApplicationProgress, ApplicationProgressType } from "@/app/types/job-application";
 
 const stages = Object.values(ApplicationProgress)
 

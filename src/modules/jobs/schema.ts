@@ -1,5 +1,4 @@
 import * as z from 'zod'
-import { ApplicationStatus, ApplicationProgress } from '@/app/types/job-application'
 
 export const createJobSchema = z.object({
   title: z.string().min(1, 'Job title is required'),

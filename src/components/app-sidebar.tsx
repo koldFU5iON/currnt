@@ -87,18 +87,20 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton size="lg" tooltip="Devon Stanton">
-                  <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-muted">
-                    <User className="size-4" />
-                  </div>
-                  <div className="flex flex-col text-left flex-1">
-                    <span className="font-medium text-sm">Devon Stanton</span>
-                    <span className="text-xs text-muted-foreground">devon.stanton@gmail.com</span>
-                  </div>
-                  <ChevronsUpDown className="size-4 ml-auto" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
+              <DropdownMenuTrigger
+                render={
+                  <SidebarMenuButton size="lg" tooltip="Devon Stanton">
+                    <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-muted">
+                      <User className="size-4" />
+                    </div>
+                    <div className="flex flex-col text-left flex-1">
+                      <span className="font-medium text-sm">Devon Stanton</span>
+                      <span className="text-xs text-muted-foreground">devon.stanton@gmail.com</span>
+                    </div>
+                    <ChevronsUpDown className="size-4 ml-auto" />
+                  </SidebarMenuButton>
+                }
+              />
               <DropdownMenuContent side="right" align="end" className="w-56">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />

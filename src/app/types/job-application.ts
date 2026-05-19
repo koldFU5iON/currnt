@@ -1,3 +1,5 @@
+import type { JobApplication } from "@prisma/client"
+
 export const ApplicationStatus = {
   NotStarted: "not started",
   Applied: "applied",
@@ -13,31 +15,21 @@ export const ApplicationProgress = {
   Recruiter: "recruiter screening",
   Interview: "interview",
   Project: "take-home project",
-  Offer: "offer"
-}
+  Offer: "offer",
+} as const
 
 export type ApplicationProgressType = typeof ApplicationProgress[keyof typeof ApplicationProgress]
 
-export interface Job {
-  id: string,
-  jobFit?: JobFit,
-  jobNumber?: string,
-  title: string,
-  url?: string,
-  company: string,
-  countries: string[],
-  dateApplied?: Date,
-  status: ApplicationStatusType,
-  progress: ApplicationProgressType,
-  datePublished?: Date,
-  lastUpdated: Date,
-
+export type JobFit = {
+  rating: number
+  label: "poor" | "ok" | "stretch" | "good" | "excellent"
+  justification: string
 }
 
-export type JobFit = {
-  rating: number,
-  label: "poor" | "ok" | "stretch" | "good" | "excellent",
-  justification: string
+export type Job = Omit<JobApplication, "status" | "progress" | "jobFit"> & {
+  status: ApplicationStatusType
+  progress: ApplicationProgressType
+  jobFit?: JobFit | null
 }
 
 

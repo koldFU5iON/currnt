@@ -1,8 +1,5 @@
-
-import { ApplicationProgress, ApplicationStatus, type Job } from "@/app/types/job-application";
-import { JobList } from "@/app/components/joblist/JobList";
+import { JobList } from "./_components/job-list";
 import { getActiveJobs } from "@/modules/jobs/queries";
-
 
 export default async function Page() {
   const jobs = await getActiveJobs()

@@ -4,7 +4,7 @@ import * as z from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm, FormProvider } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
-import { FormField } from './FormField'
+import { FormField } from './form-field'
 import { createJobSchema } from '@/modules/jobs/schema'
 import { createJobApplication } from '@/modules/jobs/mutations'
 import { toast } from 'sonner'
@@ -29,7 +29,7 @@ export function CreateJobForm() {
       form.reset()
       // TODO: Show success message and redirect
       toast('New Job Application Created')
-      redirect('/dashboard/job-application/')
+      redirect('/dashboard/job-applications/')
     } catch (error) {
       console.error('Error creating job:', error)
       // TODO: Show error message
