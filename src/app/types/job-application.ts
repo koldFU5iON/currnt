@@ -4,10 +4,24 @@ export const ApplicationStatus = {
   NotStarted: "not started",
   Applied: "applied",
   Interviewing: "interviewing",
+  Accepted: "accepted",
   Rejected: "rejected",
 } as const
 
 export type ApplicationStatusType = typeof ApplicationStatus[keyof typeof ApplicationStatus]
+
+// The job is still live and being worked.
+export const OpenStatuses = [
+  ApplicationStatus.NotStarted,
+  ApplicationStatus.Applied,
+  ApplicationStatus.Interviewing,
+] as const
+
+// The job is closed — a final outcome was reached.
+export const ClosedStatuses = [
+  ApplicationStatus.Accepted,
+  ApplicationStatus.Rejected,
+] as const
 
 export const ApplicationProgress = {
   NotStarted: "not started",

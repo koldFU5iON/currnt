@@ -76,7 +76,7 @@ type JobSearchBarProps = {
 
 function JobSearchBar({ value, onChange }: JobSearchBarProps) {
   return (
-    <div className="flex mb-2">
+    <div className="flex ">
       <InputGroup className="w-sm">
         <InputGroupInput
           value={value}

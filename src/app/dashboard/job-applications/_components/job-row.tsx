@@ -6,8 +6,8 @@ import { StatusDropdown } from "./status-dropdown"
 import { AppControls } from "@/components/app-item-menu"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
 import { Label } from "@/components/ui/label"
-import { Calendar, Flame, SquareArrowOutUpRight } from "lucide-react"
-import { daysAgo, formatDate } from "@/lib/utils"
+import { Calendar, Flame, Pencil, SquareArrowOutUpRight } from "lucide-react"
+import { ApplicationDateBlock } from "./app-date-block"
 
 export function JobRow(props: Job) {
   const { id, jobNumber, title, company, countries, url, dateApplied, lastUpdated, status, progress } = props
@@ -24,8 +24,8 @@ export function JobRow(props: Job) {
         {/* TODO: render real job fit indicator once jobFit is populated */}
         <Flame className="fill-amber-500 " />
       </div>
-      <AppProgressBar progress={progress} />
-      <ApplicationDateBlock label="Applied" date={dateApplied} />
+      <AppProgressBar progress={progress} jobId={id} />
+      <ApplicationDateBlock label="Applied" date={dateApplied} jobId={id} />
       <ApplicationDateBlock label="Last Update" date={lastUpdated} />
       <StatusDropdown jobId={id} status={status} />
       <div className="flex">
@@ -70,28 +70,4 @@ function ApplicationHeader({ title, jobNumber, company, countries, url }: Applic
   )
 }
 
-type ApplicationDateBlockProps = {
-  date: Date | null
-  label: string
-}
 
-function ApplicationDateBlock({ label, date }: ApplicationDateBlockProps) {
-  if (!date) {
-    return <div className="text-xs text-muted-foreground">{label}: —</div>
-  }
-
-  const days = daysAgo(date)
-  return (
-    <div className="flex flex-col">
-      <div className="text-xs font-semibold">{label}:</div>
-      <div className="flex items-center gap-1 space-x-2 font-bold text-sm">
-        <Calendar size={12} /> {formatDate(date)}
-      </div>
-      {days !== null && (
-        <div className="text-xs italic">
-          {days === 0 ? "today" : `${days} days ago`}
-        </div>
-      )}
-    </div>
-  )
-}

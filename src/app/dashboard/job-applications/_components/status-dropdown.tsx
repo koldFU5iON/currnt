@@ -1,13 +1,18 @@
 'use client'
 
 import { useTransition } from "react"
-import { ApplicationStatus, type ApplicationStatusType } from "@/app/types/job-application"
+import {
+  ClosedStatuses,
+  OpenStatuses,
+  type ApplicationStatusType,
+} from "@/app/types/job-application"
 import { updateJobStatus } from "@/modules/jobs/mutations"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { buttonVariants } from "@/components/ui/button"
@@ -29,6 +34,17 @@ export function StatusDropdown({ jobId, status }: StatusDropdownProps) {
     })
   }
 
+  const renderItems = (states: readonly ApplicationStatusType[]) =>
+    states.map((state) => (
+      <DropdownMenuItem
+        key={state}
+        onClick={() => handleSelect(state)}
+        className="capitalize"
+      >
+        {state}
+      </DropdownMenuItem>
+    ))
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -39,17 +55,9 @@ export function StatusDropdown({ jobId, status }: StatusDropdownProps) {
         {status}
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuGroup>
-          {Object.values(ApplicationStatus).map((state) => (
-            <DropdownMenuItem
-              key={state}
-              onClick={() => handleSelect(state)}
-              className="capitalize"
-            >
-              {state}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuGroup>
+        <DropdownMenuGroup>{renderItems(OpenStatuses)}</DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>{renderItems(ClosedStatuses)}</DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   )

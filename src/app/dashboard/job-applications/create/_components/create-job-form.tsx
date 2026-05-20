@@ -19,7 +19,7 @@ export function CreateJobForm() {
       url: '',
       jobDescription: '',
       jobNumber: '',
-      jobPublished: new Date()
+      datePublished: new Date()
     },
   })
 
@@ -69,12 +69,15 @@ export function CreateJobForm() {
         <FormField
           name="jobDescription"
           label="Job Description"
+          type="textarea"
+          placeholder="Paste the job description here"
         />
 
         <FormField
-          name="jobPublished"
+          name="datePublished"
           label="Job Published"
-          placeholder=''
+          type="date"
+          required
         />
 
         <Button type="submit" disabled={form.formState.isSubmitting}>

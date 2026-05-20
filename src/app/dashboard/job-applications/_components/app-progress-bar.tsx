@@ -1,64 +1,92 @@
 'use client'
 
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { useTransition } from "react"
 import clsx from "clsx";
 import React from "react";
 import { ApplicationProgress, ApplicationProgressType } from "@/app/types/job-application";
+import { updateJobProgress } from "@/modules/jobs/mutations"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 const stages = Object.values(ApplicationProgress)
 
 type NodeState = "past" | "active" | "future"
 
-export function AppProgressBar({ progress }: { progress: ApplicationProgressType }) {
+export function AppProgressBar({
+  progress,
+  jobId,
+}: {
+  progress: ApplicationProgressType
+  jobId: string
+}) {
+  const [isPending, startTransition] = useTransition()
   const activeIndex = stages.indexOf(progress)
 
+  function handleSelect(stage: ApplicationProgressType) {
+    if (stage === progress) return
+    startTransition(async () => {
+      await updateJobProgress(jobId, stage)
+    })
+  }
+
   return (
-    <div className="flex flex-col items-center justify-center">
-      <span className="text-xs text-muted-foreground">progress:</span>
-      <div className="flex items-center w-28">
-        {stages.map((stage, index) => {
-          const state: NodeState = index < activeIndex ? "past" : index === activeIndex ? "active" : "future"
-          return (
-            <React.Fragment key={stage}>
-              <AppProgressBarNode stage={stage} state={state} />
-              {index < stages.length - 1 && (
-                <AppProgressBarConnector filled={index < activeIndex} />
-              )}
-            </React.Fragment>
-          )
-        })}
-      </div>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        disabled={isPending}
+        className="flex flex-col items-center justify-center cursor-pointer"
+      >
+        <span className="text-xs text-muted-foreground">progress:</span>
+        <div className="flex items-center w-28">
+          {stages.map((stage, index) => {
+            const state: NodeState = index < activeIndex ? "past" : index === activeIndex ? "active" : "future"
+            return (
+              <React.Fragment key={stage}>
+                <AppProgressBarNode state={state} />
+                {index < stages.length - 1 && (
+                  <AppProgressBarConnector filled={index < activeIndex} />
+                )}
+              </React.Fragment>
+            )
+          })}
+        </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-48">
+        <DropdownMenuGroup>
+          {stages.map((stage) => (
+            <DropdownMenuItem
+              key={stage}
+              onClick={() => handleSelect(stage)}
+              className={clsx("capitalize", stage === progress && "font-semibold")}
+            >
+              {stage}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
-type AppProgressBarNodeProps = {
-  stage: string
-  state: NodeState
-}
-
-function AppProgressBarNode({ stage, state }: AppProgressBarNodeProps) {
+function AppProgressBarNode({ state }: { state: NodeState }) {
   return (
-    <HoverCard>
-      <HoverCardTrigger className="cursor-pointer">
-        <div className="relative flex items-center justify-center size-3">
-          {state === "active" && (
-            <div className="absolute inset-0 rounded-full bg-green-500 animate-ping opacity-40" />
-          )}
-          <div className={clsx(
-            "size-3 rounded-full border transition-colors duration-300",
-            {
-              "bg-primary border-primary": state === "past",
-              "bg-green-500 border-green-500": state === "active",
-              "bg-background border-border": state === "future",
-            }
-          )} />
-        </div>
-      </HoverCardTrigger>
-      <HoverCardContent className="w-fit text-sm capitalize">
-        {stage}
-      </HoverCardContent>
-    </HoverCard>
+    <div className="relative flex items-center justify-center size-3">
+      {state === "active" && (
+        <div className="absolute inset-0 rounded-full bg-green-500 animate-ping opacity-40" />
+      )}
+      <div className={clsx(
+        "size-3 rounded-full border transition-colors duration-300",
+        {
+          "bg-primary border-primary": state === "past",
+          "bg-green-500 border-green-500": state === "active",
+          "bg-background border-border": state === "future",
+        }
+      )} />
+    </div>
   )
 }
 

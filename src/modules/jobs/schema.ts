@@ -6,5 +6,5 @@ export const createJobSchema = z.object({
   url: z.string().url('Must be a valid URL').optional(),
   jobDescription: z.string().optional(),
   jobNumber: z.string().optional(),
-  jobPublished: z.date()
+  datePublished: z.date()
 })
