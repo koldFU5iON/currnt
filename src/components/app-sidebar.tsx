@@ -25,28 +25,15 @@ import {
 } from "@/components/ui/dropdown-menu"
 import {
   ChevronsUpDown,
-  ClipboardList,
   FileText,
-  HomeIcon,
   LogOut,
-  LucideIcon,
   Settings,
   User,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { authClient, useSession } from "@/lib/auth-client"
-
-type NavItem = {
-  destination: string
-  label: string
-  Icon: LucideIcon
-}
-
-const mainNav: NavItem[] = [
-  { destination: "/dashboard", label: "Home", Icon: HomeIcon },
-  { destination: "/dashboard/job-applications", label: "Job Applications", Icon: ClipboardList },
-]
+import { mainNav, type NavItem } from "@/lib/nav-menu"
 
 export function AppSidebar() {
   return (

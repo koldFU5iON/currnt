@@ -46,4 +46,22 @@ export type Job = Omit<JobApplication, "status" | "progress" | "jobFit"> & {
   jobFit?: JobFit | null
 }
 
+export type ProfileType = {
+  name: string,
+  headline: string[],
+  subHeadline: string[],
+  links: ProfileLink[],
+  contact: ProfileContact[],
+  about: string,
+  competency: string[],
+}
 
+type ProfileContact = {
+  type: string
+  value: string
+}
+
+type ProfileLink = {
+  name: string
+  url: string
+}
