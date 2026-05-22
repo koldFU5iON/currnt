@@ -12,6 +12,15 @@ export function formatDate(value: Date | string | null | undefined, fallback = "
   return date.toLocaleDateString()
 }
 
+export function parseJsonField<T>(value: string | null | undefined, fallback: T): T {
+  if (!value) return fallback
+  try {
+    return JSON.parse(value) as T
+  } catch {
+    return fallback
+  }
+}
+
 export function daysAgo(value: Date | string | null | undefined): number | null {
   if (!value) return null
   const date = value instanceof Date ? value : new Date(value)

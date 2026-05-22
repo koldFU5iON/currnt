@@ -16,6 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning className={`${jakarta.variable} ${firaCode.variable}`}>
       <body className="antialiased">
+
         <TooltipProvider>
           {children}
         </TooltipProvider>

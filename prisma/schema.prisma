@@ -104,6 +104,8 @@ model Profile {
   cvDocuments     CVDocument[]
   coverLetters    CoverLetterDocument[]
   jobApplications JobApplication[]
+  competencies    Competency[]
+  languages       Language[]
   settings        UserSettings?
 }
 
@@ -125,7 +127,7 @@ model Skill {
 
   profile             Profile              @relation(fields: [profileId], references: [id], onDelete: Cascade)
   experienceSkills    ExperienceSkill[]
-  achievementSkills   AchievementSkill[]
+  roleActivitySkills  RoleActivitySkill[]
   projectSkills       ProjectSkill[]
   certificationSkills CertificationSkill[]
 
@@ -147,21 +149,26 @@ model Experience {
   updatedAt DateTime  @updatedAt
 
   profile      Profile           @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  achievements Achievement[]
-  skills       ExperienceSkill[]
+  activities RoleActivity[]
+  skills     ExperienceSkill[]
 
   @@index([profileId])
 }
 
-model Achievement {
-  id           String  @id @default(cuid())
+model RoleActivity {
+  id           String   @id @default(cuid())
   experienceId String
+  kind         String // "responsibility" | "achievement"
   description  String
   impact       String?
-  tags         String  @default("[]")
+  highlighted  Boolean  @default(false)
+  order        Int      @default(0)
+  tags         String   @default("[]")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  experience Experience         @relation(fields: [experienceId], references: [id], onDelete: Cascade)
-  skills     AchievementSkill[]
+  experience Experience          @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  skills     RoleActivitySkill[]
 
   @@index([experienceId])
 }
@@ -224,6 +231,34 @@ model Certification {
   @@index([profileId])
 }
 
+model Competency {
+  id        String   @id @default(cuid())
+  profileId String
+  name      String
+  origin    String   @default("manual") // "manual" | "derived"
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+model Language {
+  id          String   @id @default(cuid())
+  profileId   String
+  name        String
+  proficiency String // "native" | "fluent" | "professional" | "intermediate" | "basic"
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
 // Junction tables
 
 model ExperienceSkill {
@@ -235,13 +270,13 @@ model ExperienceSkill {
   @@id([experienceId, skillId])
 }
 
-model AchievementSkill {
-  achievementId String
-  skillId       String
-  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
-  skill         Skill       @relation(fields: [skillId], references: [id], onDelete: Cascade)
+model RoleActivitySkill {
+  roleActivityId String
+  skillId        String
+  roleActivity   RoleActivity @relation(fields: [roleActivityId], references: [id], onDelete: Cascade)
+  skill          Skill        @relation(fields: [skillId], references: [id], onDelete: Cascade)
 
-  @@id([achievementId, skillId])
+  @@id([roleActivityId, skillId])
 }
 
 model ProjectSkill {

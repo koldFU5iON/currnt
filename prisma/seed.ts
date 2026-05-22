@@ -3,6 +3,7 @@
 try { process.loadEnvFile('.env.local') } catch {}
 
 import { jobApplications } from './seeds/job.seed'
+import { experiences, skills, educations, languages, competencies } from './seeds/profile.seed'
 
 const TEST_EMAIL = 'test@example.com'
 const TEST_PASSWORD = 'password'
@@ -54,6 +55,22 @@ async function main() {
       data: jobApplications.map((job) => ({ ...job, profileId: profile.id })),
     })
     console.log(`Created ${jobApplications.length} dummy job applications for test user`)
+  }
+
+  const existingExperiences = await prisma.experience.count({ where: { profileId: profile.id } })
+  if (existingExperiences === 0) {
+    for (const { activities, ...experience } of experiences) {
+      await prisma.experience.create({
+        data: { ...experience, profileId: profile.id, activities: { create: activities } },
+      })
+    }
+    await prisma.skill.createMany({ data: skills.map((s) => ({ ...s, profileId: profile.id })) })
+    await prisma.education.createMany({ data: educations.map((e) => ({ ...e, profileId: profile.id })) })
+    await prisma.language.createMany({ data: languages.map((l) => ({ ...l, profileId: profile.id })) })
+    await prisma.competency.createMany({ data: competencies.map((c) => ({ ...c, profileId: profile.id })) })
+    console.log(
+      `Created profile content for test user (${experiences.length} experiences, ${skills.length} skills)`,
+    )
   }
 
   console.log('Done')
