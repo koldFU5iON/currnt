@@ -33,10 +33,6 @@ type CertType = QualificationsType['certifications'][number]
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const levelValue: Record<string, number> = {
-  Expert: 100, Advanced: 75, Intermediate: 50, Beginner: 25,
-}
-
 const proficiencyClass: Record<string, string> = {
   native: "bg-green-500 text-white",
   fluent: "bg-green-400 text-white",
@@ -48,13 +44,13 @@ const proficiencyClass: Record<string, string> = {
 const toDateInput = (d?: Date | null) =>
   d ? new Date(d).toISOString().split('T')[0] : ''
 
-// ── Section header shared component ──────────────────────────────────────────
+// ── Section header ────────────────────────────────────────────────────────────
 
 function SectionHeader({ title, onAdd }: { title: string; onAdd: () => void }) {
   return (
     <div className="flex items-center justify-between mb-3">
       <H size={4}>{title}</H>
-      <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={onAdd}>
+      <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={onAdd} aria-label={`Add ${title}`}>
         <Plus size={12} /> Add
       </Button>
     </div>
@@ -63,13 +59,13 @@ function SectionHeader({ title, onAdd }: { title: string; onAdd: () => void }) {
 
 // ── Row hover controls ────────────────────────────────────────────────────────
 
-function RowControls({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
+function RowControls({ onEdit, onDelete, label }: { onEdit: () => void; onDelete: () => void; label: string }) {
   return (
-    <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onEdit}>
+    <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onEdit} aria-label={`Edit ${label}`}>
         <Pencil size={12} />
       </Button>
-      <Button variant="ghost" size="icon" className="h-6 w-6 hover:text-destructive" onClick={onDelete}>
+      <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive" onClick={onDelete} aria-label={`Delete ${label}`}>
         <Trash2 size={12} />
       </Button>
     </div>
@@ -92,12 +88,12 @@ function RadialGauge({ years, totalYears }: { years: number; totalYears: number 
   const pct = totalYears > 0 ? Math.min(Math.max(years / totalYears, 0), 1) : 0
   const filledLength = pct * arcLength
 
-  // light green → dark green based on experience ratio
-  const lightness = Math.round(70 - pct * 42)
-  const color = `hsl(142, 70%, ${lightness}%)`
+  // oklch: light green (L≈0.76) → dark green (L≈0.40) as experience ratio increases
+  const l = (0.76 - pct * 0.36).toFixed(3)
+  const color = `oklch(${l} 0.13 142)`
 
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-label={`${years} years`}>
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-label={`${years} of ${totalYears} years experience`}>
       <circle
         cx={cx} cy={cy} r={r}
         fill="none"
@@ -133,12 +129,23 @@ function RadialGauge({ years, totalYears }: { years: number; totalYears: number 
   )
 }
 
+// ── Empty state ───────────────────────────────────────────────────────────────
+
+function EmptySection({ noun, onAdd }: { noun: string; onAdd: () => void }) {
+  return (
+    <div className="py-5 text-center space-y-2">
+      <p className="text-sm text-muted-foreground">No {noun} added yet.</p>
+      <Button variant="outline" size="sm" onClick={onAdd}>Add your first {noun.replace(/s$/, '')}</Button>
+    </div>
+  )
+}
+
 // ── Top-level block ───────────────────────────────────────────────────────────
 
 export function QualificationsBlock({ qualifications, careerYears }: { qualifications: QualificationsType; careerYears: number }) {
   const { skills, education, certifications, tools } = qualifications
   return (
-    <div className="grid grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <section><SkillsSection initial={skills} careerYears={careerYears} /></section>
       <section><LanguagesSection initial={tools} /></section>
       <section><EducationSection initial={education} /></section>
@@ -153,6 +160,7 @@ function SkillsSection({ initial, careerYears }: { initial: SkillType[]; careerY
   const [skills, setSkills] = useState(initial)
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<SkillType | null>(null)
+  const [saving, setSaving] = useState(false)
 
   const openAdd = () => { setEditing(null); setOpen(true) }
   const openEdit = (s: SkillType) => { setEditing(s); setOpen(true) }
@@ -164,7 +172,7 @@ function SkillsSection({ initial, careerYears }: { initial: SkillType[]; careerY
   }
 
   const handleSave = async (data: Parameters<typeof createSkill>[0]) => {
-    setOpen(false)
+    setSaving(true)
     try {
       if (editing) {
         const updated = await updateSkill(editing.id, data)
@@ -173,36 +181,45 @@ function SkillsSection({ initial, careerYears }: { initial: SkillType[]; careerY
         const created = await createSkill(data)
         setSkills(s => [...s, created as unknown as SkillType])
       }
-    } catch { /* revalidatePath will sync on next navigation */ }
+      setOpen(false)
+    } catch { } finally {
+      setSaving(false)
+    }
   }
 
   return (
     <div>
       <SectionHeader title="Skills" onAdd={openAdd} />
-      <div className="space-y-1">
-        {skills.map(skill => (
-          <div key={skill.id} className="group flex items-center gap-2 py-0.5">
-            <span className="text-sm font-medium flex-1 min-w-0 truncate">{skill.name}</span>
-            {skill.yearsOfExperience != null && (
-              <RadialGauge years={skill.yearsOfExperience} totalYears={careerYears} />
-            )}
-            <Badge variant="outline" className="text-xs shrink-0">{skill.level}</Badge>
-            <RowControls onEdit={() => openEdit(skill)} onDelete={() => handleDelete(skill.id)} />
+      {skills.length === 0
+        ? <EmptySection noun="skills" onAdd={openAdd} />
+        : (
+          <div className="space-y-1">
+            {skills.map(skill => (
+              <div key={skill.id} className="group flex items-center gap-2 py-0.5">
+                <span className="text-sm font-medium flex-1 min-w-0 truncate">{skill.name}</span>
+                {skill.yearsOfExperience != null && (
+                  <RadialGauge years={skill.yearsOfExperience} totalYears={careerYears} />
+                )}
+                <Badge variant="outline" className="text-xs shrink-0">{skill.level}</Badge>
+                <RowControls label={skill.name} onEdit={() => openEdit(skill)} onDelete={() => handleDelete(skill.id)} />
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      <SkillDialog open={open} onOpenChange={setOpen} editing={editing} onSave={handleSave} />
+        )
+      }
+      <SkillDialog open={open} onOpenChange={setOpen} editing={editing} onSave={handleSave} saving={saving} />
     </div>
   )
 }
 
 function SkillDialog({
-  open, onOpenChange, editing, onSave,
+  open, onOpenChange, editing, onSave, saving,
 }: {
   open: boolean
   onOpenChange: (o: boolean) => void
   editing: SkillType | null
   onSave: (data: Parameters<typeof createSkill>[0]) => void
+  saving: boolean
 }) {
   const [level, setLevel] = useState(editing?.level ?? 'Intermediate')
   useEffect(() => { setLevel(editing?.level ?? 'Intermediate') }, [editing])
@@ -220,7 +237,7 @@ function SkillDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={saving ? undefined : onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{editing ? 'Edit Skill' : 'Add Skill'}</DialogTitle>
@@ -252,8 +269,8 @@ function SkillDialog({
             </Field>
           </FieldGroup>
           <DialogFooter className="mt-4">
-            <DialogClose render={<Button type="button" variant="secondary">Cancel</Button>} />
-            <Button type="submit">{editing ? 'Save' : 'Add'}</Button>
+            <DialogClose render={<Button type="button" variant="secondary" disabled={saving}>Cancel</Button>} />
+            <Button type="submit" disabled={saving}>{saving ? 'Saving...' : editing ? 'Save' : 'Add'}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -267,6 +284,7 @@ function LanguagesSection({ initial }: { initial: LanguageType[] }) {
   const [languages, setLanguages] = useState(initial)
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<LanguageType | null>(null)
+  const [saving, setSaving] = useState(false)
 
   const openAdd = () => { setEditing(null); setOpen(true) }
   const openEdit = (l: LanguageType) => { setEditing(l); setOpen(true) }
@@ -278,7 +296,7 @@ function LanguagesSection({ initial }: { initial: LanguageType[] }) {
   }
 
   const handleSave = async (data: Parameters<typeof createLanguage>[0]) => {
-    setOpen(false)
+    setSaving(true)
     try {
       if (editing) {
         const updated = await updateLanguage(editing.id, data)
@@ -287,37 +305,46 @@ function LanguagesSection({ initial }: { initial: LanguageType[] }) {
         const created = await createLanguage(data)
         setLanguages(l => [...l, created as unknown as LanguageType])
       }
-    } catch { }
+      setOpen(false)
+    } catch { } finally {
+      setSaving(false)
+    }
   }
 
   return (
     <div>
       <SectionHeader title="Languages" onAdd={openAdd} />
-      <div className="space-y-1">
-        {languages.map(lang => (
-          <div key={lang.id} className="group flex items-center justify-between py-1.5 border-b border-border last:border-0">
-            <span className="text-sm font-medium">{lang.name}</span>
-            <div className="flex items-center gap-1.5">
-              <Badge className={clsx("text-xs capitalize", proficiencyClass[lang.proficiency] ?? "bg-muted text-muted-foreground")}>
-                {lang.proficiency}
-              </Badge>
-              <RowControls onEdit={() => openEdit(lang)} onDelete={() => handleDelete(lang.id)} />
-            </div>
+      {languages.length === 0
+        ? <EmptySection noun="languages" onAdd={openAdd} />
+        : (
+          <div className="space-y-1">
+            {languages.map(lang => (
+              <div key={lang.id} className="group flex items-center justify-between py-1.5 border-b border-border last:border-0">
+                <span className="text-sm font-medium">{lang.name}</span>
+                <div className="flex items-center gap-1.5">
+                  <Badge className={clsx("text-xs capitalize", proficiencyClass[lang.proficiency] ?? "bg-muted text-muted-foreground")}>
+                    {lang.proficiency}
+                  </Badge>
+                  <RowControls label={lang.name} onEdit={() => openEdit(lang)} onDelete={() => handleDelete(lang.id)} />
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      <LanguageDialog open={open} onOpenChange={setOpen} editing={editing} onSave={handleSave} />
+        )
+      }
+      <LanguageDialog open={open} onOpenChange={setOpen} editing={editing} onSave={handleSave} saving={saving} />
     </div>
   )
 }
 
 function LanguageDialog({
-  open, onOpenChange, editing, onSave,
+  open, onOpenChange, editing, onSave, saving,
 }: {
   open: boolean
   onOpenChange: (o: boolean) => void
   editing: LanguageType | null
   onSave: (data: Parameters<typeof createLanguage>[0]) => void
+  saving: boolean
 }) {
   const [proficiency, setProficiency] = useState(editing?.proficiency ?? 'intermediate')
   useEffect(() => { setProficiency(editing?.proficiency ?? 'intermediate') }, [editing])
@@ -329,7 +356,7 @@ function LanguageDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={saving ? undefined : onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{editing ? 'Edit Language' : 'Add Language'}</DialogTitle>
@@ -353,8 +380,8 @@ function LanguageDialog({
             </Field>
           </FieldGroup>
           <DialogFooter className="mt-4">
-            <DialogClose render={<Button type="button" variant="secondary">Cancel</Button>} />
-            <Button type="submit">{editing ? 'Save' : 'Add'}</Button>
+            <DialogClose render={<Button type="button" variant="secondary" disabled={saving}>Cancel</Button>} />
+            <Button type="submit" disabled={saving}>{saving ? 'Saving...' : editing ? 'Save' : 'Add'}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -368,6 +395,7 @@ function EducationSection({ initial }: { initial: EducationType[] }) {
   const [educations, setEducations] = useState(initial)
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<EducationType | null>(null)
+  const [saving, setSaving] = useState(false)
 
   const openAdd = () => { setEditing(null); setOpen(true) }
   const openEdit = (e: EducationType) => { setEditing(e); setOpen(true) }
@@ -379,7 +407,7 @@ function EducationSection({ initial }: { initial: EducationType[] }) {
   }
 
   const handleSave = async (data: Parameters<typeof createEducation>[0]) => {
-    setOpen(false)
+    setSaving(true)
     try {
       if (editing) {
         const updated = await updateEducation(editing.id, data)
@@ -388,50 +416,59 @@ function EducationSection({ initial }: { initial: EducationType[] }) {
         const created = await createEducation(data)
         setEducations(e => [...e, created as unknown as EducationType])
       }
-    } catch { }
+      setOpen(false)
+    } catch { } finally {
+      setSaving(false)
+    }
   }
 
   return (
     <div>
       <SectionHeader title="Education" onAdd={openAdd} />
-      <div className="space-y-4">
-        {educations.map(edu => (
-          <div key={edu.id} className="group space-y-1">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <p className="font-semibold text-sm">{edu.institution}</p>
-                <p className="text-sm text-muted-foreground">
-                  {edu.qualification}{edu.field ? ` · ${edu.field}` : ''}
+      {educations.length === 0
+        ? <EmptySection noun="education" onAdd={openAdd} />
+        : (
+          <div className="space-y-4">
+            {educations.map(edu => (
+              <div key={edu.id} className="group space-y-1">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="font-semibold text-sm">{edu.institution}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {edu.qualification}{edu.field ? ` · ${edu.field}` : ''}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {edu.grade && <Badge variant="secondary" className="text-xs">{edu.grade}</Badge>}
+                    <RowControls label={edu.institution} onEdit={() => openEdit(edu)} onDelete={() => handleDelete(edu.id)} />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {edu.startDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
+                  {' – '}
+                  {edu.endDate
+                    ? edu.endDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+                    : 'Present'}
                 </p>
+                <Separator className="mt-2" />
               </div>
-              <div className="flex items-center gap-1 shrink-0">
-                {edu.grade && <Badge variant="secondary" className="text-xs">{edu.grade}</Badge>}
-                <RowControls onEdit={() => openEdit(edu)} onDelete={() => handleDelete(edu.id)} />
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {edu.startDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
-              {' – '}
-              {edu.endDate
-                ? edu.endDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
-                : 'Present'}
-            </p>
-            <Separator className="mt-2" />
+            ))}
           </div>
-        ))}
-      </div>
-      <EducationDialog open={open} onOpenChange={setOpen} editing={editing} onSave={handleSave} />
+        )
+      }
+      <EducationDialog open={open} onOpenChange={setOpen} editing={editing} onSave={handleSave} saving={saving} />
     </div>
   )
 }
 
 function EducationDialog({
-  open, onOpenChange, editing, onSave,
+  open, onOpenChange, editing, onSave, saving,
 }: {
   open: boolean
   onOpenChange: (o: boolean) => void
   editing: EducationType | null
   onSave: (data: Parameters<typeof createEducation>[0]) => void
+  saving: boolean
 }) {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -448,7 +485,7 @@ function EducationDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={saving ? undefined : onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{editing ? 'Edit Education' : 'Add Education'}</DialogTitle>
@@ -483,8 +520,8 @@ function EducationDialog({
             </Field>
           </FieldGroup>
           <DialogFooter className="mt-4">
-            <DialogClose render={<Button type="button" variant="secondary">Cancel</Button>} />
-            <Button type="submit">{editing ? 'Save' : 'Add'}</Button>
+            <DialogClose render={<Button type="button" variant="secondary" disabled={saving}>Cancel</Button>} />
+            <Button type="submit" disabled={saving}>{saving ? 'Saving...' : editing ? 'Save' : 'Add'}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -498,6 +535,7 @@ function CertificationsSection({ initial }: { initial: CertType[] }) {
   const [certs, setCerts] = useState(initial)
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<CertType | null>(null)
+  const [saving, setSaving] = useState(false)
 
   const sixMonthsFromNow = new Date()
   sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6)
@@ -512,7 +550,7 @@ function CertificationsSection({ initial }: { initial: CertType[] }) {
   }
 
   const handleSave = async (data: Parameters<typeof createCertification>[0]) => {
-    setOpen(false)
+    setSaving(true)
     try {
       if (editing) {
         const updated = await updateCertification(editing.id, data)
@@ -521,45 +559,54 @@ function CertificationsSection({ initial }: { initial: CertType[] }) {
         const created = await createCertification(data)
         setCerts(c => [...c, created as unknown as CertType])
       }
-    } catch { }
+      setOpen(false)
+    } catch { } finally {
+      setSaving(false)
+    }
   }
 
   return (
     <div>
       <SectionHeader title="Certifications" onAdd={openAdd} />
-      <div className="space-y-1">
-        {certs.map(cert => {
-          const expiringSoon = cert.expiryDate && cert.expiryDate < sixMonthsFromNow
-          return (
-            <div key={cert.id} className="group flex items-start justify-between gap-2 py-1.5 border-b border-border last:border-0">
-              <div className="space-y-0.5 min-w-0">
-                <p className="text-sm font-semibold truncate">{cert.name}</p>
-                <p className="text-xs text-muted-foreground">{cert.issuer}</p>
-                <p className="text-xs text-muted-foreground">
-                  Issued {cert.issueDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
-                  {cert.expiryDate && ` · Expires ${cert.expiryDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`}
-                </p>
-              </div>
-              <div className="flex items-center gap-1 shrink-0">
-                {expiringSoon && <Badge className="bg-amber-400 text-white text-xs">Expires soon</Badge>}
-                <RowControls onEdit={() => openEdit(cert)} onDelete={() => handleDelete(cert.id)} />
-              </div>
-            </div>
-          )
-        })}
-      </div>
-      <CertificationDialog open={open} onOpenChange={setOpen} editing={editing} onSave={handleSave} />
+      {certs.length === 0
+        ? <EmptySection noun="certifications" onAdd={openAdd} />
+        : (
+          <div className="space-y-1">
+            {certs.map(cert => {
+              const expiringSoon = cert.expiryDate && cert.expiryDate < sixMonthsFromNow
+              return (
+                <div key={cert.id} className="group flex items-start justify-between gap-2 py-1.5 border-b border-border last:border-0">
+                  <div className="space-y-0.5 min-w-0">
+                    <p className="text-sm font-semibold truncate">{cert.name}</p>
+                    <p className="text-xs text-muted-foreground">{cert.issuer}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Issued {cert.issueDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
+                      {cert.expiryDate && ` · Expires ${cert.expiryDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {expiringSoon && <Badge className="bg-amber-400 text-white text-xs">Expires soon</Badge>}
+                    <RowControls label={cert.name} onEdit={() => openEdit(cert)} onDelete={() => handleDelete(cert.id)} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )
+      }
+      <CertificationDialog open={open} onOpenChange={setOpen} editing={editing} onSave={handleSave} saving={saving} />
     </div>
   )
 }
 
 function CertificationDialog({
-  open, onOpenChange, editing, onSave,
+  open, onOpenChange, editing, onSave, saving,
 }: {
   open: boolean
   onOpenChange: (o: boolean) => void
   editing: CertType | null
   onSave: (data: Parameters<typeof createCertification>[0]) => void
+  saving: boolean
 }) {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -575,7 +622,7 @@ function CertificationDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={saving ? undefined : onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{editing ? 'Edit Certification' : 'Add Certification'}</DialogTitle>
@@ -606,8 +653,8 @@ function CertificationDialog({
             </Field>
           </FieldGroup>
           <DialogFooter className="mt-4">
-            <DialogClose render={<Button type="button" variant="secondary">Cancel</Button>} />
-            <Button type="submit">{editing ? 'Save' : 'Add'}</Button>
+            <DialogClose render={<Button type="button" variant="secondary" disabled={saving}>Cancel</Button>} />
+            <Button type="submit" disabled={saving}>{saving ? 'Saving...' : editing ? 'Save' : 'Add'}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

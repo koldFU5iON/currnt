@@ -62,10 +62,10 @@ function EditableField({ icon, field, value, label }: EditableFieldProps) {
             if (e.key === 'Escape') handleCancel()
           }}
         />
-        <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0" onClick={handleSave}>
+        <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={handleSave} aria-label="Save">
           <Check size={13} />
         </Button>
-        <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0" onClick={handleCancel}>
+        <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={handleCancel} aria-label="Cancel">
           <X size={13} />
         </Button>
       </div>
@@ -74,15 +74,19 @@ function EditableField({ icon, field, value, label }: EditableFieldProps) {
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       className="group flex items-center gap-2 px-1 py-1.5 rounded cursor-pointer hover:bg-accent/60 transition-colors"
       onClick={() => setEditing(true)}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setEditing(true) } }}
+      aria-label={`Edit ${label}`}
     >
       <span className="text-muted-foreground shrink-0">{icon}</span>
       {error
         ? <span className="text-xs text-destructive">Failed to save</span>
         : current
           ? <span className="text-sm">{current}</span>
-          : <AlertTriangleIcon size={14} color="orange" />
+          : <AlertTriangleIcon size={14} className="text-amber-500" aria-label={`${label} not set`} />
       }
       <Pencil size={11} className="ml-auto opacity-0 group-hover:opacity-40 transition-opacity shrink-0" />
     </div>
@@ -93,7 +97,7 @@ export function ContactBlock({ contact }: { contact: ContactBlockProps }) {
   return (
     <div className="ml-2 mt-2">
       <div className="border-l-4 pl-3 py-1 border-primary/90">
-        <H size={1} className="text-primary/80">{contact.name}</H>
+        <H size={2} className="text-primary/80">{contact.name}</H>
       </div>
       <div className="mt-3 space-y-0.5">
         <EditableField icon={<Mail size={14} />} field="email" value={contact.email} label="Email" />

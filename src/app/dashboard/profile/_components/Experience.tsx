@@ -84,7 +84,7 @@ export function ExperienceBlock({ exp }: { exp: ExperienceWithActivities[] }) {
           <Plus size={12} /> Add
         </Button>
       </div>
-      <div className="grid grid-cols-3 gap-4 bg-background p-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 bg-background p-4">
         {experiences.map(experience => (
           <Card className="bg-accent group" key={experience.id}>
             <CardHeader className="border-b border-primary/80">
@@ -142,22 +142,25 @@ export function ExperienceBlock({ exp }: { exp: ExperienceWithActivities[] }) {
                 })}
               </div>
             </CardContent>
-            <CardFooter className="justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <CardFooter className="justify-end gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
               <Button
                 variant="ghost" size="sm" className="gap-1 text-xs"
                 onClick={() => setActivitiesFor(experience)}
+                aria-label={`Manage activities for ${experience.company}`}
               >
                 <ListChecks size={13} /> Activities
               </Button>
               <Button
-                variant="ghost" size="icon" className="h-7 w-7"
+                variant="ghost" size="icon" className="h-9 w-9"
                 onClick={() => openEdit(experience)}
+                aria-label={`Edit ${experience.company}`}
               >
                 <Pencil size={13} />
               </Button>
               <Button
-                variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive"
+                variant="ghost" size="icon" className="h-9 w-9 hover:text-destructive"
                 onClick={() => handleDelete(experience.id)}
+                aria-label={`Delete ${experience.company}`}
               >
                 <Trash2 size={13} />
               </Button>
@@ -189,7 +192,14 @@ export function ExperienceBlock({ exp }: { exp: ExperienceWithActivities[] }) {
 
 function ExperienceCard({ onAdd }: { onAdd: () => void }) {
   return (
-    <Card className="hover:bg-accent cursor-pointer min-h-[200px]" onClick={onAdd}>
+    <Card
+      role="button"
+      tabIndex={0}
+      className="hover:bg-accent cursor-pointer min-h-[200px]"
+      onClick={onAdd}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onAdd() } }}
+      aria-label="Add work experience"
+    >
       <CardContent className="flex-1 h-full">
         <div className="flex flex-col justify-center items-center h-full rounded-lg border border-primary/80 border-dashed min-h-[160px] gap-1 text-sm text-muted-foreground">
           <Plus size={18} />
@@ -394,11 +404,11 @@ function ActivityManageDialog({
                           <p className="text-xs text-muted-foreground mt-0.5">↳ {a.impact}</p>
                         )}
                       </div>
-                      <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEditForm(a)}>
+                      <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity shrink-0">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditForm(a)} aria-label="Edit activity">
                           <Pencil size={11} />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 hover:text-destructive" onClick={() => handleDelete(a.id)}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive" onClick={() => handleDelete(a.id)} aria-label="Delete activity">
                           <Trash2 size={11} />
                         </Button>
                       </div>

@@ -39,11 +39,11 @@ export default async function Page() {
   }
 
   return <ContentContainer title="Profile Page" fullWidth>
-    <div className="grid grid-cols-3 gap-6 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
       <div>
         {contact.name && <ContactBlock contact={contact} />}
       </div>
-      <div className="col-span-2">
+      <div className="md:col-span-2">
         <QualificationsBlock qualifications={qualifications} careerYears={careerYears} />
       </div>
     </div>
