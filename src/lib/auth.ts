@@ -5,6 +5,25 @@ import { prisma } from "@/lib/db"
 
 type SocialProviderConfig = { clientId: string; clientSecret: string }
 
+function normalizeOrigin(value?: string) {
+  if (!value) return undefined
+  const withProtocol = value.startsWith("http://") || value.startsWith("https://")
+    ? value
+    : `https://${value}`
+  return withProtocol.replace(/\/$/, "")
+}
+
+const vercelUrl = normalizeOrigin(process.env.VERCEL_URL)
+const vercelProductionUrl = normalizeOrigin(process.env.VERCEL_PROJECT_PRODUCTION_URL)
+const authBaseUrl = normalizeOrigin(process.env.BETTER_AUTH_URL) ?? vercelUrl
+const envTrustedOrigins = process.env.BETTER_AUTH_TRUSTED_ORIGINS
+  ?.split(",")
+  .map((origin) => normalizeOrigin(origin.trim()))
+  .filter((origin): origin is string => Boolean(origin)) ?? []
+
+const trustedOrigins = [authBaseUrl, vercelUrl, vercelProductionUrl, ...envTrustedOrigins]
+  .filter((origin): origin is string => Boolean(origin))
+
 const socialProviders: Record<string, SocialProviderConfig> = {}
 
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
@@ -35,6 +54,8 @@ export function getEnabledSocialProviders(): EnabledSocialProvider[] {
 }
 
 export const auth = betterAuth({
+  baseURL: authBaseUrl,
+  trustedOrigins,
   database: prismaAdapter(prisma, { provider: "postgresql" }),
   emailAndPassword: {
     enabled: true,
