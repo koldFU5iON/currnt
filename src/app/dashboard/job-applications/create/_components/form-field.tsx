@@ -9,6 +9,7 @@ interface FormFieldProps {
   type?: string
   placeholder?: string
   required?: boolean
+  rows?: number
 }
 
 // <input type="date"> needs a local YYYY-MM-DD string, while the form holds a Date.
@@ -28,6 +29,7 @@ export function FormField({
   type = "text",
   placeholder,
   required = false,
+  rows,
 }: FormFieldProps) {
   const { control } = useFormContext()
   return (
@@ -43,6 +45,7 @@ export function FormField({
             <Textarea
               {...field}
               placeholder={placeholder}
+              rows={rows}
               aria-invalid={fieldState.invalid}
             />
           ) : type === "date" ? (

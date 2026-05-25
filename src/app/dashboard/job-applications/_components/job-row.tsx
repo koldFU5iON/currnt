@@ -8,12 +8,30 @@ import { AppControls } from "@/components/app-item-menu"
 import { SquareArrowOutUpRight } from "lucide-react"
 import { ApplicationDateBlock } from "./app-date-block"
 import { JobFit } from "./job-fit"
+import { Checkbox } from "@/components/ui/checkbox"
 
-export function JobRow(props: Job) {
-  const { id, jobNumber, title, company, countries, url, dateApplied, lastUpdated, status, progress, jobFit } = props
+type JobRowProps = {
+  job: Job
+  selected: boolean
+  onToggleSelect: (id: string) => void
+  onEdit: (job: Job) => void
+  onArchive: (id: string) => void
+}
+
+export function JobRow({ job, selected, onToggleSelect, onEdit, onArchive }: JobRowProps) {
+  const { id, jobNumber, title, company, countries, url, dateApplied, lastUpdated, status, progress, jobFit } = job
 
   return (
-    <div className="group col-span-full grid grid-cols-subgrid items-center transition-colors duration-150 hover:bg-muted/50">
+    <div className="group col-span-full grid grid-cols-subgrid items-center border-b border-border/30 last:border-b-0 transition-colors duration-150 hover:bg-muted/50 data-[selected=true]:bg-muted/40"
+         data-selected={selected}>
+      <div className="flex items-center justify-center px-2 py-3">
+        <Checkbox
+          checked={selected}
+          onCheckedChange={() => onToggleSelect(id)}
+          aria-label={`Select ${title}`}
+        />
+      </div>
+
       <div className="min-w-0 px-3 py-3">
         <div className="flex min-w-0 items-center gap-1.5">
           <Link
@@ -59,7 +77,11 @@ export function JobRow(props: Job) {
 
       <div className="flex items-center gap-1 px-3 py-3">
         <JobFit jobFit={jobFit || null} />
-        <AppControls id={id} />
+        <AppControls
+          id={id}
+          onEdit={() => onEdit(job)}
+          onArchive={() => onArchive(id)}
+        />
       </div>
     </div>
   )

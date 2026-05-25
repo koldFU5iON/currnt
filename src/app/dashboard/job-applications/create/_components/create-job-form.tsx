@@ -11,10 +11,14 @@ import { FormField } from './form-field'
 import { createJobSchema } from '@/modules/jobs/schema'
 import { createJobApplication } from '@/modules/jobs/mutations'
 import { extractJobFromUrl } from '@/modules/jobs/extract'
+import { findPotentialDuplicates, type DuplicateMatch } from '@/modules/jobs/dedup'
+import { DuplicateWarning } from '../../_components/duplicate-warning'
 import { toast } from 'sonner'
 
 export function CreateJobForm() {
   const [extracting, setExtracting] = useState(false)
+  const [duplicates, setDuplicates] = useState<DuplicateMatch[]>([])
+  const [acknowledgedDupes, setAcknowledgedDupes] = useState(false)
   const router = useRouter()
 
   const form = useForm<z.infer<typeof createJobSchema>>({
@@ -51,6 +55,17 @@ export function CreateJobForm() {
       if (data.jobNumber) form.setValue('jobNumber', data.jobNumber)
       if (data.datePublished) form.setValue('datePublished', data.datePublished)
       toast.success('Details extracted — review and submit')
+
+      // Re-check for duplicates against the freshly-extracted values
+      if (data.title && data.company) {
+        const matches = await findPotentialDuplicates({
+          jobNumber: data.jobNumber,
+          title: data.title,
+          company: data.company,
+        })
+        setDuplicates(matches)
+        setAcknowledgedDupes(false)
+      }
     } finally {
       setExtracting(false)
     }
@@ -58,6 +73,20 @@ export function CreateJobForm() {
 
   async function onSubmit(data: z.infer<typeof createJobSchema>) {
     try {
+      // Final guard — catches manual-entry duplicates that didn't go through extract.
+      const matches = await findPotentialDuplicates({
+        jobNumber: data.jobNumber,
+        title: data.title,
+        company: data.company,
+      })
+      setDuplicates(matches)
+
+      if (matches.length > 0 && !acknowledgedDupes) {
+        setAcknowledgedDupes(true)
+        toast.warning('Possible duplicate — submit again to create anyway')
+        return
+      }
+
       await createJobApplication(data)
       toast.success('Job application created')
       router.push('/dashboard/job-applications')
@@ -106,8 +135,14 @@ export function CreateJobForm() {
           placeholder="Paste or extract the full job description (markdown supported)"
         />
 
+        <DuplicateWarning matches={duplicates} />
+
         <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">
-          {form.formState.isSubmitting ? 'Creating...' : 'Create Job Application'}
+          {form.formState.isSubmitting
+            ? 'Creating...'
+            : duplicates.length > 0 && acknowledgedDupes
+              ? 'Create anyway'
+              : 'Create Job Application'}
         </Button>
 
       </form>

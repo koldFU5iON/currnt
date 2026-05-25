@@ -5,7 +5,7 @@ import { requireProfile } from "@/lib/session"
 export async function getActiveJobs(): Promise<Job[]> {
   const { profile } = await requireProfile()
   const jobs = await prisma.jobApplication.findMany({
-    where: { profileId: profile.id },
+    where: { profileId: profile.id, archivedAt: null },
     orderBy: { dateApplied: 'desc' },
   })
   return jobs as Job[]

@@ -381,6 +381,7 @@ model JobApplication {
   tags           String[]
   datePublished  DateTime? @default(now())
   lastUpdated    DateTime  @updatedAt
+  archivedAt     DateTime?
 
   profile      Profile               @relation(fields: [profileId], references: [id], onDelete: Cascade)
   contacts     ApplicationContact[]
@@ -390,6 +391,7 @@ model JobApplication {
 
   @@index([profileId])
   @@index([status])
+  @@index([profileId, archivedAt])
 }
 
 model ApplicationContact {

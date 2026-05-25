@@ -12,3 +12,7 @@ export const createJobSchema = z.object({
   datePublished: z.date().optional(),
   location: z.string().optional(),
 })
+
+// Same fields, all optional — for partial updates from the edit dialog.
+// Per-field constraints (e.g. min(1) on title) still apply when a value is sent.
+export const updateJobSchema = createJobSchema.partial()

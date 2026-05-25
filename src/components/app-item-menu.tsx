@@ -21,9 +21,11 @@ import {
 
 type AppControlsProps = {
   id: string
+  onEdit?: () => void
+  onArchive?: () => void
 }
 
-export function AppControls({ id }: AppControlsProps) {
+export function AppControls({ id, onEdit, onArchive }: AppControlsProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -56,13 +58,15 @@ export function AppControls({ id }: AppControlsProps) {
           <AppControlsItem
             Icon={Pencil}
             label="Edit"
-            disabled
+            onSelect={onEdit}
+            disabled={!onEdit}
             shortcut="⌘E"
           />
           <AppControlsItem
             Icon={Archive}
             label="Archive"
-            disabled
+            onSelect={onArchive}
+            disabled={!onArchive}
           />
         </DropdownMenuGroup>
 
@@ -86,11 +90,12 @@ type AppControlsItemProps = {
   label: string
   color?: string
   action?: string
+  onSelect?: () => void
   disabled?: boolean
   shortcut?: string
 }
 
-function AppControlsItem({ Icon, color, label, action, disabled, shortcut }: AppControlsItemProps) {
+function AppControlsItem({ Icon, color, label, action, onSelect, disabled, shortcut }: AppControlsItemProps) {
   const content = (
     <>
       {Icon && <Icon color={color} className="size-4" />}
@@ -110,7 +115,11 @@ function AppControlsItem({ Icon, color, label, action, disabled, shortcut }: App
   }
 
   return (
-    <DropdownMenuItem disabled={disabled} className={!disabled ? "cursor-pointer" : ""}>
+    <DropdownMenuItem
+      disabled={disabled}
+      onSelect={onSelect}
+      className={!disabled ? "cursor-pointer" : ""}
+    >
       {content}
     </DropdownMenuItem>
   )

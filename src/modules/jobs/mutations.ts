@@ -3,7 +3,7 @@
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import * as z from 'zod'
-import { createJobSchema } from './schema'
+import { createJobSchema, updateJobSchema } from './schema'
 import {
   ApplicationProgress,
   ApplicationStatus,
@@ -92,4 +92,56 @@ export async function updateJobProgress(id: string, progress: ApplicationProgres
 
   revalidatePath('/dashboard/job-applications')
   revalidatePath(`/dashboard/job-applications/view/${id}`)
+}
+
+export async function updateJobApplication(
+  id: string,
+  data: z.infer<typeof updateJobSchema>,
+) {
+  const { profile } = await requireProfile()
+  const validated = updateJobSchema.parse(data)
+
+  const { location, url, ...rest } = validated
+  const payload: Record<string, unknown> = { ...rest }
+  if (url !== undefined) payload.url = url || null
+  if (location !== undefined) {
+    payload.countries = location
+      ? location.split(',').map(s => s.trim()).filter(Boolean)
+      : []
+  }
+
+  const result = await prisma.jobApplication.updateMany({
+    where: { id, profileId: profile.id },
+    data: payload,
+  })
+  if (result.count === 0) throw new Error('Job not found')
+
+  revalidatePath('/dashboard/job-applications')
+  revalidatePath(`/dashboard/job-applications/view/${id}`)
+}
+
+export async function archiveJobApplication(id: string) {
+  const { profile } = await requireProfile()
+
+  const result = await prisma.jobApplication.updateMany({
+    where: { id, profileId: profile.id },
+    data: { archivedAt: new Date() },
+  })
+  if (result.count === 0) throw new Error('Job not found')
+
+  revalidatePath('/dashboard/job-applications')
+  revalidatePath(`/dashboard/job-applications/view/${id}`)
+}
+
+export async function bulkArchiveJobApplications(ids: string[]) {
+  if (ids.length === 0) return { archived: 0 }
+  const { profile } = await requireProfile()
+
+  const result = await prisma.jobApplication.updateMany({
+    where: { id: { in: ids }, profileId: profile.id },
+    data: { archivedAt: new Date() },
+  })
+
+  revalidatePath('/dashboard/job-applications')
+  return { archived: result.count }
 }

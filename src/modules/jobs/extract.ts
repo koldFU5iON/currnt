@@ -93,7 +93,7 @@ async function extractLinkedIn(jobId: string): Promise<ExtractionResult> {
     return { ok: false, error: `Could not reach LinkedIn: ${msg}` }
   }
 
-  const attr = (pattern: RegExp) => html.match(pattern)?.[1]?.trim()
+  const attr = (pattern: RegExp) => decode(html.match(pattern)?.[1]?.trim())
 
   const title = attr(/class="[^"]*topcard__title[^"]*"[^>]*>([^<]+)</)
     ?? attr(/<h2[^>]*class="[^"]*top-card-layout__title[^"]*"[^>]*>([^<]+)</)
@@ -180,14 +180,18 @@ async function extractGreenhouse(board: string, jobId: string): Promise<Extracti
   return {
     ok: true,
     data: {
-      title: typeof payload.title === 'string' ? payload.title.trim() : undefined,
-      company: typeof payload.company_name === 'string' ? payload.company_name.trim() : undefined,
-      location: typeof location === 'string' ? location : undefined,
+      title: decode(typeof payload.title === 'string' ? payload.title.trim() : undefined),
+      company: decode(typeof payload.company_name === 'string' ? payload.company_name.trim() : undefined),
+      location: decode(typeof location === 'string' ? location : undefined),
       jobDescription,
       jobNumber: idValue,
       datePublished,
     },
   }
+}
+
+function decode(s: string | undefined): string | undefined {
+  return s ? decodeEntities(s) : s
 }
 
 function decodeEntities(s: string): string {
@@ -237,9 +241,9 @@ function fromJsonLd(html: string): ExtractedJob | null {
       const identifier = job.identifier as Record<string, unknown> | undefined
 
       return {
-        title: (job.title as string | undefined)?.trim(),
-        company: (org?.name as string | undefined)?.trim(),
-        location: locationParts.length > 0 ? (locationParts as string[]).join(', ') : undefined,
+        title: decode((job.title as string | undefined)?.trim()),
+        company: decode((org?.name as string | undefined)?.trim()),
+        location: decode(locationParts.length > 0 ? (locationParts as string[]).join(', ') : undefined),
         jobDescription,
         jobNumber: identifier?.value != null ? String(identifier.value) : undefined,
         datePublished,
@@ -257,13 +261,13 @@ function fromMetaTags(html: string): ExtractedJob {
   const og = (prop: string) => {
     const a = html.match(new RegExp(`<meta[^>]+property=["']${prop}["'][^>]+content=["']([^"']+)["']`, 'i'))
     const b = html.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+property=["']${prop}["']`, 'i'))
-    return (a?.[1] ?? b?.[1])?.trim()
+    return decode((a?.[1] ?? b?.[1])?.trim())
   }
 
   const title =
     og('og:title') ??
-    html.match(/<h1[^>]*>([^<]{3,120})<\/h1>/i)?.[1]?.trim() ??
-    html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]?.replace(/\s*[\|\-–]\s*.+$/, '').trim()
+    decode(html.match(/<h1[^>]*>([^<]{3,120})<\/h1>/i)?.[1]?.trim()) ??
+    decode(html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]?.replace(/\s*[\|\-–]\s*.+$/, '').trim())
 
   return {
     title: title ?? undefined,
