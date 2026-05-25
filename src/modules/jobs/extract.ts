@@ -22,6 +22,10 @@ export async function extractJobFromUrl(url: string): Promise<ExtractionResult> 
   const linkedInId = linkedInJobId(url)
   if (linkedInId) return extractLinkedIn(linkedInId)
 
+  // Direct Greenhouse URL — call the API without fetching the wrapper page
+  const directGh = greenhouseFromUrl(url)
+  if (directGh) return extractGreenhouse(directGh.board, directGh.jobId)
+
   let html: string
   try {
     const res = await fetch(url, {
@@ -39,6 +43,14 @@ export async function extractJobFromUrl(url: string): Promise<ExtractionResult> 
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Network error'
     return { ok: false, error: `Could not reach that URL: ${msg}` }
+  }
+
+  // Greenhouse embedded on a wrapper site (e.g. mongodb.com/careers, many corporate sites)
+  const embeddedGh = greenhouseFromHtml(url, html)
+  if (embeddedGh) {
+    const ghResult = await extractGreenhouse(embeddedGh.board, embeddedGh.jobId)
+    if (ghResult.ok) return ghResult
+    // If the API didn't have the job, fall through to JSON-LD / meta below
   }
 
   const extracted = fromJsonLd(html) ?? fromMetaTags(html)
@@ -109,7 +121,88 @@ async function extractLinkedIn(jobId: string): Promise<ExtractionResult> {
   }
 }
 
-// ── JSON-LD JobPosting (most reliable — used by Greenhouse, Lever, Workday, Indeed) ──
+// ── Greenhouse (public Boards API) ────────────────────────────────────────────
+//
+// Works for two cases:
+//   1. Direct URLs like boards.greenhouse.io/{board}/jobs/{id}
+//   2. Wrapper sites (e.g. mongodb.com/careers/jobs/{id}) that embed Greenhouse
+//      via boards.greenhouse.io/embed/job_board/js?for={board}. The wrapper HTML
+//      is just a shell — the job content is rendered client-side, so a server
+//      fetch sees no description. Calling the API directly bypasses this.
+
+function greenhouseFromUrl(url: string): { board: string; jobId: string } | null {
+  const m = url.match(/(?:^|\/\/)(?:boards|job-boards)\.greenhouse\.io\/([^/?#]+)\/jobs\/(\d+)/i)
+  return m ? { board: m[1], jobId: m[2] } : null
+}
+
+function greenhouseFromHtml(url: string, html: string): { board: string; jobId: string } | null {
+  const board = html.match(/(?:boards|job-boards)\.greenhouse\.io\/embed\/job_board\/js\?for=([a-z0-9_-]+)/i)?.[1]
+  if (!board) return null
+
+  // gh_jid is Greenhouse's canonical query param; many wrappers expose only the path id
+  const jobId =
+    url.match(/[?&]gh_jid=(\d+)/i)?.[1] ??
+    html.match(/gh_jid=(\d+)/i)?.[1] ??
+    url.match(/\/(?:jobs?|positions?)\/(\d+)/i)?.[1]
+
+  return jobId ? { board, jobId } : null
+}
+
+async function extractGreenhouse(board: string, jobId: string): Promise<ExtractionResult> {
+  const apiUrl = `https://boards-api.greenhouse.io/v1/boards/${board}/jobs/${jobId}?content=true`
+  let payload: Record<string, unknown>
+  try {
+    const res = await fetch(apiUrl, {
+      headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(12_000),
+    })
+    if (!res.ok) {
+      return { ok: false, error: `Greenhouse returned ${res.status} — the job may no longer be available.` }
+    }
+    payload = (await res.json()) as Record<string, unknown>
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Network error'
+    return { ok: false, error: `Could not reach Greenhouse: ${msg}` }
+  }
+
+  // Greenhouse returns description HTML with entities encoded (&lt;p&gt;…),
+  // so we must decode before handing it to Turndown or it'll render literally.
+  const contentRaw = typeof payload.content === 'string' ? payload.content : ''
+  const jobDescription = contentRaw ? td.turndown(decodeEntities(contentRaw)) : undefined
+
+  const rawDate = typeof payload.first_published === 'string' ? payload.first_published : undefined
+  const parsed = rawDate ? new Date(rawDate) : undefined
+  const datePublished = parsed && !isNaN(parsed.getTime()) ? parsed : undefined
+
+  const location = (payload.location as Record<string, unknown> | undefined)?.name
+  const idValue = payload.id != null ? String(payload.id) : jobId
+
+  return {
+    ok: true,
+    data: {
+      title: typeof payload.title === 'string' ? payload.title.trim() : undefined,
+      company: typeof payload.company_name === 'string' ? payload.company_name.trim() : undefined,
+      location: typeof location === 'string' ? location : undefined,
+      jobDescription,
+      jobNumber: idValue,
+      datePublished,
+    },
+  }
+}
+
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&') // last, so e.g. &amp;lt; doesn't get over-decoded
+}
+
+// ── JSON-LD JobPosting (used by Lever, Workday, Indeed, and many ATSs) ────────
 
 function fromJsonLd(html: string): ExtractedJob | null {
   const blocks = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)]
