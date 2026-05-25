@@ -21,9 +21,15 @@ const PRE_INTERVIEW_PROGRESS = PROGRESS_ORDER.slice(
 
 export async function createJobApplication(data: z.infer<typeof createJobSchema>) {
   const { profile } = await requireProfile()
+  const { location, url, ...rest } = data
+  const countries = location
+    ? location.split(',').map(s => s.trim()).filter(Boolean)
+    : []
   return prisma.jobApplication.create({
     data: {
-      ...data,
+      ...rest,
+      url: url || undefined,
+      countries,
       profileId: profile.id,
     },
   })

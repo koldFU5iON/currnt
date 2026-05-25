@@ -76,7 +76,7 @@ function AppProgressBarNode({ state }: { state: NodeState }) {
   return (
     <div className="relative flex items-center justify-center size-3">
       {state === "active" && (
-        <div className="absolute inset-0 rounded-full bg-green-500 animate-ping opacity-40" />
+        <div className="absolute inset-0 rounded-full bg-green-500 motion-safe:animate-ping opacity-40" />
       )}
       <div className={clsx(
         "size-3 rounded-full border transition-colors duration-300",

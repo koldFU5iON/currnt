@@ -4,7 +4,8 @@ import Link from "next/link"
 import { useMemo, useState } from "react"
 import { Plus, SearchIcon } from "lucide-react"
 import { type Job } from "@/app/types/job-application"
-import { Button } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { Separator } from "@/components/ui/separator"
 import { JobRow } from "./job-row"
@@ -31,7 +32,9 @@ export function JobList({ jobs }: { jobs: Job[] }) {
       />
       <Separator className="my-3" />
       {filteredJobs.length > 0 ? (
-        filteredJobs.map((job) => <JobRow key={job.id} {...job} />)
+        <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_auto_auto] divide-y divide-border/50">
+          {filteredJobs.map((job) => <JobRow key={job.id} {...job} />)}
+        </div>
       ) : (
         <div className="text-sm text-muted-foreground py-6 text-center">
           {query ? "No jobs match your search." : "No jobs yet. Create your first application."}
@@ -54,10 +57,12 @@ function ToolBar({ query, onQueryChange, visibleCount, totalCount }: ToolBarProp
       <div className="flex space-x-2 items-center">
         <JobSearchBar value={query} onChange={onQueryChange} />
         <Separator orientation="vertical" className="h-8" />
-        <Link href="/dashboard/job-applications/create">
-          <Button type="button" className="flex flex-row">
-            <Plus /> Add Job
-          </Button>
+        <Link
+          href="/dashboard/job-applications/create"
+          className={cn(buttonVariants(), "gap-1.5")}
+        >
+          <Plus size={16} />
+          Add Job
         </Link>
       </div>
       <div className="text-xs text-muted-foreground">
@@ -82,6 +87,7 @@ function JobSearchBar({ value, onChange }: JobSearchBarProps) {
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="Search for job..."
+          aria-label="Search jobs"
         />
         <InputGroupAddon>
           <SearchIcon />

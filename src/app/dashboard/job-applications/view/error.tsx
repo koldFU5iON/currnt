@@ -1,30 +1,30 @@
-'use client' // Error boundaries must be Client Components
+'use client'
 
 import { useEffect } from 'react'
+import { AlertTriangle } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 export default function Error({
   error,
-  unstable_retry,
+  reset,
 }: {
   error: Error & { digest?: string }
-  unstable_retry: () => void
+  reset: () => void
 }) {
   useEffect(() => {
-    // Log the error to an error reporting service
     console.error(error)
   }, [error])
 
   return (
-    <div>
-      <h2>Something went wrong!</h2>
-      <button
-        onClick={
-          // Attempt to recover by re-fetching and re-rendering the segment
-          () => unstable_retry()
-        }
-      >
-        Try again
-      </button>
+    <div className="flex min-h-[400px] flex-col items-center justify-center gap-4 p-8 text-center">
+      <AlertTriangle className="h-10 w-10 text-destructive" aria-hidden />
+      <div className="space-y-1">
+        <h2 className="text-base font-semibold">Something went wrong</h2>
+        <p className="text-sm text-muted-foreground">
+          {error.message || 'An unexpected error occurred loading this job application.'}
+        </p>
+      </div>
+      <Button onClick={reset} variant="outline" size="sm">Try again</Button>
     </div>
   )
 }

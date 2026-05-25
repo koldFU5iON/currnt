@@ -1,7 +1,6 @@
 'use client'
 
 import { Separator } from "@/components/ui/separator";
-import { usePathname } from "next/navigation";
 import { H } from "./style/Style";
 import clsx from "clsx";
 
@@ -13,14 +12,10 @@ interface ContentContainerProps {
 }
 
 export function ContentContainer({ children, title, description, fullWidth }: ContentContainerProps) {
-  const path = usePathname()
   return (
 
     <div className={clsx("bg-accent rounded-md m-3", !fullWidth && "md:w-6xl max-w-6xl")}>
       <header className="p-4">
-        <div className="text-xs text-primary/60">
-          {path}
-        </div>
         <H size={1}>
           {title}
         </H>

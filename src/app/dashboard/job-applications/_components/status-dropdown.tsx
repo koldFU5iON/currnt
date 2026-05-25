@@ -24,6 +24,17 @@ type StatusDropdownProps = {
   status: ApplicationStatusType
 }
 
+function statusDotColor(status: ApplicationStatusType): string {
+  switch (status) {
+    case "not started": return "bg-muted-foreground/50"
+    case "applied": return "bg-blue-500"
+    case "interviewing": return "bg-amber-500"
+    case "accepted": return "bg-green-500"
+    case "rejected": return "bg-destructive"
+    default: return "bg-muted-foreground/50"
+  }
+}
+
 export function StatusDropdown({ jobId, status }: StatusDropdownProps) {
   const [isPending, startTransition] = useTransition()
 
@@ -39,8 +50,9 @@ export function StatusDropdown({ jobId, status }: StatusDropdownProps) {
       <DropdownMenuItem
         key={state}
         onClick={() => handleSelect(state)}
-        className="capitalize"
+        className="capitalize gap-2"
       >
+        <span className={cn("size-2 shrink-0 rounded-full", statusDotColor(state))} aria-hidden />
         {state}
       </DropdownMenuItem>
     ))
@@ -49,9 +61,12 @@ export function StatusDropdown({ jobId, status }: StatusDropdownProps) {
     <DropdownMenu>
       <DropdownMenuTrigger
         disabled={isPending}
-        className={cn(buttonVariants({ variant: "outline" }), "capitalize")}
+        className={cn(buttonVariants({ variant: "outline", size: "sm" }), "capitalize gap-1.5")}
       >
-        {isPending ? <Loader2 className="size-3 animate-spin" /> : null}
+        {isPending
+          ? <Loader2 className="size-3 animate-spin" />
+          : <span className={cn("size-2 shrink-0 rounded-full", statusDotColor(status))} aria-hidden />
+        }
         {status}
       </DropdownMenuTrigger>
       <DropdownMenuContent>

@@ -1,102 +1,74 @@
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { type Job } from "@/app/types/job-application"
-import { Link as LinkIcon, MapPin } from "lucide-react"
+import { MapPin } from "lucide-react"
+import { MarkdownProse } from "./markdown-prose"
 
 export function JobDetailsCard({ job }: { job: Job }) {
   const countries = Array.isArray(job.countries) ? job.countries : []
   const tags = Array.isArray(job.tags) ? job.tags : []
+  const hasMetadata = countries.length > 0 || !!job.jobNumber || tags.length > 0
 
   return (
-    <>
-      <Card>
-        <CardHeader>
-          <CardTitle>Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {job.jobNumber && (
-            <DetailRow label="Job Number">
-              <p>{job.jobNumber}</p>
-            </DetailRow>
-          )}
-
-          {countries.length > 0 && (
-            <DetailRow label="Locations">
-              <div className="flex flex-wrap gap-2">
-                {countries.map((country) => (
-                  <Badge key={country} variant="secondary">
-                    <MapPin className="w-3 h-3 mr-1" />
-                    {country}
-                  </Badge>
-                ))}
-              </div>
-            </DetailRow>
-          )}
-
-          {job.url && (
-            <DetailRow label="Job URL">
-              <a
-                href={job.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 hover:underline flex items-center gap-1"
-              >
-                <LinkIcon className="w-4 h-4" />
-                {job.url}
-              </a>
-            </DetailRow>
-          )}
-        </CardContent>
-      </Card>
-
-      {job.jobDescription && (
+    <div className="space-y-8">
+      {hasMetadata && (
         <Card>
-          <CardHeader>
-            <CardTitle>Job Description</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-              {job.jobDescription}
-            </p>
+          <CardContent className="grid grid-cols-1 gap-x-8 gap-y-5 pt-5 sm:grid-cols-2 md:grid-cols-3">
+            {job.jobNumber && (
+              <MetaField label="Reference">
+                <span className="font-mono text-sm">{job.jobNumber}</span>
+              </MetaField>
+            )}
+            {countries.length > 0 && (
+              <MetaField label="Locations">
+                <div className="flex flex-wrap gap-1.5">
+                  {countries.map((country) => (
+                    <Badge key={country} variant="secondary" className="gap-1">
+                      <MapPin className="h-3 w-3" />
+                      {country}
+                    </Badge>
+                  ))}
+                </div>
+              </MetaField>
+            )}
+            {tags.length > 0 && (
+              <MetaField label="Tags">
+                <div className="flex flex-wrap gap-1.5">
+                  {tags.map((tag) => (
+                    <Badge key={tag} variant="outline">{tag}</Badge>
+                  ))}
+                </div>
+              </MetaField>
+            )}
           </CardContent>
         </Card>
+      )}
+
+      {job.jobDescription && (
+        <section aria-labelledby="desc-heading">
+          <h2 id="desc-heading" className="mb-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Job Description
+          </h2>
+          <MarkdownProse content={job.jobDescription} />
+        </section>
       )}
 
       {job.notes && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Notes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="whitespace-pre-wrap text-sm">{job.notes}</p>
-          </CardContent>
-        </Card>
+        <section aria-labelledby="notes-heading">
+          <h2 id="notes-heading" className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Notes
+          </h2>
+          <p className="whitespace-pre-wrap text-sm leading-relaxed">{job.notes}</p>
+        </section>
       )}
-
-      {tags.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Tags</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag) => (
-                <Badge key={tag} variant="outline">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </>
+    </div>
   )
 }
 
-function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
+function MetaField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div>
-      <h3 className="text-sm font-medium text-muted-foreground mb-2">{label}</h3>
+    <div className="space-y-1.5">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
       {children}
     </div>
   )

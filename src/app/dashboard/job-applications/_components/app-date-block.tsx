@@ -50,19 +50,11 @@ export function ApplicationDateBlock({ label, date, jobId }: ApplicationDateBloc
       <div className="flex justify-between text-xs font-semibold mr-3">{label}:
         {jobId && (
           <Popover open={open} onOpenChange={handleOpenChange}>
-            <PopoverTrigger>
-              <div
-                className="cursor-pointer
-            border
-            hover:invert
-            bg-primary
-            border-accent-foreground
-            hover:bg-accent-foreground
-            hover:border-accent
-            w-fit rounded-full p-1
-            invisible group-hover:visible ">
-                <Pencil size={12} className="stroke-white" />
-              </div>
+            <PopoverTrigger
+              aria-label={`Edit ${label.toLowerCase()} date`}
+              className="invisible w-fit cursor-pointer rounded-full border border-accent-foreground bg-primary p-1 transition-opacity hover:invert group-hover:visible"
+            >
+              <Pencil size={12} className="stroke-white" />
             </PopoverTrigger>
             <PopoverContent className="w-auto">
               <form action={handleSubmit} className="flex flex-col gap-2">

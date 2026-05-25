@@ -7,7 +7,6 @@ export default async function Page() {
 
   return (
     <ContentContainer title="Job Applications" description="Track all the jobs you're currently interested in. Update the status to keep up to date on the current process and where you stand with your application">
-      <h1>Job applications</h1>
       <JobList jobs={jobs} />
     </ContentContainer>
   )
