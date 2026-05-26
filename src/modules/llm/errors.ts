@@ -40,8 +40,11 @@ export function normalizeLLMError(err: unknown): LLMError {
   if (err instanceof LLMError) return err
 
   if (err instanceof LoadAPIKeyError || err instanceof LoadSettingError) {
+    // Shouldn't normally hit this — resolveConfig() raises 'not_configured'
+    // before the SDK ever sees a missing key. Falls through to here only on
+    // weird provider-SDK loader issues.
     return new LLMError(
-      'LLM is not configured. Set AI_GATEWAY_API_KEY in your environment.',
+      'LLM is not configured. Update your settings at /dashboard/settings/llm.',
       'config',
       err,
     )

@@ -137,7 +137,7 @@ Copy `.env.example` → `.env.local`. Never commit `.env.local`.
 ## External APIs
 
 - `POST /api/jobs/capture` — bearer-token-authed endpoint for agents/scripts/bookmarklets to submit a job URL. Tokens minted at `/dashboard/settings/api-tokens`. See `docs/api-jobs-capture.md` for the full spec + curl examples.
-- `GET /api/llm/ping` — session-authed sanity check for the LLM layer. Returns the configured model's reply + latency + usage. Useful when wiring `AI_GATEWAY_API_KEY` for the first time.
+- `GET /api/llm/ping` — session-authed sanity check that runs a tiny `pong` round-trip using the signed-in user's saved LLM key. Useful right after wiring up their key in `/dashboard/settings/llm`.
 
 ## LLM layer
 
