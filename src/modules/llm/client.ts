@@ -1,32 +1,82 @@
-// Server-only LLM façade. Product features call `complete()` /
-// `completeStructured()` and never import from `ai` directly — that way the
-// SDK or provider can be swapped without rippling through the app.
+// Server-only LLM façade — bring-your-own-key. Each user supplies their own
+// provider API key via /dashboard/settings/llm; this module fetches their
+// settings, decrypts the key, and runs the call against the provider they
+// chose. Token costs land on the user's account, not the app owner's.
 //
-// Defaults route through the Vercel AI Gateway (`AI_GATEWAY_API_KEY`), so a
-// model is just a `provider/name` string. Switching to OpenAI is a one-line
-// env change once you've got an OpenAI provider enabled on the Gateway.
+// Product features call complete()/completeStructured() with a profileId and
+// never import from 'ai' or any provider SDK directly — adding a new provider
+// is a single addition to PROVIDERS below, with no ripple beyond this file.
 
-import { generateText, Output, type LanguageModelUsage } from 'ai'
+import { generateText, Output, type LanguageModel, type LanguageModelUsage } from 'ai'
+import { createAnthropic } from '@ai-sdk/anthropic'
+import { createOpenAI } from '@ai-sdk/openai'
+import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import type { z } from 'zod'
-import { normalizeLLMError } from './errors'
+import { prisma } from '@/lib/db'
+import { decrypt } from '@/lib/encryption'
+import { LLMError, normalizeLLMError } from './errors'
 
-// Latest stable Claude Sonnet at time of writing. Override per-call via the
-// `model` option or globally via the LLM_MODEL env var.
-const DEFAULT_MODEL = process.env.LLM_MODEL || 'anthropic/claude-sonnet-4.6'
+// Supported providers. Adding a new one is a single entry here — the factory
+// receives the user's decrypted API key and the model id and returns a
+// LanguageModel suitable for generateText.
+type ProviderFactory = (apiKey: string, modelId: string) => LanguageModel
 
-function providerOf(modelId: string): string {
-  const slash = modelId.indexOf('/')
-  return slash > 0 ? modelId.slice(0, slash) : 'unknown'
+const PROVIDERS: Record<string, ProviderFactory> = {
+  anthropic: (apiKey, modelId) => createAnthropic({ apiKey })(modelId),
+  openai: (apiKey, modelId) => createOpenAI({ apiKey })(modelId),
+  google: (apiKey, modelId) => createGoogleGenerativeAI({ apiKey })(modelId),
+}
+
+export const SUPPORTED_PROVIDERS = Object.keys(PROVIDERS) as ReadonlyArray<keyof typeof PROVIDERS>
+
+type ResolvedConfig = {
+  provider: string
+  model: string
+  apiKey: string
+}
+
+async function resolveConfig(profileId: string): Promise<ResolvedConfig> {
+  const settings = await prisma.userSettings.findUnique({
+    where: { profileId },
+    select: { llmProvider: true, llmModel: true, llmApiKey: true },
+  })
+
+  if (!settings?.llmApiKey) {
+    throw new LLMError(
+      'No LLM API key configured. Add one at /dashboard/settings/llm.',
+      'not_configured',
+    )
+  }
+
+  const provider = settings.llmProvider
+  if (!PROVIDERS[provider]) {
+    throw new LLMError(
+      `Unsupported LLM provider "${provider}". Supported: ${SUPPORTED_PROVIDERS.join(', ')}.`,
+      'config',
+    )
+  }
+
+  const apiKey = decrypt(settings.llmApiKey)
+  if (!apiKey) {
+    // Decryption failure usually means ENCRYPTION_KEY rotated without backfill.
+    // Either way, the stored ciphertext is unusable; tell the user to re-enter.
+    throw new LLMError(
+      'Stored API key could not be decrypted. Re-enter your key in settings.',
+      'config',
+    )
+  }
+
+  return { provider, model: settings.llmModel, apiKey }
 }
 
 export type CompleteOptions = {
-  /** Override the default model for this call, e.g. 'openai/gpt-5'. */
+  /** Override the user's default model for this call (e.g. switch to a stronger model). */
   model?: string
   /** System prompt — sets persona / constraints separately from the user prompt. */
   system?: string
   /** Cap on generated tokens. Useful for keeping costs bounded. */
   maxOutputTokens?: number
-  /** 0–1; lower = more deterministic. Default leaves the provider's default in place. */
+  /** 0–1; lower = more deterministic. */
   temperature?: number
 }
 
@@ -42,8 +92,15 @@ export type CompleteResult = ResponseMeta & {
   finishReason: string
 }
 
-export async function complete(prompt: string, opts: CompleteOptions = {}): Promise<CompleteResult> {
-  const model = opts.model ?? DEFAULT_MODEL
+export async function complete(
+  profileId: string,
+  prompt: string,
+  opts: CompleteOptions = {},
+): Promise<CompleteResult> {
+  const cfg = await resolveConfig(profileId)
+  const modelId = opts.model ?? cfg.model
+  const model = PROVIDERS[cfg.provider](cfg.apiKey, modelId)
+
   const startedAt = Date.now()
   try {
     const result = await generateText({
@@ -56,8 +113,8 @@ export async function complete(prompt: string, opts: CompleteOptions = {}): Prom
     return {
       text: result.text,
       finishReason: result.finishReason,
-      provider: providerOf(model),
-      model,
+      provider: cfg.provider,
+      model: modelId,
       usage: result.usage,
       latencyMs: Date.now() - startedAt,
     }
@@ -70,15 +127,16 @@ export type CompleteStructuredResult<T> = ResponseMeta & {
   object: T
 }
 
-// Structured output — the model is steered to produce JSON matching `schema`,
-// and the result is validated/parsed before return. Throws LLMError with
-// kind='invalid_output' if the model can't produce conforming output.
 export async function completeStructured<T>(
+  profileId: string,
   prompt: string,
   schema: z.ZodType<T>,
   opts: CompleteOptions = {},
 ): Promise<CompleteStructuredResult<T>> {
-  const model = opts.model ?? DEFAULT_MODEL
+  const cfg = await resolveConfig(profileId)
+  const modelId = opts.model ?? cfg.model
+  const model = PROVIDERS[cfg.provider](cfg.apiKey, modelId)
+
   const startedAt = Date.now()
   try {
     const result = await generateText({
@@ -91,12 +149,31 @@ export async function completeStructured<T>(
     })
     return {
       object: result.output as T,
-      provider: providerOf(model),
-      model,
+      provider: cfg.provider,
+      model: modelId,
       usage: result.usage,
       latencyMs: Date.now() - startedAt,
     }
   } catch (err) {
     throw normalizeLLMError(err)
+  }
+}
+
+// Lightweight read-only check for UIs that want to render "key configured"
+// state without paying for a full ping. Returns the provider/model the user
+// has saved (no key material).
+export async function getLLMConfigStatus(profileId: string): Promise<{
+  configured: boolean
+  provider: string | null
+  model: string | null
+}> {
+  const settings = await prisma.userSettings.findUnique({
+    where: { profileId },
+    select: { llmProvider: true, llmModel: true, llmApiKey: true },
+  })
+  return {
+    configured: !!settings?.llmApiKey,
+    provider: settings?.llmProvider ?? null,
+    model: settings?.llmModel ?? null,
   }
 }

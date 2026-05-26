@@ -1,11 +1,17 @@
 import Link from 'next/link'
-import { ChevronRight, KeyRound } from 'lucide-react'
+import { ChevronRight, KeyRound, Sparkles } from 'lucide-react'
 import { ContentContainer } from '@/app/components/ContentContainer'
 import { Card } from '@/components/ui/card'
 
-// Settings index. Currently lists a single section; future sections (account,
-// notifications, integrations) can slot in alongside API tokens.
+// Settings index. Future sections (account, notifications) can slot in
+// alongside API tokens and LLM.
 const SECTIONS = [
+  {
+    href: '/dashboard/settings/llm',
+    Icon: Sparkles,
+    title: 'LLM',
+    description: 'Bring-your-own-key AI: connect Anthropic, OpenAI, or Google.',
+  },
   {
     href: '/dashboard/settings/api-tokens',
     Icon: KeyRound,

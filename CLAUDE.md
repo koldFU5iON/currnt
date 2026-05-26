@@ -125,13 +125,10 @@ LINKEDIN_CLIENT_SECRET=""
 TWITTER_CLIENT_ID=""               # X uses the "twitter" provider key in Better Auth
 TWITTER_CLIENT_SECRET=""
 
-ENCRYPTION_KEY="dev-encryption-key-32-bytes-long!!"
-ANTHROPIC_API_KEY=""               # optional server-side fallback
-
-# LLM layer — uses Vercel AI Gateway by default (one key works for any provider)
-AI_GATEWAY_API_KEY=""              # required server-side; create at Vercel → AI Gateway → API Keys
-LLM_MODEL="anthropic/claude-sonnet-4.6"  # optional override
+ENCRYPTION_KEY="dev-encryption-key-32-bytes-long!!"  # AES-256-GCM key for at-rest secrets (LLM keys, etc.)
 ```
+
+The LLM layer is bring-your-own-key — each user enters their own provider API key at `/dashboard/settings/llm`. No app-level LLM env vars; costs land on the user, not the app owner.
 
 Copy `.env.example` → `.env.local`. Never commit `.env.local`.
 
@@ -144,13 +141,16 @@ Copy `.env.example` → `.env.local`. Never commit `.env.local`.
 
 ## LLM layer
 
-Server-side abstraction over the Vercel AI Gateway in `src/modules/llm/`.
+Bring-your-own-key — each user supplies their own provider API key. Server-side
+abstraction in `src/modules/llm/`:
 
-- `complete(prompt, opts?)` — plain text generation
-- `completeStructured(prompt, zodSchema, opts?)` — typed JSON output via `Output.object`
-- All errors are normalized to `LLMError` with a `kind` field — product code branches on `kind` instead of provider-specific SDK errors
+- `complete(profileId, prompt, opts?)` — plain text generation
+- `completeStructured(profileId, prompt, zodSchema, opts?)` — typed JSON output via `Output.object`
+- All errors normalize to `LLMError` with a `kind` field; product code branches on `kind` instead of provider-specific SDK errors
+- `getLLMConfigStatus(profileId)` — cheap read-only check for "is this user set up?"
 
-See `docs/llm-layer.md` for usage examples + how to add new providers.
+Providers wired in: Anthropic, OpenAI, Google. Adding more is a single entry in
+the `PROVIDERS` map in `client.ts`. See `docs/llm-layer.md` for usage examples.
 
 ## Reference docs
 

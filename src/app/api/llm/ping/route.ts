@@ -1,19 +1,25 @@
-// GET /api/llm/ping — session-authed sanity check that the LLM layer is
-// configured and the configured model responds. Cheap (max 16 tokens, temp 0),
-// returns the model's reply plus latency + usage so misconfigurations show up
-// clearly in the response body.
-//
-// Not a production user surface — this is the equivalent of `curl localhost`
-// for the AI layer.
+// GET /api/llm/ping — session-authed sanity check using the signed-in user's
+// own LLM key + provider. Cheap (max 16 tokens, temp 0). Useful for verifying
+// a freshly-entered key works before relying on it in product features.
 
 import { NextResponse } from 'next/server'
 import { requireProfile } from '@/lib/session'
 import { complete } from '@/modules/llm/client'
 import { LLMError } from '@/modules/llm/errors'
 
+const STATUS_BY_KIND: Record<string, number> = {
+  not_configured: 412, // precondition required — set up your key first
+  config: 503,
+  auth: 503,
+  rate_limit: 429,
+  unavailable: 502,
+}
+
 export async function GET() {
+  let profileId: string
   try {
-    await requireProfile()
+    const { profile } = await requireProfile()
+    profileId = profile.id
   } catch {
     return NextResponse.json(
       { ok: false, error: 'unauthorized', message: 'Sign in to ping the LLM' },
@@ -22,7 +28,7 @@ export async function GET() {
   }
 
   try {
-    const result = await complete('Reply with exactly the word: pong', {
+    const result = await complete(profileId, 'Reply with exactly the word: pong', {
       maxOutputTokens: 16,
       temperature: 0,
     })
@@ -36,17 +42,14 @@ export async function GET() {
     })
   } catch (err) {
     const llmErr = err instanceof LLMError ? err : null
-    const status =
-      llmErr?.kind === 'config' || llmErr?.kind === 'auth'
-        ? 503  // service unavailable — not the client's fault, but config-side
-        : 502  // upstream issue
+    const kind = llmErr?.kind ?? 'unknown'
     return NextResponse.json(
       {
         ok: false,
-        error: llmErr?.kind ?? 'unknown',
+        error: kind,
         message: llmErr?.message ?? 'LLM call failed',
       },
-      { status },
+      { status: STATUS_BY_KIND[kind] ?? 502 },
     )
   }
 }

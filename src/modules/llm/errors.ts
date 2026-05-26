@@ -14,7 +14,8 @@ import {
 } from 'ai'
 
 export type LLMErrorKind =
-  | 'config'         // missing key, bad model id, datasource mis-set
+  | 'not_configured' // user hasn't entered an API key yet
+  | 'config'         // bad model id, unsupported provider, malformed setup
   | 'auth'           // valid request, wrong/expired credentials
   | 'rate_limit'     // 429
   | 'unavailable'    // 5xx from provider
