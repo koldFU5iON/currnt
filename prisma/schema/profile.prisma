@@ -28,6 +28,7 @@ model Profile {
   competencies    Competency[]
   languages       Language[]
   settings        UserSettings?
+  apiTokens       ApiToken[]
 }
 
 model Skill {

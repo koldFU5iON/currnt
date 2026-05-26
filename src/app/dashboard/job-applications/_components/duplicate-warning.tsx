@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { AlertTriangle } from 'lucide-react'
-import { type DuplicateMatch } from '@/modules/jobs/dedup'
+import { type DuplicateMatch } from '@/modules/jobs/dedup-internal'
 
 export function DuplicateWarning({ matches }: { matches: DuplicateMatch[] }) {
   if (matches.length === 0) return null

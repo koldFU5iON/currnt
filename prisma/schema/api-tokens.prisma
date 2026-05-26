@@ -1,0 +1,29 @@
+// ------------------------------------------------------------
+// API TOKENS — bearer tokens for external agents and tools to
+// submit jobs/etc. without going through the dashboard UI.
+//
+// Storage shape:
+//   prefix      — first 12 chars of the raw token, kept for display so
+//                 the user can identify a token in a list without seeing
+//                 the secret
+//   hashedToken — SHA-256(raw) hex digest, the only thing we can compare
+//                 against on incoming requests; raw token is shown to the
+//                 user once at creation, never again
+//   revokedAt   — non-null = inert; we keep revoked rows for audit/usage
+//                 history instead of deleting
+// ------------------------------------------------------------
+
+model ApiToken {
+  id          String    @id @default(cuid())
+  profileId   String
+  name        String
+  hashedToken String    @unique
+  prefix      String
+  createdAt   DateTime  @default(now())
+  lastUsedAt  DateTime?
+  revokedAt   DateTime?
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
