@@ -12,12 +12,32 @@ import {
 } from '@/app/types/job-application'
 import { requireProfile } from '@/lib/session'
 
-// Progress stages that precede "recruiter screening", in funnel order.
+// Progress stages in funnel order. Used to compute "everything before stage X"
+// for the auto-advance logic below.
 const PROGRESS_ORDER = Object.values(ApplicationProgress)
-const PRE_INTERVIEW_PROGRESS = PROGRESS_ORDER.slice(
-  0,
-  PROGRESS_ORDER.indexOf(ApplicationProgress.Recruiter),
-)
+
+// Declarative status → workflow rules. Adding a new status (or changing the
+// auto-advance floor) is now a one-line edit instead of another if-arm.
+//   minProgress: floor to bump progress to (never rewinds further-along jobs)
+//   setDateApplied: backfill dateApplied if it's still null
+type StatusTransition = {
+  minProgress?: ApplicationProgressType
+  setDateApplied?: boolean
+}
+const STATUS_TRANSITIONS: Record<ApplicationStatusType, StatusTransition> = {
+  [ApplicationStatus.NotStarted]: {},
+  [ApplicationStatus.InProgress]: { minProgress: ApplicationProgress.Preparing },
+  [ApplicationStatus.Applied]: {
+    minProgress: ApplicationProgress.Pending,
+    setDateApplied: true,
+  },
+  [ApplicationStatus.Interviewing]: {
+    minProgress: ApplicationProgress.Recruiter,
+    setDateApplied: true,
+  },
+  [ApplicationStatus.Accepted]: { minProgress: ApplicationProgress.Offer },
+  [ApplicationStatus.Rejected]: {},
+}
 
 export async function createJobApplication(data: z.infer<typeof createJobSchema>) {
   const { profile } = await requireProfile()
@@ -50,6 +70,7 @@ export async function updateJobDate(id: string, date: Date) {
 
 export async function updateJobStatus(id: string, status: ApplicationStatusType) {
   const { profile } = await requireProfile()
+  const transition = STATUS_TRANSITIONS[status]
 
   const result = await prisma.jobApplication.updateMany({
     where: { id, profileId: profile.id },
@@ -57,33 +78,24 @@ export async function updateJobStatus(id: string, status: ApplicationStatusType)
   })
   if (result.count === 0) throw new Error('Job not found')
 
-  // Backfill the applied date the first time the job enters the pipeline —
-  // never overwrite an existing value, so manual edits stay intact.
-  if (
-    status === ApplicationStatus.Applied ||
-    status === ApplicationStatus.Interviewing
-  ) {
+  // Backfill applied date the first time the job enters the pipeline.
+  if (transition.setDateApplied) {
     await prisma.jobApplication.updateMany({
       where: { id, profileId: profile.id, dateApplied: null },
       data: { dateApplied: new Date() },
     })
   }
 
-  // Advance progress from "not started" to "awaiting response" when submitting —
-  // only nudge from the default; never overwrite real progress.
-  if (status === ApplicationStatus.Applied) {
-    await prisma.jobApplication.updateMany({
-      where: { id, profileId: profile.id, progress: ApplicationProgress.NotStarted },
-      data: { progress: ApplicationProgress.Pending },
-    })
-  }
-
-  // Kick off the funnel when interviews start, without rewinding real progress.
-  if (status === ApplicationStatus.Interviewing) {
-    await prisma.jobApplication.updateMany({
-      where: { id, profileId: profile.id, progress: { in: PRE_INTERVIEW_PROGRESS } },
-      data: { progress: ApplicationProgress.Recruiter },
-    })
+  // Auto-advance progress to the floor for this status. The `progress in [stages before]`
+  // filter is the "never rewind" guarantee — jobs already further along stay put.
+  if (transition.minProgress) {
+    const stagesBefore = PROGRESS_ORDER.slice(0, PROGRESS_ORDER.indexOf(transition.minProgress))
+    if (stagesBefore.length > 0) {
+      await prisma.jobApplication.updateMany({
+        where: { id, profileId: profile.id, progress: { in: stagesBefore } },
+        data: { progress: transition.minProgress },
+      })
+    }
   }
 
   revalidatePath('/dashboard/job-applications')

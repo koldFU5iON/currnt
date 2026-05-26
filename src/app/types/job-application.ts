@@ -36,8 +36,11 @@ export const ClosedStatuses = [
   ApplicationStatus.Rejected,
 ] as const
 
+// Funnel order: each stage represents progressively further along.
+// Status auto-advances progress to the matching floor in mutations.ts.
 export const ApplicationProgress = {
   NotStarted: "not started",
+  Preparing: "preparing",
   Pending: "awaiting response",
   Recruiter: "recruiter screening",
   Interview: "interview",
