@@ -69,6 +69,14 @@ export function normalizeLLMError(err: unknown): LLMError {
   }
 
   if (err instanceof NoObjectGeneratedError || err instanceof TypeValidationError) {
+    // Log the raw model output + zod issues to server logs so we can diagnose
+    // schema mismatches in prod. Without this, you only see the generic toast.
+    const raw = (err as { text?: unknown }).text
+    const cause = (err as { cause?: unknown }).cause
+    const issues = cause && typeof cause === 'object' && 'issues' in cause
+      ? (cause as { issues: unknown }).issues
+      : cause
+    console.error('[LLM invalid_output]', { rawText: raw, issues })
     return new LLMError('LLM output did not match the expected schema.', 'invalid_output', err)
   }
 

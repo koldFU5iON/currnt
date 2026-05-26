@@ -21,11 +21,15 @@ export const updateJobSchema = createJobSchema.partial()
 
 // Lives here (not next to assessJobFit) because action files use 'use server',
 // which forbids non-async exports — schemas have to be reachable from a plain module.
+// Constraints are intentionally loose: zod min/max bounds reject the whole
+// response if the model trims or pads slightly, and the cost of a retry is
+// real money. The prompt asks for 2–3 sentences; if the model returns 1 or 4
+// it's still useful. Keep enum bounded — that one's load-bearing for the UI.
 export const JobFitSchema = z.object({
   rating: z.number().min(0).max(10).describe('Overall fit score, 0 = no match, 10 = perfect match.'),
   label: z.enum(['poor', 'ok', 'stretch', 'good', 'excellent'])
     .describe('Bucketed verdict. "stretch" = could land it with effort; "good" = strong baseline match.'),
-  justification: z.string().min(20).max(600)
+  justification: z.string().min(1)
     .describe('Two or three sentences. Concrete reasoning grounded in candidate and role specifics, no fluff.'),
 })
 
