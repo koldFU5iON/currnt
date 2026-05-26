@@ -2,6 +2,7 @@
 
 import { useTransition } from "react"
 import {
+  APPLICATION_STATUS_LABEL,
   ClosedStatuses,
   OpenStatuses,
   type ApplicationStatusType,
@@ -27,6 +28,7 @@ type StatusDropdownProps = {
 function statusDotColor(status: ApplicationStatusType): string {
   switch (status) {
     case "not started": return "bg-muted-foreground/50"
+    case "in-progress": return "bg-violet-500"
     case "applied": return "bg-blue-500"
     case "interviewing": return "bg-amber-500"
     case "accepted": return "bg-green-500"
@@ -50,10 +52,10 @@ export function StatusDropdown({ jobId, status }: StatusDropdownProps) {
       <DropdownMenuItem
         key={state}
         onClick={() => handleSelect(state)}
-        className="capitalize gap-2"
+        className="gap-2"
       >
         <span className={cn("size-2 shrink-0 rounded-full", statusDotColor(state))} aria-hidden />
-        {state}
+        {APPLICATION_STATUS_LABEL[state]}
       </DropdownMenuItem>
     ))
 
@@ -61,13 +63,13 @@ export function StatusDropdown({ jobId, status }: StatusDropdownProps) {
     <DropdownMenu>
       <DropdownMenuTrigger
         disabled={isPending}
-        className={cn(buttonVariants({ variant: "outline", size: "sm" }), "capitalize gap-1.5")}
+        className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1.5")}
       >
         {isPending
           ? <Loader2 className="size-3 animate-spin" />
           : <span className={cn("size-2 shrink-0 rounded-full", statusDotColor(status))} aria-hidden />
         }
-        {status}
+        {APPLICATION_STATUS_LABEL[status]}
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         <DropdownMenuGroup>{renderItems(OpenStatuses)}</DropdownMenuGroup>

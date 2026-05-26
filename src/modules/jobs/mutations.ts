@@ -69,6 +69,15 @@ export async function updateJobStatus(id: string, status: ApplicationStatusType)
     })
   }
 
+  // Advance progress from "not started" to "awaiting response" when submitting —
+  // only nudge from the default; never overwrite real progress.
+  if (status === ApplicationStatus.Applied) {
+    await prisma.jobApplication.updateMany({
+      where: { id, profileId: profile.id, progress: ApplicationProgress.NotStarted },
+      data: { progress: ApplicationProgress.Pending },
+    })
+  }
+
   // Kick off the funnel when interviews start, without rewinding real progress.
   if (status === ApplicationStatus.Interviewing) {
     await prisma.jobApplication.updateMany({

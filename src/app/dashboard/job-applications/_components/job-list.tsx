@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { Archive, Plus, SearchIcon, X } from "lucide-react"
 import {
+  APPLICATION_STATUS_LABEL,
   ApplicationStatus,
   ClosedStatuses,
   type ApplicationStatusType,
@@ -21,18 +22,11 @@ import { archiveJobApplication, bulkArchiveJobApplications } from "@/modules/job
 type ViewMode = 'grouped' | 'all'
 const VIEW_MODE_KEY = 'jobs-view-mode'
 
-const STATUS_LABEL: Record<ApplicationStatusType, string> = {
-  [ApplicationStatus.NotStarted]: 'Not started',
-  [ApplicationStatus.Applied]: 'Applied',
-  [ApplicationStatus.Interviewing]: 'Interviewing',
-  [ApplicationStatus.Accepted]: 'Accepted',
-  [ApplicationStatus.Rejected]: 'Rejected',
-}
-
-// Priority order for open work — interviews first (prep next), then sent
-// applications, then leads you haven't pinged yet.
+// Priority order for open work — interviews top (most time-pressing), then
+// active prep work, then sent-and-waiting, then untouched leads.
 const OPEN_PRIORITY: ApplicationStatusType[] = [
   ApplicationStatus.Interviewing,
+  ApplicationStatus.InProgress,
   ApplicationStatus.Applied,
   ApplicationStatus.NotStarted,
 ]
@@ -81,7 +75,7 @@ export function JobList({ jobs }: { jobs: Job[] }) {
     }
     const openGroups = OPEN_PRIORITY.map(s => ({
       key: s,
-      label: STATUS_LABEL[s] as string | null,
+      label: APPLICATION_STATUS_LABEL[s] as string | null,
       jobs: filteredJobs.filter(j => j.status === s),
       defaultCollapsed: false,
     }))

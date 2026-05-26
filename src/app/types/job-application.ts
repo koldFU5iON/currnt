@@ -2,6 +2,7 @@ import type { JobApplication } from "@prisma/client"
 
 export const ApplicationStatus = {
   NotStarted: "not started",
+  InProgress: "in-progress",
   Applied: "applied",
   Interviewing: "interviewing",
   Accepted: "accepted",
@@ -11,11 +12,23 @@ export const ApplicationStatus = {
 export type ApplicationStatusType = typeof ApplicationStatus[keyof typeof ApplicationStatus]
 
 // The job is still live and being worked.
+// in-progress sits between not-started and applied — the user is preparing
+// CV/cover letter but hasn't submitted yet.
 export const OpenStatuses = [
   ApplicationStatus.NotStarted,
+  ApplicationStatus.InProgress,
   ApplicationStatus.Applied,
   ApplicationStatus.Interviewing,
 ] as const
+
+export const APPLICATION_STATUS_LABEL: Record<ApplicationStatusType, string> = {
+  [ApplicationStatus.NotStarted]: "Not started",
+  [ApplicationStatus.InProgress]: "In progress",
+  [ApplicationStatus.Applied]: "Applied",
+  [ApplicationStatus.Interviewing]: "Interviewing",
+  [ApplicationStatus.Accepted]: "Accepted",
+  [ApplicationStatus.Rejected]: "Rejected",
+}
 
 // The job is closed — a final outcome was reached.
 export const ClosedStatuses = [
