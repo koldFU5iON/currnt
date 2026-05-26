@@ -13,28 +13,19 @@
 // Errors are normalized to the LLM layer's kinds. The action never re-throws
 // LLMError — it returns a tagged result so the UI doesn't need try/catch.
 
-import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { requireProfile } from '@/lib/session'
 import { completeStructured } from '@/modules/llm/client'
 import { LLMError, type LLMErrorKind } from '@/modules/llm/errors'
 import { buildProfileSnapshot, serializeProfileForLLM } from '@/modules/profile/snapshot'
+import { JobFitSchema, type JobFit } from './schema'
 
-// Canonical schema — also the source of truth for the JobFit type going
-// forward. The hand-typed JobFit in types/job-application.ts predates this
-// module; both shapes are intentionally compatible.
-export const JobFitSchema = z.object({
-  rating: z.number().min(0).max(10).describe('Overall fit score, 0 = no match, 10 = perfect match.'),
-  label: z.enum(['poor', 'ok', 'stretch', 'good', 'excellent'])
-    .describe('Bucketed verdict. "stretch" = could land it with effort; "good" = strong baseline match.'),
-  justification: z.string().min(20).max(600)
-    .describe('Two or three sentences. Concrete reasoning grounded in candidate and role specifics, no fluff.'),
-})
+// Re-export the type for callers — the schema itself stays in schema.ts because
+// 'use server' files can only export async functions.
+export type { JobFit }
 
-export type JobFit = z.infer<typeof JobFitSchema>
-
-export type AssessJobFitResult =
+type AssessJobFitResult =
   | { ok: true; fit: JobFit }
   | { ok: false; error: 'no_description'; message: string }
   | { ok: false; error: 'not_found'; message: string }

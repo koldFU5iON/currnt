@@ -59,9 +59,15 @@ improves the quality of structured output.
 rating: z.number().min(0).max(10).describe('0 = no match, 10 = perfect match.')
 ```
 
-Place the schema where it'll be reused. For the canonical case, alongside the
-server action: `src/modules/jobs/job-fit.ts` exports both `JobFitSchema` and
-the inferred `JobFit` type.
+Place the schema in a plain module (not in your `'use server'` action file).
+Action files marked `'use server'` can **only export async functions** — any
+non-function export (including a zod schema) will pass `tsc` and dev-mode
+Turbopack but blow up the production build at first invocation with
+`A "use server" file can only export async functions, found object`.
+
+The canonical layout: `src/modules/jobs/schema.ts` owns the `JobFitSchema` +
+inferred `JobFit` type; `src/modules/jobs/job-fit.ts` is `'use server'` and
+only exports `assessJobFit`.
 
 ---
 
@@ -264,7 +270,8 @@ fighting the snapshot helper or trying to do the work that should live in
 
 | File | Role |
 |---|---|
-| `src/modules/jobs/job-fit.ts` | Schema, type, `assessJobFit()` server action — the whole 5-step pipeline. |
+| `src/modules/jobs/schema.ts` | `JobFitSchema` + inferred `JobFit` type. Kept here because `'use server'` files can't export non-functions. |
+| `src/modules/jobs/job-fit.ts` | `assessJobFit()` server action — the whole 5-step pipeline. |
 | `src/modules/profile/snapshot.ts` | Profile data → markdown for the prompt. Reused by every future AI feature. |
 | `src/app/dashboard/job-applications/_components/job-fit.tsx` | Trigger button when null, popover when present. Handles loading + `not_configured` toast action. |
 | `prisma/schema/jobs.prisma` | `jobFit Json?` + `jobFitAssessedAt DateTime?` columns. |
