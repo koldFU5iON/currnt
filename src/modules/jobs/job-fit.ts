@@ -21,9 +21,10 @@ import { LLMError, type LLMErrorKind } from '@/modules/llm/errors'
 import { buildProfileSnapshot, serializeProfileForLLM } from '@/modules/profile/snapshot'
 import { JobFitSchema, type JobFit } from './schema'
 
-// Re-export the type for callers — the schema itself stays in schema.ts because
-// 'use server' files can only export async functions.
-export type { JobFit }
+// Type is consumed internally only. Callers that need it import from
+// '@/modules/jobs/schema' — re-exporting here breaks the 'use server'
+// runtime even when using `export type`, because the SWC compiler still
+// emits a value-level binding for the re-export.
 
 type AssessJobFitResult =
   | { ok: true; fit: JobFit }
