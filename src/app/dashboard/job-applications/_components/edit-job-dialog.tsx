@@ -17,7 +17,16 @@ import { Button } from '@/components/ui/button'
 import { FormField } from '../create/_components/form-field'
 import { updateJobSchema } from '@/modules/jobs/schema'
 import { updateJobApplication } from '@/modules/jobs/mutations'
-import { type Job } from '@/app/types/job-application'
+import {
+  APPLICATION_SOURCES,
+  APPLICATION_SOURCE_LABEL,
+  type Job,
+} from '@/app/types/job-application'
+
+const SOURCE_OPTIONS = APPLICATION_SOURCES.map(value => ({
+  value,
+  label: APPLICATION_SOURCE_LABEL[value],
+}))
 
 type EditJobDialogProps = {
   job: Job
@@ -34,6 +43,7 @@ function valuesFromJob(job: Job): z.infer<typeof updateJobSchema> {
     jobNumber: job.jobNumber ?? '',
     jobDescription: job.jobDescription ?? '',
     datePublished: job.datePublished ?? undefined,
+    applicationSource: job.applicationSource,
   }
 }
 
@@ -86,7 +96,16 @@ export function EditJobDialog({ job, open, onOpenChange }: EditJobDialogProps) {
             </div>
 
             <FormField name="url" label="Job URL" type="url" placeholder="https://..." />
-            <FormField name="datePublished" label="Date Published" type="date" />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField name="datePublished" label="Date Published" type="date" />
+              <FormField
+                name="applicationSource"
+                label="Source"
+                type="select"
+                options={SOURCE_OPTIONS}
+              />
+            </div>
 
             <FormField
               name="jobDescription"

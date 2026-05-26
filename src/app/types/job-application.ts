@@ -34,16 +34,39 @@ export const ApplicationProgress = {
 
 export type ApplicationProgressType = typeof ApplicationProgress[keyof typeof ApplicationProgress]
 
+// How the opportunity entered the pipeline — distinct from status (where the
+// application is in the funnel) and progress (which interview stage).
+export const ApplicationSource = {
+  Cold: "cold",
+  Referral: "referral",
+  RecruiterOutreach: "recruiter_outreach",
+} as const
+
+export type ApplicationSourceType = typeof ApplicationSource[keyof typeof ApplicationSource]
+
+export const APPLICATION_SOURCES = [
+  ApplicationSource.Cold,
+  ApplicationSource.Referral,
+  ApplicationSource.RecruiterOutreach,
+] as const
+
+export const APPLICATION_SOURCE_LABEL: Record<ApplicationSourceType, string> = {
+  [ApplicationSource.Cold]: "Cold",
+  [ApplicationSource.Referral]: "Referral",
+  [ApplicationSource.RecruiterOutreach]: "Recruiter outreach",
+}
+
 export type JobFit = {
   rating: number
   label: "poor" | "ok" | "stretch" | "good" | "excellent"
   justification: string
 }
 
-export type Job = Omit<JobApplication, "status" | "progress" | "jobFit"> & {
+export type Job = Omit<JobApplication, "status" | "progress" | "jobFit" | "applicationSource"> & {
   status: ApplicationStatusType
   progress: ApplicationProgressType
   jobFit?: JobFit | null
+  applicationSource: ApplicationSourceType
 }
 
 export type ProfileType = {

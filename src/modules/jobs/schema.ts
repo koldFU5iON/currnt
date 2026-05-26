@@ -1,4 +1,5 @@
 import * as z from 'zod'
+import { APPLICATION_SOURCES } from '@/app/types/job-application'
 
 export const createJobSchema = z.object({
   title: z.string().min(1, 'Job title is required'),
@@ -11,6 +12,7 @@ export const createJobSchema = z.object({
   jobNumber: z.string().optional(),
   datePublished: z.date().optional(),
   location: z.string().optional(),
+  applicationSource: z.enum(APPLICATION_SOURCES),
 })
 
 // Same fields, all optional — for partial updates from the edit dialog.

@@ -1,7 +1,11 @@
 'use client'
 
 import Link from "next/link"
-import { type Job } from "@/app/types/job-application"
+import {
+  ApplicationSource,
+  APPLICATION_SOURCE_LABEL,
+  type Job,
+} from "@/app/types/job-application"
 import { AppProgressBar } from "./app-progress-bar"
 import { StatusDropdown } from "./status-dropdown"
 import { AppControls } from "@/components/app-item-menu"
@@ -9,6 +13,7 @@ import { SquareArrowOutUpRight } from "lucide-react"
 import { ApplicationDateBlock } from "./app-date-block"
 import { JobFit } from "./job-fit"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Badge } from "@/components/ui/badge"
 
 type JobRowProps = {
   job: Job
@@ -19,7 +24,9 @@ type JobRowProps = {
 }
 
 export function JobRow({ job, selected, onToggleSelect, onEdit, onArchive }: JobRowProps) {
-  const { id, jobNumber, title, company, countries, url, dateApplied, lastUpdated, status, progress, jobFit } = job
+  const { id, jobNumber, title, company, countries, url, dateApplied, lastUpdated, status, progress, jobFit, applicationSource } = job
+  // Cold is the silent default — only surface a badge for sources worth noticing.
+  const showSourceBadge = applicationSource !== ApplicationSource.Cold
 
   return (
     <div className="group col-span-full grid grid-cols-subgrid items-center border-b border-border/30 last:border-b-0 transition-colors duration-150 hover:bg-muted/50 data-[selected=true]:bg-muted/40"
@@ -50,6 +57,11 @@ export function JobRow({ job, selected, onToggleSelect, onEdit, onArchive }: Job
             >
               <SquareArrowOutUpRight size={12} />
             </a>
+          )}
+          {showSourceBadge && (
+            <Badge variant="outline" className="shrink-0 text-[10px] font-normal py-0 px-1.5 h-4">
+              {APPLICATION_SOURCE_LABEL[applicationSource]}
+            </Badge>
           )}
         </div>
         <p className="mt-0.5 truncate text-xs text-muted-foreground">

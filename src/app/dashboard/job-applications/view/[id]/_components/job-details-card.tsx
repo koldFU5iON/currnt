@@ -1,13 +1,14 @@
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { type Job } from "@/app/types/job-application"
+import { APPLICATION_SOURCE_LABEL, type Job } from "@/app/types/job-application"
 import { MapPin } from "lucide-react"
 import { MarkdownProse } from "./markdown-prose"
 
 export function JobDetailsCard({ job }: { job: Job }) {
   const countries = Array.isArray(job.countries) ? job.countries : []
   const tags = Array.isArray(job.tags) ? job.tags : []
-  const hasMetadata = countries.length > 0 || !!job.jobNumber || tags.length > 0
+  // Source is always set (DB default 'cold'), so it's always part of the metadata row.
+  const hasMetadata = countries.length > 0 || !!job.jobNumber || tags.length > 0 || !!job.applicationSource
 
   return (
     <div className="space-y-8">
@@ -19,6 +20,9 @@ export function JobDetailsCard({ job }: { job: Job }) {
                 <span className="font-mono text-sm">{job.jobNumber}</span>
               </MetaField>
             )}
+            <MetaField label="Source">
+              <span className="text-sm">{APPLICATION_SOURCE_LABEL[job.applicationSource]}</span>
+            </MetaField>
             {countries.length > 0 && (
               <MetaField label="Locations">
                 <div className="flex flex-wrap gap-1.5">

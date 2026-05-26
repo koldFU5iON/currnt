@@ -373,8 +373,9 @@ model JobApplication {
   url            String?
   countries      String[]
   dateApplied    DateTime?
-  status         String    @default("not started")
-  progress       String    @default("awaiting response")
+  status            String    @default("not started")
+  progress          String    @default("awaiting response")
+  applicationSource String    @default("cold")
   jobFit         Json?
   jobDescription String?
   notes          String?

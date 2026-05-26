@@ -2,6 +2,15 @@ import { Controller, useFormContext } from "react-hook-form"
 import { Field, FieldLabel, FieldError } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
+export type FormFieldOption = { value: string; label: string }
 
 interface FormFieldProps {
   name: string
@@ -10,6 +19,7 @@ interface FormFieldProps {
   placeholder?: string
   required?: boolean
   rows?: number
+  options?: FormFieldOption[]
 }
 
 // <input type="date"> needs a local YYYY-MM-DD string, while the form holds a Date.
@@ -30,6 +40,7 @@ export function FormField({
   placeholder,
   required = false,
   rows,
+  options,
 }: FormFieldProps) {
   const { control } = useFormContext()
   return (
@@ -41,7 +52,23 @@ export function FormField({
           <FieldLabel>
             {label} {required && <span className="text-destructive">*</span>}
           </FieldLabel>
-          {type === "textarea" ? (
+          {type === "select" ? (
+            <Select value={field.value ?? ""} onValueChange={field.onChange}>
+              <SelectTrigger
+                className="w-full"
+                aria-invalid={fieldState.invalid}
+              >
+                <SelectValue placeholder={placeholder ?? "Select..."} />
+              </SelectTrigger>
+              <SelectContent>
+                {options?.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : type === "textarea" ? (
             <Textarea
               {...field}
               placeholder={placeholder}

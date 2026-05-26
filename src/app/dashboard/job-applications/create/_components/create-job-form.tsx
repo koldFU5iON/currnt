@@ -13,7 +13,13 @@ import { createJobApplication } from '@/modules/jobs/mutations'
 import { extractJobFromUrl } from '@/modules/jobs/extract'
 import { findPotentialDuplicates, type DuplicateMatch } from '@/modules/jobs/dedup'
 import { DuplicateWarning } from '../../_components/duplicate-warning'
+import { APPLICATION_SOURCES, APPLICATION_SOURCE_LABEL } from '@/app/types/job-application'
 import { toast } from 'sonner'
+
+const SOURCE_OPTIONS = APPLICATION_SOURCES.map(value => ({
+  value,
+  label: APPLICATION_SOURCE_LABEL[value],
+}))
 
 export function CreateJobForm() {
   const [extracting, setExtracting] = useState(false)
@@ -31,6 +37,7 @@ export function CreateJobForm() {
       jobNumber: '',
       jobDescription: '',
       datePublished: new Date(),
+      applicationSource: 'cold',
     },
   })
 
@@ -126,7 +133,15 @@ export function CreateJobForm() {
           <FormField name="jobNumber" label="Job Number" placeholder="e.g. JOB-123" />
         </div>
 
-        <FormField name="datePublished" label="Date Published" type="date" />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField name="datePublished" label="Date Published" type="date" />
+          <FormField
+            name="applicationSource"
+            label="Source"
+            type="select"
+            options={SOURCE_OPTIONS}
+          />
+        </div>
 
         <FormField
           name="jobDescription"
