@@ -1,0 +1,37 @@
+// ------------------------------------------------------------
+// CV BUILDER
+// ------------------------------------------------------------
+
+model CVTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  region      String   @default("global")
+  description String
+  sections    String   @default("[]")
+  isDefault   Boolean  @default(false)
+  isBuiltIn   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  cvDocuments CVDocument[]
+}
+
+model CVDocument {
+  id               String   @id @default(cuid())
+  profileId        String
+  jobApplicationId String?
+  templateId       String
+  jobDescription   String?
+  jobTitle         String?
+  company          String?
+  generatedContent String   @default("{}")
+  status           String   @default("draft")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  profile        Profile               @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  template       CVTemplate            @relation(fields: [templateId], references: [id])
+  jobApplication JobApplication?       @relation(fields: [jobApplicationId], references: [id])
+  coverLetters   CoverLetterDocument[]
+
+  @@index([profileId])
+}

@@ -1,0 +1,24 @@
+// ------------------------------------------------------------
+// COVER LETTER
+// ------------------------------------------------------------
+
+model CoverLetterDocument {
+  id               String   @id @default(cuid())
+  profileId        String
+  jobApplicationId String?
+  cvDocumentId     String?
+  mode             String
+  jobDescription   String?
+  jobTitle         String?
+  company          String?
+  sections         String   @default("[]")
+  status           String   @default("draft")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  profile        Profile         @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  jobApplication JobApplication? @relation(fields: [jobApplicationId], references: [id])
+  cvDocument     CVDocument?     @relation(fields: [cvDocumentId], references: [id])
+
+  @@index([profileId])
+}

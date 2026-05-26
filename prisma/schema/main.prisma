@@ -1,0 +1,15 @@
+// ============================================================
+// TAIILRD — Prisma Schema
+// PostgreSQL for self-hosted and cloud deployment.
+//
+// This folder is split by domain. Prisma 7 auto-merges every
+// *.prisma file in this directory at validate/generate time.
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}

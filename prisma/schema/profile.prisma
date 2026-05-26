@@ -1,0 +1,215 @@
+// ------------------------------------------------------------
+// USER PROFILE + VAULT (profile ingredients)
+// ------------------------------------------------------------
+
+model Profile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  name      String
+  email     String?
+  phone     String?
+  location  String?
+  website   String?
+  linkedIn  String?
+  github    String?
+  headline  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skills          Skill[]
+  experiences     Experience[]
+  projects        Project[]
+  educations      Education[]
+  certifications  Certification[]
+  cvDocuments     CVDocument[]
+  coverLetters    CoverLetterDocument[]
+  jobApplications JobApplication[]
+  competencies    Competency[]
+  languages       Language[]
+  settings        UserSettings?
+}
+
+model Skill {
+  id                String   @id @default(cuid())
+  profileId         String
+  name              String
+  category          String
+  level             String
+  yearsOfExperience Float?
+  tags              String   @default("[]")
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  profile             Profile              @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  experienceSkills    ExperienceSkill[]
+  roleActivitySkills  RoleActivitySkill[]
+  projectSkills       ProjectSkill[]
+  certificationSkills CertificationSkill[]
+
+  @@index([profileId])
+}
+
+model Experience {
+  id        String    @id @default(cuid())
+  profileId String
+  company   String
+  role      String
+  startDate DateTime
+  endDate   DateTime?
+  location  String?
+  remote    Boolean   @default(false)
+  summary   String
+  tags      String    @default("[]")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  profile      Profile           @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  activities RoleActivity[]
+  skills     ExperienceSkill[]
+
+  @@index([profileId])
+}
+
+model RoleActivity {
+  id           String   @id @default(cuid())
+  experienceId String
+  kind         String // "responsibility" | "achievement"
+  description  String
+  impact       String?
+  highlighted  Boolean  @default(false)
+  order        Int      @default(0)
+  tags         String   @default("[]")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  experience Experience          @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  skills     RoleActivitySkill[]
+
+  @@index([experienceId])
+}
+
+model Project {
+  id          String    @id @default(cuid())
+  profileId   String
+  name        String
+  description String
+  url         String?
+  repoUrl     String?
+  startDate   DateTime?
+  endDate     DateTime?
+  status      String    @default("active")
+  highlights  String    @default("[]")
+  tags        String    @default("[]")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  profile Profile        @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  skills  ProjectSkill[]
+
+  @@index([profileId])
+}
+
+model Education {
+  id            String    @id @default(cuid())
+  profileId     String
+  institution   String
+  qualification String
+  field         String?
+  startDate     DateTime
+  endDate       DateTime?
+  grade         String?
+  notes         String?
+  tags          String    @default("[]")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+model Certification {
+  id            String    @id @default(cuid())
+  profileId     String
+  name          String
+  issuer        String
+  issueDate     DateTime
+  expiryDate    DateTime?
+  credentialUrl String?
+  tags          String    @default("[]")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  profile Profile              @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  skills  CertificationSkill[]
+
+  @@index([profileId])
+}
+
+model Competency {
+  id        String   @id @default(cuid())
+  profileId String
+  name      String
+  origin    String   @default("manual") // "manual" | "derived"
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+model Language {
+  id          String   @id @default(cuid())
+  profileId   String
+  name        String
+  proficiency String // "native" | "fluent" | "professional" | "intermediate" | "basic"
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+// Junction tables — many-to-many between profile ingredients and Skill.
+
+model ExperienceSkill {
+  experienceId String
+  skillId      String
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  skill        Skill      @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([experienceId, skillId])
+}
+
+model RoleActivitySkill {
+  roleActivityId String
+  skillId        String
+  roleActivity   RoleActivity @relation(fields: [roleActivityId], references: [id], onDelete: Cascade)
+  skill          Skill        @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([roleActivityId, skillId])
+}
+
+model ProjectSkill {
+  projectId String
+  skillId   String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  skill     Skill   @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, skillId])
+}
+
+model CertificationSkill {
+  certificationId String
+  skillId         String
+  certification   Certification @relation(fields: [certificationId], references: [id], onDelete: Cascade)
+  skill           Skill         @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([certificationId, skillId])
+}

@@ -5,7 +5,13 @@ import { defineConfig } from 'prisma/config'
 try { process.loadEnvFile(path.join(process.cwd(), '.env.local')) } catch {}
 
 export default defineConfig({
-  schema: path.join('prisma', 'schema.prisma'),
+  // Multi-file schema directory — Prisma 7 auto-merges every *.prisma file.
+  schema: path.join('prisma', 'schema'),
+  // Pin migrations to prisma/migrations (Prisma's default with a folder schema
+  // would resolve to prisma/schema/migrations, which isn't where they live).
+  migrations: {
+    path: path.join('prisma', 'migrations'),
+  },
   datasource: {
     url: process.env.DATABASE_URL!,
   },

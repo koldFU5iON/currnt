@@ -40,9 +40,10 @@ docker compose down    # stop Postgres
 
 Prisma 7 moved database connection config out of `schema.prisma` into `prisma.config.ts`.
 
-- `prisma.config.ts` — configures CLI commands (db push, migrate); loads `.env.local` manually since Prisma doesn't load it by default
+- `prisma.config.ts` — configures CLI commands (db push, migrate); loads `.env.local` manually since Prisma doesn't load it by default. Pins `schema` to `prisma/schema/` (folder) and `migrations.path` to `prisma/migrations`.
+- `prisma/schema/*.prisma` — multi-file schema split by domain (`main`, `auth`, `profile`, `cv`, `cover-letter`, `jobs`, `settings`). Prisma 7 auto-merges every `*.prisma` file in this folder at validate/generate time.
 - `src/lib/db.ts` — standard PrismaClient singleton; reads `DATABASE_URL` from environment at runtime (Next.js loads `.env.local` automatically)
-- Do **not** put `url` back into `schema.prisma` — it's no longer valid in Prisma 7
+- Do **not** put `url` back into the schema files — it's no longer valid in Prisma 7
 
 ---
 

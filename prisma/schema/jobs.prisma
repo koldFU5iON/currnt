@@ -1,0 +1,63 @@
+// ------------------------------------------------------------
+// JOB TRACKER
+// ------------------------------------------------------------
+
+model JobApplication {
+  id                String    @id @default(cuid())
+  profileId         String
+  jobNumber         String?
+  title             String
+  company           String
+  url               String?
+  countries         String[]
+  dateApplied       DateTime?
+  status            String    @default("not started")
+  progress          String    @default("not started")
+  applicationSource String    @default("cold")
+  jobFit            Json?
+  jobDescription    String?
+  notes             String?
+  tags              String[]
+  datePublished     DateTime? @default(now())
+  lastUpdated       DateTime  @updatedAt
+  archivedAt        DateTime?
+
+  profile      Profile               @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  contacts     ApplicationContact[]
+  events       ApplicationEvent[]
+  cvDocuments  CVDocument[]
+  coverLetters CoverLetterDocument[]
+
+  @@index([profileId])
+  @@index([status])
+  @@index([profileId, archivedAt])
+}
+
+model ApplicationContact {
+  id            String  @id @default(cuid())
+  applicationId String
+  name          String
+  role          String?
+  email         String?
+  linkedIn      String?
+  notes         String?
+
+  application JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+}
+
+model ApplicationEvent {
+  id            String    @id @default(cuid())
+  applicationId String
+  type          String
+  title         String
+  description   String?
+  scheduledAt   DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime  @default(now())
+
+  application JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+}

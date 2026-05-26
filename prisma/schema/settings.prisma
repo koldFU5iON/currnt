@@ -1,0 +1,19 @@
+// ------------------------------------------------------------
+// SETTINGS
+// ------------------------------------------------------------
+
+model UserSettings {
+  id                String   @id @default(cuid())
+  profileId         String   @unique
+  llmProvider       String   @default("anthropic")
+  llmModel          String   @default("claude-sonnet-4-5-20251001")
+  llmApiKey         String?
+  llmBaseUrl        String?
+  defaultTemplateId String?
+  theme             String   @default("system")
+  exportFormat      String   @default("pdf")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
