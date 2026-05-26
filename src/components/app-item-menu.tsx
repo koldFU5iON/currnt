@@ -114,10 +114,11 @@ function AppControlsItem({ Icon, color, label, action, onSelect, disabled, short
     )
   }
 
+  // base-ui Menu.Item dispatches keyboard activation as onClick (unlike Radix's onSelect)
   return (
     <DropdownMenuItem
       disabled={disabled}
-      onSelect={onSelect}
+      onClick={onSelect}
       className={!disabled ? "cursor-pointer" : ""}
     >
       {content}
