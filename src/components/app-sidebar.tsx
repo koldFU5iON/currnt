@@ -135,10 +135,12 @@ function UserMenu() {
       <DropdownMenuContent side="right" align="end" className="w-56">
         <DropdownMenuGroup>
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
-          <DropdownMenuItem disabled>
-            <Settings className="size-4" />
-            Settings
-          </DropdownMenuItem>
+          <Link href="/dashboard/settings">
+            <DropdownMenuItem className="cursor-pointer">
+              <Settings className="size-4" />
+              Settings
+            </DropdownMenuItem>
+          </Link>
           <DropdownMenuItem disabled>
             <User className="size-4" />
             Profile
