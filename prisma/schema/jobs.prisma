@@ -14,8 +14,9 @@ model JobApplication {
   status            String    @default("not started")
   progress          String    @default("not started")
   applicationSource String    @default("cold")
-  jobFit            Json?
-  jobDescription    String?
+  jobFit              Json?
+  jobFitAssessedAt    DateTime?
+  jobDescription      String?
   notes             String?
   tags              String[]
   datePublished     DateTime? @default(now())
