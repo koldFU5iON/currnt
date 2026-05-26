@@ -24,6 +24,7 @@
     "@prisma/client": "^7.8.0",
     "@tanstack/react-query": "^5.100.10",
     "@types/turndown": "^5.0.6",
+    "ai": "^6.0.191",
     "axios": "^1.16.1",
     "better-auth": "^1.6.11",
     "class-variance-authority": "^0.7.1",

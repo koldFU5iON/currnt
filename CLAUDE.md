@@ -127,6 +127,10 @@ TWITTER_CLIENT_SECRET=""
 
 ENCRYPTION_KEY="dev-encryption-key-32-bytes-long!!"
 ANTHROPIC_API_KEY=""               # optional server-side fallback
+
+# LLM layer — uses Vercel AI Gateway by default (one key works for any provider)
+AI_GATEWAY_API_KEY=""              # required server-side; create at Vercel → AI Gateway → API Keys
+LLM_MODEL="anthropic/claude-sonnet-4.6"  # optional override
 ```
 
 Copy `.env.example` → `.env.local`. Never commit `.env.local`.
@@ -136,6 +140,17 @@ Copy `.env.example` → `.env.local`. Never commit `.env.local`.
 ## External APIs
 
 - `POST /api/jobs/capture` — bearer-token-authed endpoint for agents/scripts/bookmarklets to submit a job URL. Tokens minted at `/dashboard/settings/api-tokens`. See `docs/api-jobs-capture.md` for the full spec + curl examples.
+- `GET /api/llm/ping` — session-authed sanity check for the LLM layer. Returns the configured model's reply + latency + usage. Useful when wiring `AI_GATEWAY_API_KEY` for the first time.
+
+## LLM layer
+
+Server-side abstraction over the Vercel AI Gateway in `src/modules/llm/`.
+
+- `complete(prompt, opts?)` — plain text generation
+- `completeStructured(prompt, zodSchema, opts?)` — typed JSON output via `Output.object`
+- All errors are normalized to `LLMError` with a `kind` field — product code branches on `kind` instead of provider-specific SDK errors
+
+See `docs/llm-layer.md` for usage examples + how to add new providers.
 
 ## Reference docs
 
