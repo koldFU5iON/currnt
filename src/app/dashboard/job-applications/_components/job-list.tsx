@@ -44,6 +44,9 @@ export function JobList({ jobs }: { jobs: Job[] }) {
   const [viewMode, setViewMode] = useState<ViewMode>('grouped')
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [editing, setEditing] = useState<Job | null>(null)
+  // Per-row in-flight label so the user sees "Archiving…" the instant they click,
+  // not after the server roundtrip + revalidate finishes.
+  const [busyRows, setBusyRows] = useState<Map<string, string>>(new Map())
 
   // Hydrate view-mode preference once on mount. Doing this in an effect (rather
   // than as a lazy initial state) avoids an SSR/CSR hydration mismatch — server
@@ -102,7 +105,19 @@ export function JobList({ jobs }: { jobs: Job[] }) {
     setSelected(new Set())
   }
 
+  function markBusy(ids: string[], label: string | null) {
+    setBusyRows(prev => {
+      const next = new Map(prev)
+      for (const id of ids) {
+        if (label) next.set(id, label)
+        else next.delete(id)
+      }
+      return next
+    })
+  }
+
   async function handleSingleArchive(id: string) {
+    markBusy([id], 'Archiving…')
     try {
       await archiveJobApplication(id)
       toast.success('Job archived')
@@ -112,20 +127,24 @@ export function JobList({ jobs }: { jobs: Job[] }) {
         next.delete(id)
         return next
       })
+      // No clear needed on success — revalidate removes the row entirely.
     } catch {
       toast.error('Failed to archive')
+      markBusy([id], null)
     }
   }
 
   async function handleBulkArchive() {
     const ids = [...selected]
     if (ids.length === 0) return
+    markBusy(ids, 'Archiving…')
     try {
       const { archived } = await bulkArchiveJobApplications(ids)
       toast.success(`${archived} ${archived === 1 ? 'job' : 'jobs'} archived`)
       clearSelection()
     } catch {
       toast.error('Failed to archive')
+      markBusy(ids, null)
     }
   }
 
@@ -153,6 +172,7 @@ export function JobList({ jobs }: { jobs: Job[] }) {
               jobs={g.jobs}
               defaultCollapsed={g.defaultCollapsed}
               selected={selected}
+              busyRows={busyRows}
               onToggleSelect={toggleSelect}
               onEdit={setEditing}
               onArchive={handleSingleArchive}

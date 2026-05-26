@@ -9,6 +9,7 @@ type JobGroupProps = {
   label: string | null
   jobs: Job[]
   selected: Set<string>
+  busyRows: Map<string, string>
   onToggleSelect: (id: string) => void
   onEdit: (job: Job) => void
   onArchive: (id: string) => void
@@ -22,6 +23,7 @@ export function JobGroup({
   label,
   jobs,
   selected,
+  busyRows,
   onToggleSelect,
   onEdit,
   onArchive,
@@ -55,6 +57,7 @@ export function JobGroup({
           key={job.id}
           job={job}
           selected={selected.has(job.id)}
+          busyLabel={busyRows.get(job.id)}
           onToggleSelect={onToggleSelect}
           onEdit={onEdit}
           onArchive={onArchive}

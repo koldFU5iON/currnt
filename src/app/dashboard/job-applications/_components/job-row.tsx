@@ -9,7 +9,7 @@ import {
 import { AppProgressBar } from "./app-progress-bar"
 import { StatusDropdown } from "./status-dropdown"
 import { AppControls } from "@/components/app-item-menu"
-import { SquareArrowOutUpRight } from "lucide-react"
+import { Loader2, SquareArrowOutUpRight } from "lucide-react"
 import { ApplicationDateBlock } from "./app-date-block"
 import { JobFit } from "./job-fit"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -18,19 +18,31 @@ import { Badge } from "@/components/ui/badge"
 type JobRowProps = {
   job: Job
   selected: boolean
+  busyLabel?: string
   onToggleSelect: (id: string) => void
   onEdit: (job: Job) => void
   onArchive: (id: string) => void
 }
 
-export function JobRow({ job, selected, onToggleSelect, onEdit, onArchive }: JobRowProps) {
+export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArchive }: JobRowProps) {
   const { id, jobNumber, title, company, countries, url, dateApplied, lastUpdated, status, progress, jobFit, applicationSource } = job
   // Cold is the silent default — only surface a badge for sources worth noticing.
   const showSourceBadge = applicationSource !== ApplicationSource.Cold
+  const busy = Boolean(busyLabel)
 
   return (
-    <div className="group col-span-full grid grid-cols-subgrid items-center border-b border-border/30 last:border-b-0 transition-colors duration-150 hover:bg-muted/50 data-[selected=true]:bg-muted/40"
-         data-selected={selected}>
+    <div className="group relative col-span-full grid grid-cols-subgrid items-center border-b border-border/30 last:border-b-0 transition-colors duration-150 hover:bg-muted/50 data-[selected=true]:bg-muted/40 data-[busy=true]:hover:bg-transparent"
+         data-selected={selected}
+         data-busy={busy}
+         aria-busy={busy || undefined}>
+      {busy && (
+        <div className="pointer-events-auto absolute inset-0 z-10 flex items-center justify-center bg-background/85 backdrop-blur-[1px]">
+          <span role="status" className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+            {busyLabel}
+          </span>
+        </div>
+      )}
       <div className="flex items-center justify-center px-2 py-3">
         <Checkbox
           checked={selected}
