@@ -8,6 +8,38 @@ import type {
   LanguageProficiencyType,
 } from "@/app/types/profile"
 
+// Loads experience + its activities + the profile's skills — everything
+// needed for extraction and duplicate detection in one query, no N+1.
+export async function getExperienceWithSuggestionContext(
+  experienceId: string,
+  profileId: string,
+) {
+  const experience = await prisma.experience.findFirst({
+    where: { id: experienceId, profileId },
+    select: {
+      id: true,
+      company: true,
+      role: true,
+      startDate: true,
+      endDate: true,
+      summary: true,
+      activities: {
+        select: { id: true, description: true, kind: true },
+        orderBy: { order: 'asc' },
+      },
+    },
+  })
+  if (!experience) return null
+
+  const skills = await prisma.skill.findMany({
+    where: { profileId },
+    select: { id: true, name: true },
+    orderBy: { name: 'asc' },
+  })
+
+  return { experience, skills }
+}
+
 // Loads the signed-in user's whole profile context store as domain types:
 // JSON `tags` columns are parsed; String enum columns are narrowed.
 export async function getFullProfile(): Promise<FullProfile> {
