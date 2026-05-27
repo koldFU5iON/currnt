@@ -6,7 +6,7 @@ export default function Home() {
     <div className="mx-auto w-lg ">
       <section className="bg-accent p-5 border-b ">
         <h1 className="text-3xl">Welcome to Resume</h1>
-        <p>Let's get you back on track</p>
+        <p>Let&apos;s get you back on track</p>
       </section>
       <section>
         <div className="p-2">

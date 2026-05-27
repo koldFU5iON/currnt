@@ -1,7 +1,6 @@
 import { ContentContainer } from "@/app/components/ContentContainer";
 import { ExperienceBlock } from "./_components/Experience";
 import { getFullProfile } from "@/modules/profile/queries";
-import { H } from "@/app/components/style/Style";
 import { ContactBlock } from "./_components/Contact";
 import { QualificationsBlock } from "./_components/Qualifications";
 import type { FullProfile } from "@/app/types/profile";

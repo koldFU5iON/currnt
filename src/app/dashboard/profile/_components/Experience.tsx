@@ -4,7 +4,6 @@ import { useState, type FormEvent } from "react"
 import {
   Card, CardHeader, CardContent, CardDescription, CardFooter, CardTitle
 } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader,
