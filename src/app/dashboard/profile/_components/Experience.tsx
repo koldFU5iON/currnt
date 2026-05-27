@@ -1,6 +1,7 @@
 'use client'
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useState, type FormEvent } from "react"
 import {
   Card, CardHeader, CardContent, CardDescription, CardFooter, CardTitle
@@ -18,12 +19,12 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import { Calendar, FileText, ListChecks, MapPin, Pencil, Plus, Trash2, X } from "lucide-react"
+import { Calendar, ListChecks, MapPin, Pencil, Plus, Trash2, X } from "lucide-react"
 import { ExperienceWithActivities, RoleActivityKind } from "@/app/types/profile"
 import { H } from "@/app/components/style/Style"
 import clsx from "clsx"
 import {
-  createExperience, updateExperience, deleteExperience,
+  createExperience, deleteExperience,
   createActivity, updateActivity, deleteActivity,
 } from "@/modules/profile/actions"
 
@@ -31,19 +32,13 @@ import {
 
 type ActivityType = ExperienceWithActivities['activities'][number]
 
-const toDateInput = (d?: Date | null) =>
-  d ? new Date(d).toISOString().split('T')[0] : ''
-
 // ── Experience block ──────────────────────────────────────────────────────────
 
 export function ExperienceBlock({ exp }: { exp: ExperienceWithActivities[] }) {
+  const router = useRouter()
   const [experiences, setExperiences] = useState(exp)
   const [open, setOpen] = useState(false)
-  const [editing, setEditing] = useState<ExperienceWithActivities | null>(null)
   const [activitiesFor, setActivitiesFor] = useState<ExperienceWithActivities | null>(null)
-
-  const openAdd = () => { setEditing(null); setOpen(true) }
-  const openEdit = (e: ExperienceWithActivities) => { setEditing(e); setOpen(true) }
 
   const handleDelete = async (id: string) => {
     const prev = experiences
@@ -51,20 +46,13 @@ export function ExperienceBlock({ exp }: { exp: ExperienceWithActivities[] }) {
     try { await deleteExperience(id) } catch { setExperiences(prev) }
   }
 
-  const handleSave = async (data: Parameters<typeof createExperience>[0]) => {
+  const openAdd = () => setOpen(true)
+
+  const handleCreate = async (data: Parameters<typeof createExperience>[0]) => {
     setOpen(false)
     try {
-      if (editing) {
-        const updated = await updateExperience(editing.id, data)
-        setExperiences(e => e.map(x =>
-          x.id === editing.id
-            ? { ...(updated as unknown as ExperienceWithActivities), activities: x.activities }
-            : x
-        ))
-      } else {
-        const created = await createExperience(data)
-        setExperiences(e => [...e, { ...(created as unknown as ExperienceWithActivities), activities: [] }])
-      }
+      const created = await createExperience(data)
+      router.push(`/dashboard/profile/experience/${created.id}`)
     } catch { }
   }
 
@@ -116,9 +104,6 @@ export function ExperienceBlock({ exp }: { exp: ExperienceWithActivities[] }) {
             </CardHeader>
             <CardContent>
               <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
-                {experience.summary && (
-                  <p className="text-xs text-muted-foreground">{experience.summary}</p>
-                )}
                 {(['responsibility', 'achievement'] as const).map(kind => {
                   const items = experience.activities.filter(a => a.kind === kind)
                   if (items.length === 0) return null
@@ -143,12 +128,6 @@ export function ExperienceBlock({ exp }: { exp: ExperienceWithActivities[] }) {
               </div>
             </CardContent>
             <CardFooter className="justify-end gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
-              <Link
-                href={`/dashboard/profile/experience/${experience.id}`}
-                className={buttonVariants({ variant: 'ghost', size: 'sm', className: 'gap-1 text-xs' })}
-              >
-                <FileText size={13} /> Notes
-              </Link>
               <Button
                 variant="ghost" size="sm" className="gap-1 text-xs"
                 onClick={() => setActivitiesFor(experience)}
@@ -156,13 +135,13 @@ export function ExperienceBlock({ exp }: { exp: ExperienceWithActivities[] }) {
               >
                 <ListChecks size={13} /> Activities
               </Button>
-              <Button
-                variant="ghost" size="icon" className="h-9 w-9"
-                onClick={() => openEdit(experience)}
+              <Link
+                href={`/dashboard/profile/experience/${experience.id}`}
+                className={buttonVariants({ variant: 'ghost', size: 'sm', className: 'gap-1 text-xs' })}
                 aria-label={`Edit ${experience.company}`}
               >
-                <Pencil size={13} />
-              </Button>
+                <Pencil size={13} /> Edit
+              </Link>
               <Button
                 variant="ghost" size="icon" className="h-9 w-9 hover:text-destructive"
                 onClick={() => handleDelete(experience.id)}
@@ -179,8 +158,7 @@ export function ExperienceBlock({ exp }: { exp: ExperienceWithActivities[] }) {
       <ExperienceDialog
         open={open}
         onOpenChange={setOpen}
-        editing={editing}
-        onSave={handleSave}
+        onSave={handleCreate}
       />
       {activitiesFor && (
         <ActivityManageDialog
@@ -219,11 +197,10 @@ function ExperienceCard({ onAdd }: { onAdd: () => void }) {
 // ── Experience add/edit dialog ────────────────────────────────────────────────
 
 function ExperienceDialog({
-  open, onOpenChange, editing, onSave,
+  open, onOpenChange, onSave,
 }: {
   open: boolean
   onOpenChange: (o: boolean) => void
-  editing: ExperienceWithActivities | null
   onSave: (data: Parameters<typeof createExperience>[0]) => void
 }) {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -237,7 +214,7 @@ function ExperienceDialog({
       remote: fd.get('remote') !== null,
       startDate: new Date(fd.get('startDate') as string),
       endDate: endDateStr ? new Date(endDateStr) : undefined,
-      summary: fd.get('summary') as string,
+      summary: '',
     })
   }
 
@@ -245,33 +222,32 @@ function ExperienceDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{editing ? 'Edit Experience' : 'Add Experience'}</DialogTitle>
+          <DialogTitle>Add Experience</DialogTitle>
           <DialogDescription>
-            {editing ? 'Update your work experience details.' : 'Add a new role to your profile.'}
+            Add the basics — you can fill in notes and activities on the next page.
           </DialogDescription>
         </DialogHeader>
-        <form key={editing?.id ?? 'new'} onSubmit={handleSubmit}>
+        <form key="new" onSubmit={handleSubmit}>
           <FieldGroup>
             <div className="grid grid-cols-2 gap-3">
               <Field>
                 <Label htmlFor="exp-company">Company</Label>
-                <Input id="exp-company" name="company" defaultValue={editing?.company} required />
+                <Input id="exp-company" name="company" required />
               </Field>
               <Field>
                 <Label htmlFor="exp-role">Role / Title</Label>
-                <Input id="exp-role" name="role" defaultValue={editing?.role} required />
+                <Input id="exp-role" name="role" required />
               </Field>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <Field>
                 <Label htmlFor="exp-location">Location</Label>
-                <Input id="exp-location" name="location" placeholder="City, Country" defaultValue={editing?.location ?? ''} />
+                <Input id="exp-location" name="location" placeholder="City, Country" />
               </Field>
               <Field>
                 <div className="flex items-center gap-2 mt-6">
                   <input
                     id="exp-remote" name="remote" type="checkbox"
-                    defaultChecked={editing?.remote ?? false}
                     className="h-4 w-4 rounded border-border accent-primary"
                   />
                   <Label htmlFor="exp-remote">Remote position</Label>
@@ -281,26 +257,17 @@ function ExperienceDialog({
             <div className="grid grid-cols-2 gap-3">
               <Field>
                 <Label htmlFor="exp-start">Start Date</Label>
-                <Input id="exp-start" name="startDate" type="date" defaultValue={toDateInput(editing?.startDate)} required />
+                <Input id="exp-start" name="startDate" type="date" required />
               </Field>
               <Field>
                 <Label htmlFor="exp-end">End Date</Label>
-                <Input id="exp-end" name="endDate" type="date" defaultValue={toDateInput(editing?.endDate)} />
+                <Input id="exp-end" name="endDate" type="date" />
               </Field>
             </div>
-            <Field>
-              <Label htmlFor="exp-summary">Summary</Label>
-              <Textarea
-                id="exp-summary" name="summary" rows={3}
-                placeholder="Brief overview of your role and impact..."
-                defaultValue={editing?.summary ?? ''}
-                required
-              />
-            </Field>
           </FieldGroup>
           <DialogFooter className="mt-4">
             <DialogClose render={<Button type="button" variant="secondary">Cancel</Button>} />
-            <Button type="submit">{editing ? 'Save' : 'Add'}</Button>
+            <Button type="submit">Add & Open</Button>
           </DialogFooter>
         </form>
       </DialogContent>

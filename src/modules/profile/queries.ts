@@ -20,6 +20,8 @@ export async function getExperienceWithSuggestionContext(
       id: true,
       company: true,
       role: true,
+      location: true,
+      remote: true,
       startDate: true,
       endDate: true,
       summary: true,
