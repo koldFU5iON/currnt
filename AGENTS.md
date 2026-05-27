@@ -165,6 +165,17 @@ The LLM layer is bring-your-own-key — each user enters their own provider API 
 
 Copy `.env.example` → `.env.local`. Never commit `.env.local`.
 
+### Production database SSL
+
+The production `DATABASE_URL` on Vercel must include an **explicit `sslmode`** to suppress the upcoming `pg-connection-string` v3.0 / `pg` v9.0 deprecation warning (which currently emits `SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'` in runtime logs). When those libraries upgrade, the implicit aliasing drops and SSL semantics change unexpectedly unless we're explicit now.
+
+Append one of these to the prod connection string:
+
+- **`?sslmode=verify-full`** (preferred) — preserves current behavior with full cert chain + hostname validation. Works on Neon, Supabase, and most managed Postgres. Try this first.
+- **`?uselibpqcompat=true&sslmode=require`** (fallback) — only if `verify-full` fails to connect because the provider's cert chain doesn't validate cleanly. Adopts standard libpq semantics, which are weaker; treat as a last resort.
+
+Update the Vercel `DATABASE_URL` env var (Production scope) via dashboard or `vercel env`. Local Docker Postgres at `localhost:5435` does not enable SSL and is unaffected — the `.env.local` value stays as-is.
+
 ---
 
 ## External APIs
