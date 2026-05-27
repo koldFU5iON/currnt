@@ -53,18 +53,22 @@ model Skill {
 }
 
 model Experience {
-  id        String    @id @default(cuid())
-  profileId String
-  company   String
-  role      String
-  startDate DateTime
-  endDate   DateTime?
-  location  String?
-  remote    Boolean   @default(false)
-  summary   String
-  tags      String    @default("[]")
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  profileId       String
+  company         String
+  role            String
+  startDate       DateTime
+  endDate         DateTime?
+  location        String?
+  remote          Boolean   @default(false)
+  // Markdown source notes. Recognized H2 tags (## Overview, ## Responsibilities,
+  // ## Achievements, ## Skills) drive deterministic local extraction; prose
+  // under no recognized heading feeds the LLM extraction step. Issue #26.
+  summary         String
+  notesUpdatedAt  DateTime?
+  tags            String    @default("[]")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   profile      Profile           @relation(fields: [profileId], references: [id], onDelete: Cascade)
   activities RoleActivity[]

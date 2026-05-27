@@ -71,11 +71,20 @@ export async function createExperience(data: ExperienceData) {
 
 export async function updateExperience(id: string, data: ExperienceData) {
   const { profile } = await requireProfile()
+  const existing = await prisma.experience.findFirst({
+    where: { id, profileId: profile.id },
+    select: { summary: true },
+  })
+  const notesChanged = existing?.summary !== data.summary
   const experience = await prisma.experience.update({
     where: { id, profileId: profile.id },
-    data,
+    data: {
+      ...data,
+      ...(notesChanged ? { notesUpdatedAt: new Date() } : {}),
+    },
   })
   revalidatePath('/dashboard/profile')
+  revalidatePath(`/dashboard/profile/experience/${id}`)
   return experience
 }
 
@@ -83,6 +92,92 @@ export async function deleteExperience(id: string) {
   const { profile } = await requireProfile()
   await prisma.experience.deleteMany({ where: { id, profileId: profile.id } })
   revalidatePath('/dashboard/profile')
+}
+
+export async function updateExperienceNotes(id: string, summary: string) {
+  const { profile } = await requireProfile()
+  const experience = await prisma.experience.update({
+    where: { id, profileId: profile.id },
+    data: { summary, notesUpdatedAt: new Date() },
+  })
+  revalidatePath(`/dashboard/profile/experience/${id}`)
+  return experience
+}
+
+// ── Accept suggestions (bulk transactional) ───────────────────────────────────
+
+type AcceptedActivity = {
+  kind: string
+  description: string
+  impact: string | null
+  replaceId?: string // if set, update existing row instead of creating
+}
+
+type AcceptedSkill = {
+  name: string
+  category: string | null
+  level: string | null
+  replaceId?: string // if set, update existing row instead of creating
+}
+
+export type AcceptSuggestionsPayload = {
+  experienceId: string
+  activities: AcceptedActivity[]
+  skills: AcceptedSkill[]
+}
+
+export async function acceptSuggestions(payload: AcceptSuggestionsPayload) {
+  const { profile } = await requireProfile()
+
+  // Verify ownership before writing anything
+  const experience = await prisma.experience.findFirst({
+    where: { id: payload.experienceId, profileId: profile.id },
+    select: { id: true },
+  })
+  if (!experience) throw new Error('Experience not found')
+
+  await prisma.$transaction([
+    ...payload.activities.map((a) =>
+      a.replaceId
+        ? prisma.roleActivity.update({
+            where: { id: a.replaceId },
+            data: { description: a.description, impact: a.impact ?? undefined, kind: a.kind },
+          })
+        : prisma.roleActivity.create({
+            data: {
+              experienceId: payload.experienceId,
+              kind: a.kind,
+              description: a.description,
+              impact: a.impact ?? undefined,
+              tags: '[]',
+              order: 0,
+            },
+          }),
+    ),
+    ...payload.skills.map((s) =>
+      s.replaceId
+        ? prisma.skill.update({
+            where: { id: s.replaceId },
+            data: {
+              name: s.name,
+              ...(s.category ? { category: s.category } : {}),
+              ...(s.level ? { level: s.level } : {}),
+            },
+          })
+        : prisma.skill.create({
+            data: {
+              profileId: profile.id,
+              name: s.name,
+              category: s.category ?? 'General',
+              level: s.level ?? 'Intermediate',
+              tags: '[]',
+            },
+          }),
+    ),
+  ])
+
+  revalidatePath('/dashboard/profile')
+  revalidatePath(`/dashboard/profile/experience/${payload.experienceId}`)
 }
 
 // ── Skills ────────────────────────────────────────────────────────────────────

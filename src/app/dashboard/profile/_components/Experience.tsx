@@ -1,10 +1,11 @@
 'use client'
 
+import Link from "next/link"
 import { useState, type FormEvent } from "react"
 import {
   Card, CardHeader, CardContent, CardDescription, CardFooter, CardTitle
 } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader,
   DialogTitle, DialogFooter, DialogClose
@@ -17,7 +18,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import { Calendar, ListChecks, MapPin, Pencil, Plus, Trash2, X } from "lucide-react"
+import { Calendar, FileText, ListChecks, MapPin, Pencil, Plus, Trash2, X } from "lucide-react"
 import { ExperienceWithActivities, RoleActivityKind } from "@/app/types/profile"
 import { H } from "@/app/components/style/Style"
 import clsx from "clsx"
@@ -142,6 +143,12 @@ export function ExperienceBlock({ exp }: { exp: ExperienceWithActivities[] }) {
               </div>
             </CardContent>
             <CardFooter className="justify-end gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+              <Link
+                href={`/dashboard/profile/experience/${experience.id}`}
+                className={buttonVariants({ variant: 'ghost', size: 'sm', className: 'gap-1 text-xs' })}
+              >
+                <FileText size={13} /> Notes
+              </Link>
               <Button
                 variant="ghost" size="sm" className="gap-1 text-xs"
                 onClick={() => setActivitiesFor(experience)}
