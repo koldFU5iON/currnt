@@ -1,11 +1,11 @@
 ---
 name: capture-job
-description: Use when the user wants to save a job posting URL to their Resume dashboard for tracking — triggers on phrases like "capture this job", "save this job", "track this job", "add this to my applications", "save this for later", or when given a URL from job sites (LinkedIn jobs, Greenhouse, Lever, Workday, company careers pages). Posts to https://resume.devonstanton.com/api/jobs/capture using the bearer token in $RSM_TOKEN.
+description: Use when the user wants to save a job posting URL to their Resume dashboard for tracking — triggers on phrases like "capture this job", "save this job", "track this job", "add this to my applications", "save this for later", or when given a URL from job sites (LinkedIn jobs, Greenhouse, Lever, Workday, company careers pages). Posts to {{RESUME_URL}}/api/jobs/capture using the bearer token in $RSM_TOKEN.
 ---
 
 # Capture Job
 
-Submits a job posting URL to the Resume dashboard at `https://resume.devonstanton.com/api/jobs/capture` for tracking. The endpoint extracts title, company, and other fields from the URL automatically.
+Submits a job posting URL to the Resume dashboard at `{{RESUME_URL}}/api/jobs/capture` for tracking. The endpoint extracts title, company, and other fields from the URL automatically.
 
 ## Auth setup (one-time)
 
@@ -13,7 +13,7 @@ The skill reads the bearer token from the `RSM_TOKEN` environment variable.
 
 If `$RSM_TOKEN` is unset, the user needs to mint one:
 
-1. Open `https://resume.devonstanton.com/dashboard/settings/api-tokens`
+1. Open `{{RESUME_URL}}/dashboard/settings/api-tokens`
 2. Create a new token (shown only once)
 3. Export it: `export RSM_TOKEN="rsm_..."` (and add to `~/.zshrc` / `~/.bashrc` for persistence)
 
@@ -24,7 +24,7 @@ If the token leaks, revoke it at the same dashboard page and mint a new one.
 Use `Bash` with `curl`. **Always include the `Authorization` header from `$RSM_TOKEN`**:
 
 ```bash
-curl -sS -X POST https://resume.devonstanton.com/api/jobs/capture \
+curl -sS -X POST {{RESUME_URL}}/api/jobs/capture \
   -H "Authorization: Bearer $RSM_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"url":"<JOB_URL>"}'
@@ -54,7 +54,7 @@ The endpoint returns JSON with these fields:
   "created": true,
   "title": "Staff Technical Program Manager",
   "company": "MongoDB",
-  "reviewUrl": "https://resume.devonstanton.com/dashboard/job-applications/view/cuid",
+  "reviewUrl": "{{RESUME_URL}}/dashboard/job-applications/view/cuid",
   "duplicate": { "isDuplicate": false },
   "extraction": { "fieldsExtracted": ["title", "company", "location", "jobNumber"] }
 }
@@ -69,7 +69,7 @@ The endpoint returns JSON with these fields:
 
 Example response to the user:
 
-> Captured **Staff Technical Program Manager** at **MongoDB**. Open in dashboard: https://resume.devonstanton.com/dashboard/job-applications/view/cuid
+> Captured **Staff Technical Program Manager** at **MongoDB**. Open in dashboard: {{RESUME_URL}}/dashboard/job-applications/view/cuid
 
 ## Error handling
 
@@ -102,7 +102,7 @@ If the URL doesn't match any of these, extraction will likely return 422.
 User: "save this https://www.mongodb.com/careers/jobs/7465124"
 
 ```bash
-curl -sS -X POST https://resume.devonstanton.com/api/jobs/capture \
+curl -sS -X POST {{RESUME_URL}}/api/jobs/capture \
   -H "Authorization: Bearer $RSM_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"url":"https://www.mongodb.com/careers/jobs/7465124"}'
@@ -113,7 +113,7 @@ curl -sS -X POST https://resume.devonstanton.com/api/jobs/capture \
 User: "Alex referred me to this Stripe role: https://boards.greenhouse.io/stripe/jobs/5530229"
 
 ```bash
-curl -sS -X POST https://resume.devonstanton.com/api/jobs/capture \
+curl -sS -X POST {{RESUME_URL}}/api/jobs/capture \
   -H "Authorization: Bearer $RSM_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
