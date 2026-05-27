@@ -22,10 +22,14 @@ import {
 } from './extract-schema'
 import { getExperienceWithSuggestionContext } from './queries'
 
-export type ExtractionSource = 'parser' | 'parser+llm' | 'parser-only-no-key'
+export type ExtractionSource =
+  | 'parser'
+  | 'parser+llm'
+  | 'parser-only-no-key'
+  | 'parser-llm-error' // LLM was attempted but failed; parser results still returned
 
 type ExtractResult =
-  | { ok: true; suggestions: SuggestionsWithMatches; meta: { source: ExtractionSource } }
+  | { ok: true; suggestions: SuggestionsWithMatches; meta: { source: ExtractionSource; llmError?: string } }
   | { ok: false; error: 'no_notes' | 'not_found' | LLMErrorKind; message: string }
 
 export async function extractFromNotes(experienceId: string): Promise<ExtractResult> {
@@ -53,6 +57,7 @@ export async function extractFromNotes(experienceId: string): Promise<ExtractRes
   let llmActivities: ExtractedActivity[] = []
   let llmSkills: ExtractedSkill[] = []
   let source: ExtractionSource = 'parser'
+  let llmError: string | undefined
 
   if (parsed.unparsed.trim()) {
     const llmStatus = await getLLMConfigStatus(profile.id)
@@ -92,9 +97,13 @@ Extract activities (responsibilities and achievements) and skills from the notes
         source = 'parser+llm'
       } catch (err) {
         if (err instanceof LLMError) {
-          return { ok: false, error: err.kind, message: err.message }
+          // Degrade gracefully — return whatever the tag parser found rather
+          // than discarding all suggestions because the LLM tier failed.
+          source = 'parser-llm-error'
+          llmError = err.message
+        } else {
+          throw err
         }
-        throw err
       }
     }
   }
@@ -113,5 +122,5 @@ Extract activities (responsibilities and achievements) and skills from the notes
   })
 
   // 5. Return
-  return { ok: true, suggestions, meta: { source } }
+  return { ok: true, suggestions, meta: { source, llmError } }
 }
