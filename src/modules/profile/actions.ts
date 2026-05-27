@@ -71,11 +71,20 @@ export async function createExperience(data: ExperienceData) {
 
 export async function updateExperience(id: string, data: ExperienceData) {
   const { profile } = await requireProfile()
+  const existing = await prisma.experience.findFirst({
+    where: { id, profileId: profile.id },
+    select: { summary: true },
+  })
+  const notesChanged = existing?.summary !== data.summary
   const experience = await prisma.experience.update({
     where: { id, profileId: profile.id },
-    data,
+    data: {
+      ...data,
+      ...(notesChanged ? { notesUpdatedAt: new Date() } : {}),
+    },
   })
   revalidatePath('/dashboard/profile')
+  revalidatePath(`/dashboard/profile/experience/${id}`)
   return experience
 }
 
@@ -83,6 +92,16 @@ export async function deleteExperience(id: string) {
   const { profile } = await requireProfile()
   await prisma.experience.deleteMany({ where: { id, profileId: profile.id } })
   revalidatePath('/dashboard/profile')
+}
+
+export async function updateExperienceNotes(id: string, summary: string) {
+  const { profile } = await requireProfile()
+  const experience = await prisma.experience.update({
+    where: { id, profileId: profile.id },
+    data: { summary, notesUpdatedAt: new Date() },
+  })
+  revalidatePath(`/dashboard/profile/experience/${id}`)
+  return experience
 }
 
 // ── Skills ────────────────────────────────────────────────────────────────────
