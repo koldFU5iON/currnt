@@ -169,7 +169,7 @@ Copy `.env.example` → `.env.local`. Never commit `.env.local`.
 
 ## External APIs
 
-- `POST /api/jobs/capture` — bearer-token-authed endpoint for agents/scripts/bookmarklets to submit a job URL. Tokens minted at `/dashboard/settings/api-tokens`. See `docs/api-jobs-capture.md` for the full spec + curl examples.
+- `POST /api/jobs/capture` — bearer-token-authed endpoint for agents/scripts/bookmarklets to submit a job URL. Tokens minted at `/dashboard/settings/api-tokens`. See `docs/api-jobs-capture.md` for the full spec, and `docs/api-integrations.md` for copy-pasteable recipes (curl shell function, Claude Code skill, browser bookmarklet).
 - `GET /api/llm/ping` — session-authed sanity check that runs a tiny `pong` round-trip using the signed-in user's saved LLM key. Useful right after wiring up their key in `/dashboard/settings/llm`.
 
 ## LLM layer
@@ -191,6 +191,8 @@ Full build specification and pre-written module source is in `docs/`:
 
 - `docs/Project Guidance.md` — 11-phase build plan
 - `docs/api-jobs-capture.md` — POST /api/jobs/capture spec
+- `docs/api-integrations.md` — integration recipes for the capture endpoint (curl, Claude Code skill, bookmarklet)
+- `docs/integrations/claude-code/SKILL.md` — canonical Claude Code skill source (install to `~/.claude/skills/capture-job/`)
 - `docs/taiilrd/src/` — reference implementations for types, modules
 - `docs/taiilrd/prisma/schema.prisma` — original schema reference
 - `docs/taiilrd/vault-examples/` — example markdown vault files
