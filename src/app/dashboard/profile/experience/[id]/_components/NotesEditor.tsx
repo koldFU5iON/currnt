@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { updateExperienceNotes } from '@/modules/profile/actions'
+import { ExtractionPanel } from './ExtractionPanel'
 import { Loader2, Save } from 'lucide-react'
 
 // Shapes passed down from the server component — used by ExtractionPanel later.
@@ -99,7 +100,11 @@ export function NotesEditor({
         </div>
       </div>
 
-      {/* ExtractionPanel mounts here in step 7 */}
+      <ExtractionPanel
+        experienceId={experienceId}
+        existingActivities={existingActivities}
+        existingSkills={existingSkills}
+      />
     </div>
   )
 }
