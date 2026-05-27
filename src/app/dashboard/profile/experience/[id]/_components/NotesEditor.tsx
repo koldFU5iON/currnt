@@ -52,7 +52,7 @@ export function NotesEditor({
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label htmlFor="notes-textarea" className="text-base font-medium">
-            Notes
+            Workspace
           </Label>
           <Button
             size="sm"

@@ -94,6 +94,26 @@ export async function deleteExperience(id: string) {
   revalidatePath('/dashboard/profile')
 }
 
+type ExperienceDetailsData = {
+  company: string
+  role: string
+  location?: string
+  remote: boolean
+  startDate: Date
+  endDate?: Date
+}
+
+export async function updateExperienceDetails(id: string, data: ExperienceDetailsData) {
+  const { profile } = await requireProfile()
+  const experience = await prisma.experience.update({
+    where: { id, profileId: profile.id },
+    data,
+  })
+  revalidatePath('/dashboard/profile')
+  revalidatePath(`/dashboard/profile/experience/${id}`)
+  return experience
+}
+
 export async function updateExperienceNotes(id: string, summary: string) {
   const { profile } = await requireProfile()
   const experience = await prisma.experience.update({

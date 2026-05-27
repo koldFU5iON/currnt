@@ -4,6 +4,7 @@ import { requireProfile } from '@/lib/session'
 import { getExperienceWithSuggestionContext } from '@/modules/profile/queries'
 import { ContentContainer } from '@/app/components/ContentContainer'
 import { ChevronLeft } from 'lucide-react'
+import { ExperienceDetailsForm } from './_components/ExperienceDetailsForm'
 import { NotesEditor } from './_components/NotesEditor'
 
 export default async function ExperienceDetailPage({
@@ -18,14 +19,6 @@ export default async function ExperienceDetailPage({
   if (!ctx) notFound()
 
   const { experience, skills } = ctx
-
-  const startLabel = experience.startDate.toLocaleDateString('en-GB', {
-    month: 'short',
-    year: 'numeric',
-  })
-  const endLabel = experience.endDate
-    ? experience.endDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
-    : 'Present'
 
   return (
     <ContentContainer
@@ -42,13 +35,15 @@ export default async function ExperienceDetailPage({
         </Link>
       </div>
 
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold">{experience.role}</h1>
-        <p className="text-muted-foreground">{experience.company}</p>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          {startLabel} – {endLabel}
-        </p>
-      </div>
+      <ExperienceDetailsForm
+        experienceId={experience.id}
+        company={experience.company}
+        role={experience.role}
+        location={experience.location ?? null}
+        remote={experience.remote}
+        startDate={experience.startDate}
+        endDate={experience.endDate ?? null}
+      />
 
       <NotesEditor
         experienceId={experience.id}
