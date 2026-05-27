@@ -1,6 +1,5 @@
 import { readFile } from "node:fs/promises"
 import path from "node:path"
-import type { NextRequest } from "next/server"
 
 // Whitelist of agents whose SKILL.md sources live in src/lib/integrations/skills/.
 // Add a new entry here when you add a new <agent>.md alongside it.
@@ -12,7 +11,7 @@ function isSupported(agent: string): agent is SupportedAgent {
 }
 
 export async function GET(
-  request: NextRequest,
+  _request: Request,
   { params }: { params: Promise<{ agent: string }> },
 ) {
   const { agent } = await params
@@ -30,6 +29,17 @@ export async function GET(
     `${agent}.md`,
   )
 
+  // Fail closed on missing config. The downloaded SKILL.md tells the user's
+  // agent where to POST a bearer token — falling back to a Host-header-derived
+  // origin would let a forged request return a SKILL.md pointed at an attacker.
+  const resumeUrl = process.env.BETTER_AUTH_URL?.replace(/\/$/, "")
+  if (!resumeUrl) {
+    return new Response("Server misconfigured: BETTER_AUTH_URL is not set.", {
+      status: 500,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    })
+  }
+
   let template: string
   try {
     template = await readFile(filePath, "utf-8")
@@ -40,20 +50,15 @@ export async function GET(
     })
   }
 
-  // BETTER_AUTH_URL is the canonical deploy URL; fall back to the request
-  // origin so preview deployments and local dev still produce useful output.
-  const resumeUrl =
-    process.env.BETTER_AUTH_URL?.replace(/\/$/, "") ?? request.nextUrl.origin
-
   const filled = template.replaceAll("{{RESUME_URL}}", resumeUrl)
 
   return new Response(filled, {
     headers: {
       "Content-Type": "text/markdown; charset=utf-8",
       "Content-Disposition": `attachment; filename="SKILL.md"`,
-      // Five minutes is enough to absorb a click-then-share burst without
-      // outlasting a deploy that changes the canonical URL or the skill body.
-      "Cache-Control": "public, max-age=300",
+      // `private` keeps the browser cache but bars shared proxies — the body
+      // is host-derived, and we don't want a poisoned response cross-served.
+      "Cache-Control": "private, max-age=300",
     },
   })
 }
