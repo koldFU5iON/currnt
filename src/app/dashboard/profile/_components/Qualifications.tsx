@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, type FormEvent } from "react"
+import { useState, type FormEvent } from "react"
 import { QualificationsType } from "../page"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -207,7 +207,7 @@ function SkillsSection({ initial, careerYears }: { initial: SkillType[]; careerY
           </div>
         )
       }
-      <SkillDialog open={open} onOpenChange={setOpen} editing={editing} onSave={handleSave} saving={saving} />
+      <SkillDialog key={editing?.id ?? 'new'} open={open} onOpenChange={setOpen} editing={editing} onSave={handleSave} saving={saving} />
     </div>
   )
 }
@@ -222,7 +222,6 @@ function SkillDialog({
   saving: boolean
 }) {
   const [level, setLevel] = useState(editing?.level ?? 'Intermediate')
-  useEffect(() => { setLevel(editing?.level ?? 'Intermediate') }, [editing])
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -332,7 +331,7 @@ function LanguagesSection({ initial }: { initial: LanguageType[] }) {
           </div>
         )
       }
-      <LanguageDialog open={open} onOpenChange={setOpen} editing={editing} onSave={handleSave} saving={saving} />
+      <LanguageDialog key={editing?.id ?? 'new'} open={open} onOpenChange={setOpen} editing={editing} onSave={handleSave} saving={saving} />
     </div>
   )
 }
@@ -347,7 +346,6 @@ function LanguageDialog({
   saving: boolean
 }) {
   const [proficiency, setProficiency] = useState(editing?.proficiency ?? 'intermediate')
-  useEffect(() => { setProficiency(editing?.proficiency ?? 'intermediate') }, [editing])
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()

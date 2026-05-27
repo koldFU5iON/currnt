@@ -32,7 +32,7 @@ export function Profile({ profile }: { profile: ProfileType }) {
       <ProfileSection title="Core Competencies" >
         <div className="flex flex-col">
           {profile.competency.map(competency => (
-            <div className="even:bg-accent">
+            <div key={competency} className="even:bg-accent">
               {competency}
             </div>
           ))}

@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Reference implementations / pre-written modules used as design
+    // material, not shipping code — see the "Reference docs" section of
+    // AGENTS.md. We don't want lint noise from them.
+    "docs/**",
   ]),
 ]);
 
