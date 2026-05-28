@@ -21,6 +21,7 @@ export function CloneSnippet({ repo }: Props) {
         git clone {repo}
       </code>
       <button
+        type="button"
         onClick={handleCopy}
         className="flex cursor-pointer items-center gap-1.5 border-l border-border bg-muted px-4 py-2.5 text-xs text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
         aria-label="Copy clone command"

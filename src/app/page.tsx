@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Key, Check, LayoutGrid, Search, FileText } from 'lucide-react'
 import { buttonVariants } from '@/components/ui/button'
-import { requireProfile } from '@/lib/session'
+import { getSession } from '@/lib/session'
 import { CloneSnippet } from './_components/CloneSnippet'
 
 function GitHubIcon({ size = 15 }: { size?: number }) {
@@ -51,8 +51,8 @@ const FEATURES = [
 export default async function Home() {
   let isAuthenticated = false
   try {
-    await requireProfile()
-    isAuthenticated = true
+    const session = await getSession()
+    isAuthenticated = !!session
   } catch {
     // unauthenticated visitor
   }
