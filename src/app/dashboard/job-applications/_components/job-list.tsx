@@ -33,7 +33,7 @@ const OPEN_PRIORITY: ApplicationStatusType[] = [
 
 const CLOSED_SET: ReadonlySet<string> = new Set(ClosedStatuses)
 
-export function JobList({ jobs }: { jobs: Job[] }) {
+export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }) {
   const [query, setQuery] = useState("")
   const [viewMode, setViewMode] = useState<ViewMode>('grouped')
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -170,6 +170,7 @@ export function JobList({ jobs }: { jobs: Job[] }) {
               onToggleSelect={toggleSelect}
               onEdit={setEditing}
               onArchive={handleSingleArchive}
+              hasLLMKey={hasLLMKey}
             />
           ))}
         </div>

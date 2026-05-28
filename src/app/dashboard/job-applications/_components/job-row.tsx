@@ -22,9 +22,10 @@ type JobRowProps = {
   onToggleSelect: (id: string) => void
   onEdit: (job: Job) => void
   onArchive: (id: string) => void
+  hasLLMKey: boolean
 }
 
-export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArchive }: JobRowProps) {
+export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArchive, hasLLMKey }: JobRowProps) {
   const { id, jobNumber, title, company, countries, url, dateApplied, lastUpdated, status, progress, jobFit, applicationSource, jobDescription } = job
   // Cold is the silent default — only surface a badge for sources worth noticing.
   const showSourceBadge = applicationSource !== ApplicationSource.Cold
@@ -100,7 +101,7 @@ export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArc
       </div>
 
       <div className="flex items-center gap-1 px-3 py-3">
-        <JobFit jobId={id} jobFit={jobFit || null} canAssess={!!jobDescription?.trim()} />
+        <JobFit jobId={id} jobFit={jobFit || null} canAssess={!!jobDescription?.trim()} hasLLMKey={hasLLMKey} />
         <AppControls
           id={id}
           onEdit={() => onEdit(job)}

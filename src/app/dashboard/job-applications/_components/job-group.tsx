@@ -14,6 +14,7 @@ type JobGroupProps = {
   onEdit: (job: Job) => void
   onArchive: (id: string) => void
   defaultCollapsed?: boolean
+  hasLLMKey: boolean
 }
 
 // One section of the list. Same shape whether it's the sole "All" group
@@ -28,6 +29,7 @@ export function JobGroup({
   onEdit,
   onArchive,
   defaultCollapsed = false,
+  hasLLMKey,
 }: JobGroupProps) {
   const [collapsed, setCollapsed] = useState(defaultCollapsed)
 
@@ -61,6 +63,7 @@ export function JobGroup({
           onToggleSelect={onToggleSelect}
           onEdit={onEdit}
           onArchive={onArchive}
+          hasLLMKey={hasLLMKey}
         />
       ))}
     </div>
