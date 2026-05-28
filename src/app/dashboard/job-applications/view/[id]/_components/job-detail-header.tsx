@@ -3,7 +3,6 @@ import { type Job } from "@/app/types/job-application"
 import { ArrowLeft, SquareArrowOutUpRight } from "lucide-react"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { JobFit } from "../../../_components/job-fit"
 
 export function JobDetailHeader({ job }: { job: Job }) {
   return (
@@ -18,14 +17,7 @@ export function JobDetailHeader({ job }: { job: Job }) {
 
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 space-y-1">
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl font-semibold leading-tight md:text-3xl">{job.title}</h1>
-            <JobFit
-              jobId={job.id}
-              jobFit={job.jobFit ?? null}
-              canAssess={!!job.jobDescription?.trim()}
-            />
-          </div>
+          <h1 className="text-2xl font-semibold leading-tight md:text-3xl">{job.title}</h1>
           <p className="text-base text-muted-foreground">{job.company}</p>
         </div>
 

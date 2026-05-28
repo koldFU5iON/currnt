@@ -136,7 +136,14 @@ export function JobFit({ jobId, jobFit, canAssess = true, hasLLMKey = true }: Jo
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); handleAssess() }}
-              className="shrink-0 text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors"
+              disabled={!hasLLMKey || !canAssess}
+              title={!hasLLMKey ? 'Add an LLM API key to re-assess' : !canAssess ? 'Add a job description to re-assess' : undefined}
+              className={cn(
+                "shrink-0 text-xs inline-flex items-center gap-1 transition-colors",
+                (!hasLLMKey || !canAssess)
+                  ? "text-muted-foreground/40 cursor-not-allowed"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
             >
               <Sparkles size={11} />
               Re-assess
