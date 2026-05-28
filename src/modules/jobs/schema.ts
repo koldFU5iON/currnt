@@ -31,6 +31,8 @@ export const JobFitSchema = z.object({
     .describe('Bucketed verdict. "stretch" = could land it with effort; "good" = strong baseline match.'),
   justification: z.string().min(1)
     .describe('Two or three sentences. Concrete reasoning grounded in candidate and role specifics, no fluff.'),
+  trajectoryNote: z.string().optional()
+    .describe("One or two sentences on how this role relates to the candidate's stated career goals and target direction. Omit entirely when no career goals are provided."),
 })
 
 export type JobFit = z.infer<typeof JobFitSchema>

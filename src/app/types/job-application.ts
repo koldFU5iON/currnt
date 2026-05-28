@@ -76,6 +76,7 @@ export type JobFit = {
   rating: number
   label: "poor" | "ok" | "stretch" | "good" | "excellent"
   justification: string
+  trajectoryNote?: string
 }
 
 export type Job = Omit<JobApplication, "status" | "progress" | "jobFit" | "applicationSource"> & {
