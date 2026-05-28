@@ -157,12 +157,14 @@ export default async function Home() {
       </div>
 
       {/* LLM note */}
-      <div className="mx-auto max-w-xl px-8 pb-10 text-center">
-        <p className="border-t border-border pt-6 text-sm italic text-muted-foreground">
-          Already using ChatGPT or Claude in your job search? Plug in your own API key &mdash; the
-          AI runs on your account, not ours.
-        </p>
-      </div>
+      {!isAuthenticated && (
+        <div className="mx-auto max-w-xl px-8 pb-10 text-center">
+          <p className="border-t border-border pt-6 text-sm italic text-muted-foreground">
+            Already using ChatGPT or Claude in your job search? Plug in your own API key &mdash; the
+            AI runs on your account, not ours.
+          </p>
+        </div>
+      )}
 
       {/* Feature callouts */}
       <div className="border-t border-border bg-muted/30">

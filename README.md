@@ -2,7 +2,6 @@
 
 A structured system for tracking job applications, assessing fit, and presenting yourself clearly. Open source, bring your own AI key.
 
-→ **Hosted version:** [your-deployment-url]  
 → **GitHub:** https://github.com/koldFU5iON/resume
 
 ---

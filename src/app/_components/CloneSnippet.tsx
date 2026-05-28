@@ -12,7 +12,9 @@ export function CloneSnippet({ repo }: Props) {
     navigator.clipboard.writeText(`git clone ${repo}`).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-    }).catch(() => {})
+    }).catch(() => {
+      console.warn('CloneSnippet: clipboard write failed')
+    })
   }
 
   return (
