@@ -62,6 +62,11 @@ export const auth = betterAuth({
     requireEmailVerification: false,
   },
   socialProviders,
+  account: {
+    accountLinking: {
+      trustedProviders: ["linkedin", "google", "twitter"],
+    },
+  },
   databaseHooks: {
     user: {
       create: {
