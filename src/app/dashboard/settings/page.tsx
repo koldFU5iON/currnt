@@ -1,11 +1,17 @@
 import Link from 'next/link'
-import { ChevronRight, KeyRound, Sparkles } from 'lucide-react'
+import { ChevronRight, KeyRound, Sparkles, UserCircle } from 'lucide-react'
 import { ContentContainer } from '@/app/components/ContentContainer'
 import { Card } from '@/components/ui/card'
 
 // Settings index. Future sections (account, notifications) can slot in
 // alongside API tokens and LLM.
 const SECTIONS = [
+  {
+    href: '/dashboard/settings/account',
+    Icon: UserCircle,
+    title: 'Account',
+    description: 'Display name, password, and connected sign-in methods.',
+  },
   {
     href: '/dashboard/settings/llm',
     Icon: Sparkles,
