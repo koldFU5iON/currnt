@@ -3,13 +3,16 @@
 import { useState } from 'react'
 import { Copy, Check } from 'lucide-react'
 
-export function CloneSnippet({ repo }: { repo: string }) {
+type Props = { repo: string }
+
+export function CloneSnippet({ repo }: Props) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(`git clone ${repo}`)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    navigator.clipboard.writeText(`git clone ${repo}`).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }).catch(() => {})
   }
 
   return (
