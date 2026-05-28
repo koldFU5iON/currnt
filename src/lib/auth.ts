@@ -65,6 +65,7 @@ export const auth = betterAuth({
   account: {
     accountLinking: {
       trustedProviders: ["linkedin", "google", "twitter"],
+      requireLocalEmailVerified: false,
     },
   },
   databaseHooks: {
