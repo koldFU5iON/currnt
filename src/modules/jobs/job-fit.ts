@@ -60,7 +60,8 @@ export async function assessJobFit(jobId: string): Promise<AssessJobFitResult> {
   ])
 
   const context = normalizeOnboardingContext(settings?.onboardingContext)
-  const hasGoals = onboardingContextHasContent(context)
+  const hasGoals =
+    !!(context.targetRole || context.industries || context.workPreferences || context.extraContext)
 
   const system = `You are an experienced career coach assessing whether a candidate is a strong fit for a role.
 
