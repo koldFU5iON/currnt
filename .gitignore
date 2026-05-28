@@ -44,3 +44,6 @@ next-env.d.ts
 .agents/
 .claude/
 skills-lock.json
+
+# brainstorming session files (local only)
+.superpowers/
