@@ -1,36 +1,97 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Job Search Operations
 
-## Getting Started
+A structured system for tracking job applications, assessing fit, and presenting yourself clearly. Open source, bring your own AI key.
 
-First, run the development server:
+→ **Hosted version:** [your-deployment-url]  
+→ **GitHub:** https://github.com/koldFU5iON/resume
+
+---
+
+## Local development
+
+### Prerequisites
+
+- Node.js 20+
+- Docker (for Postgres)
+
+### 1. Clone and install
+
+```bash
+git clone https://github.com/koldFU5iON/resume.git
+cd resume
+npm install
+```
+
+### 2. Configure environment
+
+```bash
+cp .env.example .env.local
+```
+
+Open `.env.local` and set:
+
+```env
+DATABASE_URL="postgresql://taiilrd:taiilrd@localhost:5435/taiilrd"
+
+BETTER_AUTH_SECRET=""        # openssl rand -base64 32
+BETTER_AUTH_URL="http://localhost:3000"
+
+ENCRYPTION_KEY="dev-encryption-key-32-bytes-long!!"
+```
+
+Social login (Google, LinkedIn, X) is optional — each provider only activates when both its `_CLIENT_ID` and `_CLIENT_SECRET` are set.
+
+### 3. Start Postgres
+
+```bash
+docker compose up -d
+```
+
+### 4. Set up the database
+
+```bash
+npm run db:reset    # creates schema, runs migrations, seeds test data
+```
+
+This creates a test account: **test@example.com** / **password**
+
+### 5. Start the dev server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Other useful commands
 
-## Learn More
+```bash
+npm run typecheck        # TypeScript check (no emit)
+npm run lint             # ESLint
 
-To learn more about Next.js, take a look at the following resources:
+npm run db:studio        # Open Prisma Studio in browser
+npm run db:migrate       # Create + apply a named migration
+npm run db:push          # Push schema changes without a migration file
+npm run db:seed          # Re-seed without resetting the schema
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+docker compose down      # Stop Postgres
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## Stack
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Next.js 16** App Router, `src/` directory, TypeScript strict
+- **Prisma 7 + PostgreSQL** — multi-file schema in `prisma/schema/`
+- **Tailwind CSS v4 + shadcn/ui** — neutral palette, dark mode via `class` strategy
+- **Provider-agnostic LLM layer** — users bring their own Anthropic / OpenAI / Google API key; no app-level AI costs
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Bring your own AI key
+
+This app has no built-in AI billing. Each user adds their own API key at `/dashboard/settings/llm`. Keys are encrypted at rest (AES-GCM). The AI never runs on a shared account.
+
+## Contributing
+
+Issues and PRs welcome. See open issues for what's being worked on.
