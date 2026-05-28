@@ -19,6 +19,7 @@ import { requireProfile } from '@/lib/session'
 import { completeStructured } from '@/modules/llm/client'
 import { LLMError, type LLMErrorKind } from '@/modules/llm/errors'
 import { buildProfileSnapshot, serializeProfileForLLM } from '@/modules/profile/snapshot'
+import { normalizeOnboardingContext, onboardingContextHasContent } from '@/modules/onboarding/schema'
 import { JobFitSchema, type JobFit } from './schema'
 
 // Type is consumed internally only. Callers that need it import from
@@ -35,7 +36,6 @@ type AssessJobFitResult =
 export async function assessJobFit(jobId: string): Promise<AssessJobFitResult> {
   const { profile } = await requireProfile()
 
-  // 1. Gather — profile-owned to prevent cross-account read
   const job = await prisma.jobApplication.findFirst({
     where: { id: jobId, profileId: profile.id },
     select: { id: true, title: true, company: true, jobDescription: true },
@@ -51,9 +51,17 @@ export async function assessJobFit(jobId: string): Promise<AssessJobFitResult> {
     }
   }
 
-  const snapshot = await buildProfileSnapshot(profile.id)
+  const [snapshot, settings] = await Promise.all([
+    buildProfileSnapshot(profile.id),
+    prisma.userSettings.findUnique({
+      where: { profileId: profile.id },
+      select: { onboardingContext: true },
+    }),
+  ])
 
-  // 2. Prompt — system message frames the task, user message holds the data.
+  const context = normalizeOnboardingContext(settings?.onboardingContext)
+  const hasGoals = onboardingContextHasContent(context)
+
   const system = `You are an experienced career coach assessing whether a candidate is a strong fit for a role.
 
 Be honest and concrete. Overclaiming the candidate's fit makes them waste an interview slot; understating loses them an opportunity they could land. Calibrate the rating against real-world hiring bars:
@@ -64,9 +72,9 @@ Be honest and concrete. Overclaiming the candidate's fit makes them waste an int
 - 7–8 (good): strong baseline match; can credibly compete in interviews.
 - 9–10 (excellent): unusually well-aligned across role, level, and stack.
 
-Ground your justification in specific evidence from both sides — name technologies, scope, level — rather than generic praise.`
+Ground your justification in specific evidence from both sides — name technologies, scope, level — rather than generic praise.${hasGoals ? '\n\nWhen a # Career Goals section is provided, populate trajectoryNote with one or two sentences on how this role aligns or diverges from the candidate\'s stated direction. Omit the field entirely when no goals are provided.' : ''}`
 
-  const prompt = `# Candidate
+  let userPrompt = `# Candidate
 
 ${serializeProfileForLLM(snapshot)}
 
@@ -74,15 +82,21 @@ ${serializeProfileForLLM(snapshot)}
 
 **${job.title}** at ${job.company}
 
-${job.jobDescription}
+${job.jobDescription}`
 
-Return a single JSON object matching the schema. Two or three sentences in the justification.`
+  if (hasGoals) {
+    userPrompt += '\n\n# Career Goals\n'
+    if (context.targetRole)      userPrompt += `\n**Target role:** ${context.targetRole}`
+    if (context.industries)      userPrompt += `\n**Industries:** ${context.industries}`
+    if (context.workPreferences) userPrompt += `\n**Work preferences:** ${context.workPreferences}`
+    if (context.extraContext)    userPrompt += `\n**Additional context:** ${context.extraContext}`
+  }
 
-  // 3. Call LLM — completeStructured validates against the schema before return,
-  //    so by the time we get `object` it's already JobFit-typed and parseable.
+  userPrompt += `\n\nReturn a single JSON object matching the schema. Two or three sentences in the justification${hasGoals ? '; one or two sentences in trajectoryNote' : ''}.`
+
   let fit: JobFit
   try {
-    const result = await completeStructured(profile.id, prompt, JobFitSchema, {
+    const result = await completeStructured(profile.id, userPrompt, JobFitSchema, {
       system,
       maxOutputTokens: 600,
       temperature: 0.2,
@@ -95,7 +109,6 @@ Return a single JSON object matching the schema. Two or three sentences in the j
     throw err
   }
 
-  // 4. Persist — Prisma's Json column accepts any structurally-valid object.
   await prisma.jobApplication.update({
     where: { id: jobId },
     data: { jobFit: fit, jobFitAssessedAt: new Date() },
