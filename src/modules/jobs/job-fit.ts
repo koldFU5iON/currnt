@@ -19,7 +19,7 @@ import { requireProfile } from '@/lib/session'
 import { completeStructured } from '@/modules/llm/client'
 import { LLMError, type LLMErrorKind } from '@/modules/llm/errors'
 import { buildProfileSnapshot, serializeProfileForLLM } from '@/modules/profile/snapshot'
-import { normalizeOnboardingContext, onboardingContextHasContent } from '@/modules/onboarding/schema'
+import { normalizeOnboardingContext } from '@/modules/onboarding/schema'
 import { JobFitSchema, type JobFit } from './schema'
 
 // Type is consumed internally only. Callers that need it import from
