@@ -2,37 +2,45 @@
 
 import { useState, useTransition } from "react"
 import { Flame, Loader2, Sparkles } from "lucide-react"
+import Link from "next/link"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
+import { Separator } from "@/components/ui/separator"
 import type { JobFit as JobFitType } from "@/app/types/job-application"
 import { assessJobFit } from "@/modules/jobs/job-fit"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
 type JobFitProps = {
-  jobId?: string                  // required to trigger an assessment
+  jobId?: string
   jobFit: JobFitType | null
-  canAssess?: boolean             // false when the row has no description
+  canAssess?: boolean
+  hasLLMKey?: boolean
 }
 
-// Maps the bucket label to a visual treatment for the flame. Higher fit gets
-// warmer color; "poor" is muted so we don't shout about bad matches.
-const LABEL_STYLES: Record<JobFitType['label'], string> = {
-  poor:      'fill-muted-foreground/40 text-muted-foreground/40',
+const FLAME_STYLES: Record<JobFitType['label'], string> = {
+  poor:      'fill-blue-400 text-blue-400',
   ok:        'fill-amber-200 text-amber-300',
   stretch:   'fill-amber-400 text-amber-500',
   good:      'fill-orange-500 text-orange-600',
   excellent: 'fill-red-500 text-red-600',
 }
 
-export function JobFit({ jobId, jobFit, canAssess = true }: JobFitProps) {
+const PILL_TEXT_STYLES: Record<JobFitType['label'], string> = {
+  poor:      'text-blue-400',
+  ok:        'text-amber-300',
+  stretch:   'text-amber-500',
+  good:      'text-orange-600',
+  excellent: 'text-red-600',
+}
+
+export function JobFit({ jobId, jobFit, canAssess = true, hasLLMKey = true }: JobFitProps) {
   const [isPending, startTransition] = useTransition()
   const [open, setOpen] = useState(false)
 
-  // No jobId means display-only context (e.g. read-only views). Show the
-  // existing flame if assessed, otherwise nothing.
+  // Display-only context (e.g. no jobId passed)
   if (!jobId) {
-    if (!jobFit) return <div className="size-4" />
-    return <FitFlame fit={jobFit} />
+    if (!jobFit) return <div className="h-6 w-16" />
+    return <FitPill fit={jobFit} />
   }
 
   function handleAssess() {
@@ -40,10 +48,8 @@ export function JobFit({ jobId, jobFit, canAssess = true }: JobFitProps) {
     startTransition(async () => {
       const result = await assessJobFit(jobId)
       if (result.ok) {
-        toast.success(`Fit: ${result.fit.label} (${result.fit.rating}/10)`)
         setOpen(true)
       } else {
-        // not_configured → directs to settings; everything else just surfaces the message
         toast.error(result.message, {
           action: result.error === 'not_configured'
             ? { label: 'Set up', onClick: () => { window.location.href = '/dashboard/settings/llm' } }
@@ -55,61 +61,101 @@ export function JobFit({ jobId, jobFit, canAssess = true }: JobFitProps) {
 
   if (isPending) {
     return (
-      <div className="flex size-6 items-center justify-center" aria-live="polite" aria-label="Assessing fit">
-        <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
+      <div className="inline-flex h-6 items-center gap-1.5 px-2 text-xs text-muted-foreground" aria-live="polite">
+        <Loader2 className="size-3 animate-spin" />
+        Assessing...
       </div>
     )
   }
 
   if (!jobFit) {
+    const disabled = !hasLLMKey || !canAssess
+    const title = !hasLLMKey
+      ? 'Add an LLM API key in Settings to assess fit'
+      : !canAssess
+        ? 'Add a job description first'
+        : 'Assess fit'
+
     return (
       <button
         type="button"
         onClick={handleAssess}
-        disabled={!canAssess}
-        title={canAssess ? 'Assess fit' : 'Add a job description first'}
-        aria-label={canAssess ? 'Assess job fit with AI' : 'Job description required to assess fit'}
+        disabled={disabled}
+        title={title}
+        aria-label={title}
         className={cn(
-          "flex size-6 items-center justify-center rounded-md text-muted-foreground/60 transition-colors",
-          canAssess
-            ? "hover:bg-muted hover:text-foreground cursor-pointer"
-            : "cursor-not-allowed opacity-50",
+          "inline-flex h-6 items-center gap-1.5 rounded-md px-2 text-xs text-muted-foreground/60 transition-colors",
+          disabled
+            ? "cursor-not-allowed opacity-40"
+            : "hover:bg-muted hover:text-foreground cursor-pointer",
         )}
       >
-        <Sparkles size={14} />
+        <Sparkles size={12} />
+        assess
       </button>
     )
   }
 
-  // Assessed — flame icon opens popover with score + justification, plus a
-  // re-run option so the user isn't locked into a stale assessment.
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
-        aria-label={`Fit: ${jobFit.label}, ${jobFit.rating} out of 10`}
-        className="flex size-6 items-center justify-center rounded-md hover:bg-muted/50"
+        aria-label={`Fit: ${jobFit.label}, ${jobFit.rating} out of 10. Click for details.`}
+        className="rounded-md hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <FitFlame fit={jobFit} />
+        <FitPill fit={jobFit} />
       </PopoverTrigger>
-      <PopoverContent className="w-72">
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-semibold capitalize">{jobFit.label}</p>
-          <span className="font-mono text-xs text-muted-foreground">{jobFit.rating}/10</span>
+      <PopoverContent className="w-80">
+        <div className="space-y-3">
+          <div>
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+              <p className="text-sm font-semibold capitalize">{jobFit.label}</p>
+              <span className="font-mono text-xs text-muted-foreground">{jobFit.rating}/10</span>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">{jobFit.justification}</p>
+          </div>
+
+          {jobFit.trajectoryNote && (
+            <>
+              <Separator />
+              <div>
+                <p className="text-xs font-semibold mb-1.5">Your trajectory</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{jobFit.trajectoryNote}</p>
+              </div>
+            </>
+          )}
+
+          <Separator />
+
+          <div className="flex items-start justify-between gap-3">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              AI assessments can be wrong — trust your gut.{' '}
+              <Link href="/dashboard/career-profile" className="underline underline-offset-2 hover:text-foreground transition-colors">
+                Update your profile
+              </Link>
+            </p>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); handleAssess() }}
+              className="shrink-0 text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors"
+            >
+              <Sparkles size={11} />
+              Re-assess
+            </button>
+          </div>
         </div>
-        <p className="mt-2 text-xs text-muted-foreground leading-relaxed">{jobFit.justification}</p>
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); handleAssess() }}
-          className="mt-3 text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
-        >
-          <Sparkles size={11} />
-          Re-assess
-        </button>
       </PopoverContent>
     </Popover>
   )
 }
 
-function FitFlame({ fit }: { fit: JobFitType }) {
-  return <Flame size={14} className={LABEL_STYLES[fit.label] ?? LABEL_STYLES.ok} />
+function FitPill({ fit }: { fit: JobFitType }) {
+  return (
+    <span className={cn(
+      "inline-flex h-6 items-center gap-1.5 rounded-md px-2 text-xs font-medium",
+      PILL_TEXT_STYLES[fit.label],
+    )}>
+      <Flame size={12} className={FLAME_STYLES[fit.label]} />
+      {fit.label}
+    </span>
+  )
 }
