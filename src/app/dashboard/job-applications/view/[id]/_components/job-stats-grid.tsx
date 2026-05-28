@@ -1,10 +1,16 @@
 import { Badge } from "@/components/ui/badge"
 import { type Job } from "@/app/types/job-application"
 import { formatDate } from "@/lib/utils"
+import { JobFit } from "@/app/dashboard/job-applications/_components/job-fit"
 
-export function JobStatsGrid({ job }: { job: Job }) {
+interface Props {
+  job: Job
+  hasLLMKey: boolean
+}
+
+export function JobStatsGrid({ job, hasLLMKey }: Props) {
   return (
-    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border md:grid-cols-4">
+    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border md:grid-cols-5">
       <MetaCell label="Status">
         <Badge variant="secondary" className="w-fit capitalize">{job.status}</Badge>
       </MetaCell>
@@ -16,6 +22,14 @@ export function JobStatsGrid({ job }: { job: Job }) {
       </MetaCell>
       <MetaCell label="Last updated">
         <span className="text-sm font-medium">{formatDate(job.lastUpdated) ?? "—"}</span>
+      </MetaCell>
+      <MetaCell label="Fit">
+        <JobFit
+          jobId={job.id}
+          jobFit={job.jobFit ?? null}
+          canAssess={!!job.jobDescription?.trim()}
+          hasLLMKey={hasLLMKey}
+        />
       </MetaCell>
     </div>
   )
