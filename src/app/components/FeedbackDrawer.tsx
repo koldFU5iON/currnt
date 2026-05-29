@@ -5,10 +5,11 @@ import { usePathname } from 'next/navigation'
 import { useIsMobile } from '@/hooks/use-mobile'
 import {
   Dialog,
+  DialogClose,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
 import {
@@ -24,11 +25,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { createFeedbackIssue } from '@/modules/feedback/actions'
+import { createFeedbackIssue, type FeedbackType } from '@/modules/feedback/actions'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-
-type FeedbackType = 'bug' | 'idea' | 'other'
 
 const TYPES: { value: FeedbackType; label: string }[] = [
   { value: 'bug', label: 'Bug' },
@@ -113,7 +112,7 @@ export function FeedbackDrawer({ open, onOpenChange }: Props) {
   )
 
   const formFields = (
-    <div className="space-y-4">
+    <form className="space-y-4" onSubmit={e => { e.preventDefault(); handleSubmit() }}>
       {typeToggle}
       <div className="space-y-1.5">
         <Label htmlFor="feedback-title">Title</Label>
@@ -122,6 +121,7 @@ export function FeedbackDrawer({ open, onOpenChange }: Props) {
           value={title}
           onChange={e => setTitle(e.target.value)}
           placeholder="Short description…"
+          maxLength={256}
           disabled={isPending}
           autoComplete="off"
         />
@@ -141,12 +141,12 @@ export function FeedbackDrawer({ open, onOpenChange }: Props) {
           className="resize-none text-sm"
         />
       </div>
-    </div>
+    </form>
   )
 
   const submitButton = (
     <Button
-      type="button"
+      type="submit"
       size="sm"
       onClick={handleSubmit}
       disabled={isPending || !title.trim()}
@@ -186,6 +186,12 @@ export function FeedbackDrawer({ open, onOpenChange }: Props) {
         </DialogHeader>
         <div className="px-4">{formFields}</div>
         <DialogFooter>
+          <DialogClose
+            disabled={isPending}
+            className="inline-flex h-8 items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium shadow-xs hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
+          >
+            Cancel
+          </DialogClose>
           {submitButton}
         </DialogFooter>
       </DialogContent>

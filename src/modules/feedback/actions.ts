@@ -2,7 +2,7 @@
 
 import { requireProfile } from '@/lib/session'
 
-type FeedbackType = 'bug' | 'idea' | 'other'
+export type FeedbackType = 'bug' | 'idea' | 'other'
 
 export type CreateFeedbackResult =
   | { ok: true }
@@ -20,12 +20,13 @@ export async function createFeedbackIssue(
   description: string,
   currentPath: string,
 ): Promise<CreateFeedbackResult> {
-  const { profile } = await requireProfile()
+  const { session } = await requireProfile()
 
   const trimmedTitle = title.trim()
   if (!trimmedTitle) {
     return { ok: false, message: 'Title is required.' }
   }
+  const safePath = currentPath.startsWith('/') ? currentPath.slice(0, 200) : '(unknown)'
 
   const token = process.env.GITHUB_ISSUE_TOKEN
   if (!token) {
@@ -38,8 +39,8 @@ export async function createFeedbackIssue(
   }
   bodyLines.push(
     '---',
-    `**Filed from:** ${currentPath}`,
-    `**Reporter:** ${profile.email ?? 'unknown'}`,
+    `**Filed from:** ${safePath}`,
+    `**Reporter:** ${session.user.email}`,
     `**Submitted:** ${new Date().toISOString()}`,
   )
 
