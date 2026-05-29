@@ -36,7 +36,7 @@ export default function Page() {
   return (
     <ContentContainer
       title="Settings"
-      description="Manage how external tools talk to your account."
+      description="Manage your AI setup, writing preferences, and external integrations."
     >
       <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {SECTIONS.map(s => (

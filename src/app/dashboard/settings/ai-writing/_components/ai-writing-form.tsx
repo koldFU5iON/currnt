@@ -24,8 +24,8 @@ export function AIWritingForm({ initialBrief, writingRules }: Props) {
   function handleSave() {
     startTransition(async () => {
       try {
-        await updateWritingBrief(draft)
         const trimmed = draft.trim()
+        await updateWritingBrief(trimmed)
         setSaved(trimmed)
         setDraft(trimmed)
         toast.success(trimmed ? 'Writing brief saved.' : 'Writing brief cleared.')
@@ -68,12 +68,13 @@ export function AIWritingForm({ initialBrief, writingRules }: Props) {
           onClick={() => setRulesExpanded(v => !v)}
           className="flex items-center gap-1.5 text-sm font-medium hover:text-foreground text-muted-foreground transition-colors"
           aria-expanded={rulesExpanded}
+          aria-controls="writing-rules-panel"
         >
           {rulesExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           Writing rules applied to all AI output
         </button>
         {rulesExpanded && (
-          <pre className="rounded-md border bg-muted/40 p-4 text-xs text-muted-foreground whitespace-pre-wrap font-sans leading-relaxed">
+          <pre id="writing-rules-panel" className="rounded-md border bg-muted/40 p-4 text-xs text-muted-foreground whitespace-pre-wrap font-sans leading-relaxed">
             {writingRules}
           </pre>
         )}
