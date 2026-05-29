@@ -60,7 +60,7 @@ export async function createFeedbackIssue(
     })
 
     if (!res.ok) {
-      const text = await res.text().catch(() => '')
+      const text = await res.text().catch(() => '(no body)')
       console.error(`GitHub Issues API error ${res.status}: ${text}`)
       return { ok: false, message: 'GitHub returned an error. Try the fallback link.' }
     }
