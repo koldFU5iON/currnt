@@ -129,7 +129,7 @@ export function JobFit({ jobId, jobFit, canAssess = true, hasLLMKey = true }: Jo
               <Separator />
               <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <StickyNote size={11} className="shrink-0 fill-amber-200 text-amber-500" />
-                Personal notes were included in this assessment.
+                Personal notes were included when this assessment was run.
               </p>
             </>
           )}

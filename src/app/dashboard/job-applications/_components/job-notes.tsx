@@ -81,13 +81,14 @@ export function JobNotes({ jobId, initialNotes, initialIncludeInFit }: JobNotesP
             disabled={isPending}
             className="resize-none text-xs"
           />
-          <label className={cn(
+          <label htmlFor="include-in-fit" className={cn(
             "flex items-center gap-2 text-xs cursor-pointer select-none",
             (!draft.trim() || isPending) ? "text-muted-foreground/40 cursor-not-allowed" : "text-muted-foreground",
           )}>
             <Checkbox
+              id="include-in-fit"
               checked={includeInFit}
-              onCheckedChange={(v) => setIncludeInFit(Boolean(v))}
+              onCheckedChange={setIncludeInFit}
               disabled={isPending || !draft.trim()}
             />
             Include in job-fit assessment

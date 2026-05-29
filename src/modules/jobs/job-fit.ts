@@ -95,6 +95,8 @@ ${job.jobDescription}`
   }
 
   if (hasNotes) {
+    // User-controlled content — unsanitized intentionally. Injection here only affects
+    // the user's own assessment on their own API key; there is no cross-user risk.
     userPrompt += `\n\n# Personal Notes\n\n${job.notes}`
   }
 
