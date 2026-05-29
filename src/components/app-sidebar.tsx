@@ -27,13 +27,16 @@ import {
   ChevronsUpDown,
   FileText,
   LogOut,
+  MessageSquareWarning,
   Settings,
   User,
 } from "lucide-react"
 import Link from "next/link"
+import { useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { authClient, useSession } from "@/lib/auth-client"
 import { mainNav, type NavItem } from "@/lib/nav-menu"
+import { FeedbackDrawer } from "@/app/components/FeedbackDrawer"
 
 export function AppSidebar() {
   return (
@@ -73,6 +76,7 @@ export function AppSidebar() {
 
       <SidebarFooter>
         <SidebarMenu>
+          <FeedbackButton />
           <SidebarMenuItem>
             <UserMenu />
           </SidebarMenuItem>
@@ -81,6 +85,21 @@ export function AppSidebar() {
 
       <SidebarRail />
     </Sidebar>
+  )
+}
+
+function FeedbackButton() {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <SidebarMenuItem>
+        <SidebarMenuButton onClick={() => setOpen(true)} tooltip="Report an issue">
+          <MessageSquareWarning />
+          <span>Report an issue</span>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <FeedbackDrawer open={open} onOpenChange={setOpen} />
+    </>
   )
 }
 
