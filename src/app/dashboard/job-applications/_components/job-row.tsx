@@ -13,8 +13,10 @@ import { Loader2, SquareArrowOutUpRight } from "lucide-react"
 import { ApplicationDateBlock } from "./app-date-block"
 import { JobFit } from "./job-fit"
 import { JobNotes } from "./job-notes"
+import { SalaryBandCell } from "./salary-band-cell"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
+import { daysAgo, formatRelative } from "@/lib/utils"
 
 type JobRowProps = {
   job: Job
@@ -27,16 +29,22 @@ type JobRowProps = {
 }
 
 export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArchive, hasLLMKey }: JobRowProps) {
-  const { id, jobNumber, title, company, countries, url, dateApplied, lastUpdated, status, progress, jobFit, notes, notesIncludeInFit, applicationSource, jobDescription } = job
-  // Cold is the silent default — only surface a badge for sources worth noticing.
+  const {
+    id, jobNumber, title, company, countries, url,
+    dateApplied, lastUpdated, status, progress,
+    jobFit, notes, notesIncludeInFit, applicationSource,
+    jobDescription, salaryBand,
+  } = job
   const showSourceBadge = applicationSource !== ApplicationSource.Cold
   const busy = Boolean(busyLabel)
 
   return (
-    <div className="group relative col-span-full grid grid-cols-subgrid items-center border-b border-border/30 last:border-b-0 transition-colors duration-150 hover:bg-muted/50 data-[selected=true]:bg-muted/40 data-[busy=true]:hover:bg-transparent"
-         data-selected={selected}
-         data-busy={busy}
-         aria-busy={busy || undefined}>
+    <div
+      className="group relative col-span-full grid grid-cols-subgrid items-center border-b border-border/30 last:border-b-0 transition-colors duration-150 hover:bg-muted/50 data-[selected=true]:bg-muted/40 data-[busy=true]:hover:bg-transparent"
+      data-selected={selected}
+      data-busy={busy}
+      aria-busy={busy || undefined}
+    >
       {busy && (
         <div className="pointer-events-auto absolute inset-0 z-10 flex items-center justify-center bg-background/85 backdrop-blur-[1px]">
           <span role="status" className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
@@ -45,7 +53,9 @@ export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArc
           </span>
         </div>
       )}
-      <div className="flex items-center justify-center px-2 py-3">
+
+      {/* Checkbox */}
+      <div className="flex items-center justify-center px-2 py-2">
         <Checkbox
           checked={selected}
           onCheckedChange={() => onToggleSelect(id)}
@@ -53,7 +63,8 @@ export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArc
         />
       </div>
 
-      <div className="min-w-0 px-3 py-3">
+      {/* Title / company */}
+      <div className="min-w-0 px-3 py-2">
         <div className="flex min-w-0 items-center gap-1.5">
           <Link
             href={`/dashboard/job-applications/view/${id}`}
@@ -85,25 +96,45 @@ export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArc
         </p>
       </div>
 
-      <div className="py-3">
-        <AppProgressBar progress={progress} jobId={id} />
-      </div>
-
-      <div className="py-3">
-        <ApplicationDateBlock label="Applied" date={dateApplied} jobId={id} />
-      </div>
-
-      <div className="py-3">
-        <ApplicationDateBlock label="Last Update" date={lastUpdated} />
-      </div>
-
-      <div className="py-3">
+      {/* Status */}
+      <div className="py-2">
         <StatusDropdown jobId={id} status={status} />
       </div>
 
-      <div className="flex items-center gap-1 px-3 py-3">
-        <JobFit jobId={id} jobFit={jobFit || null} canAssess={!!jobDescription?.trim()} hasLLMKey={hasLLMKey} />
+      {/* Progress */}
+      <div className="px-3 py-2">
+        <AppProgressBar progress={progress} jobId={id} />
+      </div>
+
+      {/* Salary band */}
+      <div className="px-3 py-2">
+        <SalaryBandCell salaryBand={salaryBand ?? null} jobId={id} />
+      </div>
+
+      {/* Job fit */}
+      <div className="py-2">
+        <JobFit jobId={id} jobFit={jobFit ?? null} canAssess={!!jobDescription?.trim()} hasLLMKey={hasLLMKey} />
+      </div>
+
+      {/* Applied date */}
+      <div className="px-3 py-2">
+        <ApplicationDateBlock label="Applied" date={dateApplied} jobId={id} />
+      </div>
+
+      {/* Notes */}
+      <div className="flex items-center justify-center py-2">
         <JobNotes jobId={id} initialNotes={notes ?? null} initialIncludeInFit={notesIncludeInFit} />
+      </div>
+
+      {/* Last updated */}
+      <div className="px-3 py-2">
+        <span className="text-xs text-muted-foreground">
+          {formatRelative(daysAgo(lastUpdated) ?? 0)}
+        </span>
+      </div>
+
+      {/* Controls */}
+      <div className="flex items-center justify-center px-2 py-2">
         <AppControls
           id={id}
           onEdit={() => onEdit(job)}
