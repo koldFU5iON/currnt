@@ -44,6 +44,7 @@ function valuesFromJob(job: Job): z.infer<typeof updateJobSchema> {
     jobDescription: job.jobDescription ?? '',
     datePublished: job.datePublished ?? undefined,
     applicationSource: job.applicationSource,
+    salaryBand: job.salaryBand ?? '',
   }
 }
 
@@ -106,6 +107,12 @@ export function EditJobDialog({ job, open, onOpenChange }: EditJobDialogProps) {
                 options={SOURCE_OPTIONS}
               />
             </div>
+
+            <FormField
+              name="salaryBand"
+              label="Salary Band"
+              placeholder="e.g. $120–140k"
+            />
 
             <FormField
               name="jobDescription"
