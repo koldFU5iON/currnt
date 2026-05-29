@@ -38,7 +38,7 @@ export async function assessJobFit(jobId: string): Promise<AssessJobFitResult> {
 
   const job = await prisma.jobApplication.findFirst({
     where: { id: jobId, profileId: profile.id },
-    select: { id: true, title: true, company: true, jobDescription: true },
+    select: { id: true, title: true, company: true, jobDescription: true, notes: true, notesIncludeInFit: true },
   })
   if (!job) {
     return { ok: false, error: 'not_found', message: 'Job not found' }
@@ -62,6 +62,7 @@ export async function assessJobFit(jobId: string): Promise<AssessJobFitResult> {
   const context = normalizeOnboardingContext(settings?.onboardingContext)
   const hasGoals =
     !!(context.targetRole || context.industries || context.workPreferences || context.extraContext)
+  const hasNotes = job.notesIncludeInFit && !!job.notes?.trim()
 
   const system = `You are an experienced career coach assessing whether a candidate is a strong fit for a role.
 
@@ -93,7 +94,11 @@ ${job.jobDescription}`
     if (context.extraContext)    userPrompt += `\n**Additional context:** ${context.extraContext}`
   }
 
-  userPrompt += `\n\nReturn a single JSON object matching the schema. Two or three sentences in the justification${hasGoals ? '; one or two sentences in trajectoryNote' : ''}.`
+  if (hasNotes) {
+    userPrompt += `\n\n# Personal Notes\n\n${job.notes}`
+  }
+
+  userPrompt += `\n\nReturn a single JSON object matching the schema. Two or three sentences in the justification${hasGoals ? '; one or two sentences in trajectoryNote' : ''}${hasNotes ? '. Set notesUsed to true.' : ''}.`
 
   let fit: JobFit
   try {
