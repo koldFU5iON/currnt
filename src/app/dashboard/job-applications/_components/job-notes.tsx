@@ -5,6 +5,7 @@ import { StickyNote } from "lucide-react"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
 import { updateJobNotes } from "@/modules/jobs/mutations"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
@@ -12,29 +13,38 @@ import { cn } from "@/lib/utils"
 type JobNotesProps = {
   jobId: string
   initialNotes: string | null
+  initialIncludeInFit: boolean
 }
 
-export function JobNotes({ jobId, initialNotes }: JobNotesProps) {
+export function JobNotes({ jobId, initialNotes, initialIncludeInFit }: JobNotesProps) {
   const [saved, setSaved] = useState(initialNotes ?? '')
+  const [savedIncludeInFit, setSavedIncludeInFit] = useState(initialIncludeInFit)
   const [draft, setDraft] = useState(saved)
+  const [includeInFit, setIncludeInFit] = useState(initialIncludeInFit)
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   const hasNotes = saved.trim().length > 0
-  const isDirty = draft !== saved
+  const isDirty = draft !== saved || includeInFit !== savedIncludeInFit
 
   function handleOpenChange(next: boolean) {
-    if (next) setDraft(saved)
+    if (next) {
+      setDraft(saved)
+      setIncludeInFit(savedIncludeInFit)
+    }
     setOpen(next)
   }
 
   function handleSave() {
     startTransition(async () => {
       try {
-        await updateJobNotes(jobId, draft)
+        await updateJobNotes(jobId, draft, includeInFit)
         const trimmed = draft.trim()
+        const effectiveIncludeInFit = trimmed ? includeInFit : false
         setSaved(trimmed)
         setDraft(trimmed)
+        setSavedIncludeInFit(effectiveIncludeInFit)
+        setIncludeInFit(effectiveIncludeInFit)
         setOpen(false)
         toast.success(trimmed ? 'Note saved.' : 'Note cleared.')
       } catch {
@@ -71,6 +81,17 @@ export function JobNotes({ jobId, initialNotes }: JobNotesProps) {
             disabled={isPending}
             className="resize-none text-xs"
           />
+          <label className={cn(
+            "flex items-center gap-2 text-xs cursor-pointer select-none",
+            (!draft.trim() || isPending) ? "text-muted-foreground/40 cursor-not-allowed" : "text-muted-foreground",
+          )}>
+            <Checkbox
+              checked={includeInFit}
+              onCheckedChange={(v) => setIncludeInFit(Boolean(v))}
+              disabled={isPending || !draft.trim()}
+            />
+            Include in job-fit assessment
+          </label>
           <div className="flex justify-end gap-2">
             <Button
               type="button"
