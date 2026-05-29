@@ -1,9 +1,11 @@
-import { ContentContainer } from "@/app/components/ContentContainer";
-import { ExperienceBlock } from "./_components/Experience";
-import { getFullProfile } from "@/modules/profile/queries";
-import { ContactBlock } from "./_components/Contact";
-import { QualificationsBlock } from "./_components/Qualifications";
-import type { FullProfile } from "@/app/types/profile";
+import { ContentContainer } from "@/app/components/ContentContainer"
+import { ExperienceBlock } from "./_components/Experience"
+import { getFullProfile } from "@/modules/profile/queries"
+import { ContactBlock } from "./_components/Contact"
+import { QualificationsBlock } from "./_components/Qualifications"
+import { ProfileSummaryCard } from "./_components/ProfileSummaryCard"
+import { getLLMConfigStatus } from "@/modules/llm/client"
+import type { FullProfile } from "@/app/types/profile"
 
 export type QualificationsType = {
   skills: FullProfile['skills']
@@ -13,7 +15,8 @@ export type QualificationsType = {
 }
 
 export default async function Page() {
-  const profile = await getFullProfile();
+  const profile = await getFullProfile()
+  const { configured: hasLLMKey } = await getLLMConfigStatus(profile.id)
 
   const contact = {
     name: profile.name,
@@ -34,19 +37,27 @@ export default async function Page() {
     skills: profile.skills,
     education: profile.educations,
     certifications: profile.certifications,
-    tools: profile.languages
+    tools: profile.languages,
   }
 
-  return <ContentContainer title="Profile Page" fullWidth>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      <div>
-        {contact.name && <ContactBlock contact={contact} />}
+  return (
+    <ContentContainer title="Profile Page" fullWidth>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div>
+          {contact.name && <ContactBlock contact={contact} />}
+        </div>
+        <div className="md:col-span-2">
+          <QualificationsBlock qualifications={qualifications} careerYears={careerYears} />
+        </div>
       </div>
-      <div className="md:col-span-2">
-        <QualificationsBlock qualifications={qualifications} careerYears={careerYears} />
+      <div className="mb-8">
+        <p className="text-sm font-semibold mb-3">Professional Summary</p>
+        <ProfileSummaryCard
+          initialSummary={profile.summary ?? null}
+          hasLLMKey={hasLLMKey}
+        />
       </div>
-    </div>
-    <ExperienceBlock exp={profile.experiences} />
-  </ContentContainer>
-
+      <ExperienceBlock exp={profile.experiences} />
+    </ContentContainer>
+  )
 }
