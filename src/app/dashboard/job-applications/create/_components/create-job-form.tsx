@@ -2,11 +2,13 @@
 
 import * as z from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm, FormProvider } from 'react-hook-form'
+import { Controller, useForm, FormProvider } from 'react-hook-form'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Loader2, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Field, FieldLabel, FieldError } from '@/components/ui/field'
+import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from '@/components/ui/input-group'
 import { FormField } from './form-field'
 import { createJobSchema } from '@/modules/jobs/schema'
 import { createJobApplication } from '@/modules/jobs/mutations'
@@ -107,22 +109,36 @@ export function CreateJobForm() {
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 
-        <div className="space-y-2">
-          <FormField name="url" label="Job URL" type="url" placeholder="https://company.com/jobs/123" />
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            className="gap-1.5"
-            onClick={handleExtract}
-            disabled={extracting}
-          >
-            {extracting
-              ? <Loader2 size={14} className="animate-spin" />
-              : <Sparkles size={14} />}
-            {extracting ? 'Extracting...' : 'Extract from URL'}
-          </Button>
-        </div>
+        <Controller
+          name="url"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>Job URL</FieldLabel>
+              <InputGroup>
+                <InputGroupInput
+                  {...field}
+                  type="url"
+                  placeholder="https://company.com/jobs/123"
+                  aria-invalid={fieldState.invalid}
+                />
+                <InputGroupAddon align="inline-end">
+                  <InputGroupButton
+                    onClick={handleExtract}
+                    disabled={extracting}
+                    className="gap-1"
+                  >
+                    {extracting
+                      ? <Loader2 size={12} className="animate-spin" />
+                      : <Sparkles size={12} />}
+                    {extracting ? 'Extracting…' : 'Extract'}
+                  </InputGroupButton>
+                </InputGroupAddon>
+              </InputGroup>
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
+          )}
+        />
 
         <div className="grid grid-cols-2 gap-4">
           <FormField name="title" label="Job Title" placeholder="e.g. Senior Product Manager" required />
@@ -151,15 +167,17 @@ export function CreateJobForm() {
           placeholder="Paste or extract the full job description (markdown supported)"
         />
 
-        <DuplicateWarning matches={duplicates} />
-
-        <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">
-          {form.formState.isSubmitting
-            ? 'Creating...'
-            : duplicates.length > 0 && acknowledgedDupes
-              ? 'Create anyway'
-              : 'Create Job Application'}
-        </Button>
+        {/* Sticky on mobile so the submit button stays reachable while scrolling the long textarea */}
+        <div className="sticky bottom-0 -mx-6 -mb-6 px-6 pb-6 pt-3 bg-muted/95 backdrop-blur-sm border-t border-border/40 rounded-b-2xl md:static md:mx-0 md:mb-0 md:px-0 md:pt-0 md:pb-0 md:bg-transparent md:backdrop-blur-none md:border-0 md:rounded-none">
+          <DuplicateWarning matches={duplicates} />
+          <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">
+            {form.formState.isSubmitting
+              ? 'Creating…'
+              : duplicates.length > 0 && acknowledgedDupes
+                ? 'Create anyway'
+                : 'Create Job Application'}
+          </Button>
+        </div>
 
       </form>
     </FormProvider>
