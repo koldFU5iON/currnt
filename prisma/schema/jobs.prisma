@@ -19,6 +19,7 @@ model JobApplication {
   jobDescription      String?
   notes             String?
   notesIncludeInFit Boolean   @default(false)
+  salaryBand        String?
   tags              String[]
   datePublished     DateTime? @default(now())
   lastUpdated       DateTime  @updatedAt
