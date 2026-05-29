@@ -31,17 +31,26 @@ type SkillRow = SkillWithMatch & {
 
 // ── Source meta header ────────────────────────────────────────────────────────
 
-function SourceHeader({ source }: { source: ExtractionSource }) {
+function SourceHeader({ source, llmError }: { source: ExtractionSource; llmError?: string }) {
   const messages: Record<ExtractionSource, string> = {
     parser: 'Parsed from tags.',
     'parser+llm': 'Parsed from tags · LLM filled the gaps.',
     'parser-only-no-key':
       'Parsed from tags · Add an LLM key in Settings to also extract from prose.',
+    'parser-llm-error': 'Parsed from tags · LLM unavailable, prose not extracted.',
   }
   return (
-    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/40 rounded-md px-3 py-2">
-      <ScanText size={13} className="shrink-0" />
-      {messages[source]}
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/40 rounded-md px-3 py-2">
+        <ScanText size={13} className="shrink-0" />
+        {messages[source]}
+      </div>
+      {source === 'parser-llm-error' && llmError && (
+        <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-50/50 dark:bg-amber-950/20 px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
+          <AlertCircle size={13} className="shrink-0 mt-0.5" />
+          {llmError}
+        </div>
+      )}
     </div>
   )
 }
@@ -260,6 +269,7 @@ type PanelState =
   | {
       stage: 'review'
       source: ExtractionSource
+      llmError?: string
       activityRows: ActivityRow[]
       skillRows: SkillRow[]
     }
@@ -290,7 +300,7 @@ export function ExtractionPanel({ experienceId, existingActivities, existingSkil
       editedCategory: s.category ?? '',
     }))
 
-    setPanel({ stage: 'review', source: result.meta.source, activityRows, skillRows })
+    setPanel({ stage: 'review', source: result.meta.source, llmError: result.meta.llmError, activityRows, skillRows })
   }
 
   const updateActivityRow = (idx: number, patch: Partial<ActivityRow>) => {
@@ -380,7 +390,7 @@ export function ExtractionPanel({ experienceId, existingActivities, existingSkil
 
       {panel.stage === 'review' && (
         <div className="space-y-4">
-          <SourceHeader source={panel.source} />
+          <SourceHeader source={panel.source} llmError={panel.llmError} />
 
           {panel.activityRows.length > 0 && (
             <div className="space-y-2">
