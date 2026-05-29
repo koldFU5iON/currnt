@@ -186,10 +186,8 @@ export function FeedbackDrawer({ open, onOpenChange }: Props) {
         </DialogHeader>
         <div className="px-4">{formFields}</div>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button type="button" variant="outline" size="sm" disabled={isPending}>
-              Cancel
-            </Button>
+          <DialogClose render={<Button type="button" variant="outline" size="sm" disabled={isPending} />}>
+            Cancel
           </DialogClose>
           {submitButton}
         </DialogFooter>
