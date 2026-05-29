@@ -60,8 +60,13 @@ export async function clearLLMApiKey(): Promise<void> {
   revalidatePath('/dashboard/settings/llm')
 }
 
+const WRITING_BRIEF_MAX_LENGTH = 2000
+
 export async function updateWritingBrief(brief: string): Promise<void> {
   const { profile } = await requireProfile()
+  if (brief.length > WRITING_BRIEF_MAX_LENGTH) {
+    throw new Error(`Writing brief must be ${WRITING_BRIEF_MAX_LENGTH} characters or fewer.`)
+  }
   const trimmed = brief.trim() || null
   await prisma.userSettings.upsert({
     where: { profileId: profile.id },

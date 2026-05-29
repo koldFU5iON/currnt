@@ -16,7 +16,7 @@ export async function loadWritingRules(): Promise<string> {
 
 export async function loadWritingContext(profileId: string): Promise<WritingContext> {
   const [rules, settings] = await Promise.all([
-    loadWritingRules(),
+    loadWritingRules().catch(() => ''),
     prisma.userSettings.findUnique({
       where: { profileId },
       select: { writingBrief: true },

@@ -45,6 +45,7 @@ export function AIWritingForm({ initialBrief, writingRules }: Props) {
           onChange={e => setDraft(e.target.value)}
           placeholder="How do you want AI to represent you? E.g. 'I'm a senior IC not a people manager', 'prefer direct language over corporate tone', 'transitioning from finance to tech, lean into transferable skills'…"
           rows={5}
+          maxLength={2000}
           disabled={isPending}
           className="resize-none text-sm"
         />
