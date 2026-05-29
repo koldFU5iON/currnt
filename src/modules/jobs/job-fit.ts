@@ -20,6 +20,7 @@ import { completeStructured } from '@/modules/llm/client'
 import { LLMError, type LLMErrorKind } from '@/modules/llm/errors'
 import { buildProfileSnapshot, serializeProfileForLLM } from '@/modules/profile/snapshot'
 import { normalizeOnboardingContext } from '@/modules/onboarding/schema'
+import { loadWritingContext, composeSystem } from '@/modules/llm/prompt-context'
 import { JobFitSchema, type JobFit } from './schema'
 
 // Type is consumed internally only. Callers that need it import from
@@ -51,12 +52,13 @@ export async function assessJobFit(jobId: string): Promise<AssessJobFitResult> {
     }
   }
 
-  const [snapshot, settings] = await Promise.all([
+  const [snapshot, settings, writingCtx] = await Promise.all([
     buildProfileSnapshot(profile.id),
     prisma.userSettings.findUnique({
       where: { profileId: profile.id },
       select: { onboardingContext: true },
     }),
+    loadWritingContext(profile.id),
   ])
 
   const context = normalizeOnboardingContext(settings?.onboardingContext)
@@ -64,7 +66,7 @@ export async function assessJobFit(jobId: string): Promise<AssessJobFitResult> {
     !!(context.targetRole || context.industries || context.workPreferences || context.extraContext)
   const hasNotes = job.notesIncludeInFit && !!job.notes?.trim()
 
-  const system = `You are an experienced career coach assessing whether a candidate is a strong fit for a role.
+  const featureInstructions = `You are an experienced career coach assessing whether a candidate is a strong fit for a role.
 
 Be honest and concrete. Overclaiming the candidate's fit makes them waste an interview slot; understating loses them an opportunity they could land. Calibrate the rating against real-world hiring bars:
 
@@ -75,6 +77,8 @@ Be honest and concrete. Overclaiming the candidate's fit makes them waste an int
 - 9–10 (excellent): unusually well-aligned across role, level, and stack.
 
 Ground your justification in specific evidence from both sides — name technologies, scope, level — rather than generic praise.${hasGoals ? '\n\nWhen a # Career Goals section is provided, populate trajectoryNote with one or two sentences on how this role aligns or diverges from the candidate\'s stated direction. Omit the field entirely when no goals are provided.' : ''}`
+
+  const system = composeSystem(writingCtx.rules, writingCtx.brief, featureInstructions)
 
   let userPrompt = `# Candidate
 
