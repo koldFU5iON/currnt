@@ -75,7 +75,7 @@ export function JobNotes({ jobId, initialNotes, initialIncludeInFit }: JobNotesP
           <p className="text-sm font-semibold">Notes</p>
           <Textarea
             value={draft}
-            onChange={e => setDraft(e.target.value)}
+            onChange={e => { setDraft(e.target.value); if (!e.target.value.trim()) setIncludeInFit(false) }}
             placeholder="Add a note..."
             rows={4}
             disabled={isPending}
