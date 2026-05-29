@@ -17,6 +17,9 @@ const nextConfig: NextConfig = {
     "/dashboard/**": [
       "./src/lib/prompts/*.md",
     ],
+    "/api/**": [
+      "./src/lib/prompts/*.md",
+    ],
   },
 };
 

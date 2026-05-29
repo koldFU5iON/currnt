@@ -8,8 +8,11 @@ export type WritingContext = {
 }
 
 export async function loadWritingContext(profileId: string): Promise<WritingContext> {
+  const rulesPath = path.join(process.cwd(), 'src/lib/prompts/writing-rules.md')
   const [rules, settings] = await Promise.all([
-    readFile(path.join(process.cwd(), 'src/lib/prompts/writing-rules.md'), 'utf-8'),
+    readFile(rulesPath, 'utf-8').catch(() => {
+      throw new Error('writing-rules.md missing from bundle — check outputFileTracingIncludes in next.config.ts')
+    }),
     prisma.userSettings.findUnique({
       where: { profileId },
       select: { writingBrief: true },
@@ -19,5 +22,5 @@ export async function loadWritingContext(profileId: string): Promise<WritingCont
 }
 
 export function composeSystem(...parts: (string | null | undefined)[]): string {
-  return parts.filter(Boolean).join('\n\n---\n\n')
+  return parts.filter((p): p is string => Boolean(p)).join('\n\n---\n\n')
 }

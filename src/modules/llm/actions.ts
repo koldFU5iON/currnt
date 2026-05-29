@@ -60,12 +60,13 @@ export async function clearLLMApiKey(): Promise<void> {
   revalidatePath('/dashboard/settings/llm')
 }
 
-export async function updateWritingBrief(brief: string) {
+export async function updateWritingBrief(brief: string): Promise<void> {
   const { profile } = await requireProfile()
+  const trimmed = brief.trim() || null
   await prisma.userSettings.upsert({
     where: { profileId: profile.id },
-    update: { writingBrief: brief.trim() || null },
-    create: { profileId: profile.id, writingBrief: brief.trim() || null },
+    update: { writingBrief: trimmed },
+    create: { profileId: profile.id, writingBrief: trimmed },
   })
   revalidatePath('/dashboard/settings/ai-writing')
 }
