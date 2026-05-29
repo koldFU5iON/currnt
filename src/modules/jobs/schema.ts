@@ -33,6 +33,8 @@ export const JobFitSchema = z.object({
     .describe('Two or three sentences. Concrete reasoning grounded in candidate and role specifics, no fluff.'),
   trajectoryNote: z.string().optional()
     .describe("One or two sentences on how this role relates to the candidate's stated career goals and target direction. Omit entirely when no career goals are provided."),
+  notesUsed: z.boolean().optional()
+    .describe('Set to true when personal notes were included in this assessment. Omit or set false otherwise.'),
 })
 
 export type JobFit = z.infer<typeof JobFitSchema>

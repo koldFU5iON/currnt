@@ -77,6 +77,7 @@ export type JobFit = {
   label: "poor" | "ok" | "stretch" | "good" | "excellent"
   justification: string
   trajectoryNote?: string
+  notesUsed?: boolean
 }
 
 export type Job = Omit<JobApplication, "status" | "progress" | "jobFit" | "applicationSource"> & {
