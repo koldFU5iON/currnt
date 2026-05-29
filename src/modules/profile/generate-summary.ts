@@ -20,7 +20,7 @@ export async function generateProfileSummary(): Promise<GenerateSummaryResult> {
   try {
     const result = await complete(profile.id, userPrompt, {
       system,
-      maxOutputTokens: 200,
+      maxOutputTokens: 300,
       temperature: 0.4,
     })
     return { ok: true, summary: result.text.trim() }

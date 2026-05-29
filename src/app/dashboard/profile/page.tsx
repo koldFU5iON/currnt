@@ -57,7 +57,7 @@ export default async function Page() {
       <div className="mb-8">
         <p className="text-sm font-semibold mb-3">Professional Summary</p>
         <ProfileSummaryCard
-          initialSummary={profile.summary ?? null}
+          initialSummary={profile.summary}
           hasLLMKey={hasLLMKey}
         />
       </div>
