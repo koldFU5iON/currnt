@@ -163,7 +163,7 @@ export function FeedbackDrawer({ open, onOpenChange }: Props) {
             <DrawerTitle>Report an issue</DrawerTitle>
             <DrawerDescription>Tell us what you ran into or share an idea.</DrawerDescription>
           </DrawerHeader>
-          <div className="px-4 pb-2">{formFields}</div>
+          <div className="flex-1 overflow-y-auto px-4 pb-2">{formFields}</div>
           <DrawerFooter className="flex-row justify-end gap-2">
             <DrawerClose asChild>
               <Button type="button" variant="outline" size="sm" disabled={isPending}>
@@ -186,11 +186,10 @@ export function FeedbackDrawer({ open, onOpenChange }: Props) {
         </DialogHeader>
         <div className="px-4">{formFields}</div>
         <DialogFooter>
-          <DialogClose
-            disabled={isPending}
-            className="inline-flex h-8 items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium shadow-xs hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
-          >
-            Cancel
+          <DialogClose asChild>
+            <Button type="button" variant="outline" size="sm" disabled={isPending}>
+              Cancel
+            </Button>
           </DialogClose>
           {submitButton}
         </DialogFooter>
