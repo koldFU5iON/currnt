@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
     "/api/integrations/skills/[agent]": [
       "./src/lib/integrations/skills/*.md",
     ],
-    "/**": [
+    "/dashboard/**": [
       "./src/lib/prompts/*.md",
     ],
   },
