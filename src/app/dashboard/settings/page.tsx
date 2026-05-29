@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ChevronRight, KeyRound, Sparkles, UserCircle } from 'lucide-react'
+import { ChevronRight, KeyRound, PenLine, Sparkles, UserCircle } from 'lucide-react'
 import { ContentContainer } from '@/app/components/ContentContainer'
 import { Card } from '@/components/ui/card'
 
@@ -17,6 +17,12 @@ const SECTIONS = [
     Icon: Sparkles,
     title: 'LLM',
     description: 'Bring-your-own-key AI: connect Anthropic, OpenAI, or Google.',
+  },
+  {
+    href: '/dashboard/settings/ai-writing',
+    Icon: PenLine,
+    title: 'AI Writing',
+    description: 'Writing brief and style rules applied to all AI-generated content.',
   },
   {
     href: '/dashboard/settings/api-tokens',
