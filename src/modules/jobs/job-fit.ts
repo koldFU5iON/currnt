@@ -20,7 +20,7 @@ import { completeStructured } from '@/modules/llm/client'
 import { LLMError, type LLMErrorKind } from '@/modules/llm/errors'
 import { buildProfileSnapshot, serializeProfileForLLM } from '@/modules/profile/snapshot'
 import { normalizeOnboardingContext } from '@/modules/onboarding/schema'
-import { loadWritingContext, composeSystem } from '@/modules/llm/prompt-context'
+import { loadWritingRules, composeSystem, type WritingContext } from '@/modules/llm/prompt-context'
 import { JobFitSchema, type JobFit } from './schema'
 
 // Type is consumed internally only. Callers that need it import from
@@ -52,15 +52,16 @@ export async function assessJobFit(jobId: string): Promise<AssessJobFitResult> {
     }
   }
 
-  const [snapshot, settings, writingCtx] = await Promise.all([
+  const [snapshot, settings, rules] = await Promise.all([
     buildProfileSnapshot(profile.id),
     prisma.userSettings.findUnique({
       where: { profileId: profile.id },
-      select: { onboardingContext: true },
+      select: { onboardingContext: true, writingBrief: true },
     }),
-    loadWritingContext(profile.id),
+    loadWritingRules(),
   ])
 
+  const writingCtx: WritingContext = { rules, brief: settings?.writingBrief ?? null }
   const context = normalizeOnboardingContext(settings?.onboardingContext)
   const hasGoals =
     !!(context.targetRole || context.industries || context.workPreferences || context.extraContext)

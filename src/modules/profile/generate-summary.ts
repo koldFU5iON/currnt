@@ -12,8 +12,10 @@ type GenerateSummaryResult =
 
 export async function generateProfileSummary(): Promise<GenerateSummaryResult> {
   const { profile } = await requireProfile()
-  const snapshot = await buildProfileSnapshot(profile.id)
-  const { rules, brief } = await loadWritingContext(profile.id)
+  const [snapshot, { rules, brief }] = await Promise.all([
+    buildProfileSnapshot(profile.id),
+    loadWritingContext(profile.id),
+  ])
 
   const featureInstructions = `You are an experienced CV writer. Write professional summaries that are specific, honest, and compelling. Use first person. Return only the summary paragraph — no heading, no preamble, no extra commentary.`
 

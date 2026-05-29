@@ -7,12 +7,16 @@ export type WritingContext = {
   brief: string | null
 }
 
-export async function loadWritingContext(profileId: string): Promise<WritingContext> {
+export async function loadWritingRules(): Promise<string> {
   const rulesPath = path.join(process.cwd(), 'src/lib/prompts/writing-rules.md')
+  return readFile(rulesPath, 'utf-8').catch(() => {
+    throw new Error('writing-rules.md missing from bundle — check outputFileTracingIncludes in next.config.ts')
+  })
+}
+
+export async function loadWritingContext(profileId: string): Promise<WritingContext> {
   const [rules, settings] = await Promise.all([
-    readFile(rulesPath, 'utf-8').catch(() => {
-      throw new Error('writing-rules.md missing from bundle — check outputFileTracingIncludes in next.config.ts')
-    }),
+    loadWritingRules(),
     prisma.userSettings.findUnique({
       where: { profileId },
       select: { writingBrief: true },
