@@ -122,7 +122,7 @@ export async function updateJobApplication(
   const { profile } = await requireProfile()
   const validated = updateJobSchema.parse(data)
 
-  const { location, url, ...rest } = validated
+  const { location, url, salaryBand, ...rest } = validated
   const payload: Record<string, unknown> = { ...rest }
   if (url !== undefined) payload.url = url || null
   if (location !== undefined) {
@@ -130,6 +130,7 @@ export async function updateJobApplication(
       ? location.split(',').map(s => s.trim()).filter(Boolean)
       : []
   }
+  if (salaryBand !== undefined) payload.salaryBand = salaryBand || null
 
   const result = await prisma.jobApplication.updateMany({
     where: { id, profileId: profile.id },
@@ -147,6 +148,19 @@ export async function archiveJobApplication(id: string) {
   const result = await prisma.jobApplication.updateMany({
     where: { id, profileId: profile.id },
     data: { archivedAt: new Date() },
+  })
+  if (result.count === 0) throw new Error('Job not found')
+
+  revalidatePath('/dashboard/job-applications')
+  revalidatePath(`/dashboard/job-applications/view/${id}`)
+}
+
+export async function updateJobSalaryBand(id: string, salaryBand: string | null) {
+  const { profile } = await requireProfile()
+
+  const result = await prisma.jobApplication.updateMany({
+    where: { id, profileId: profile.id },
+    data: { salaryBand },
   })
   if (result.count === 0) throw new Error('Job not found')
 
