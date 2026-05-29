@@ -158,23 +158,45 @@ export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }
       <Separator className="my-3" />
 
       {filteredJobs.length > 0 ? (
-        <div className="grid grid-cols-[auto_1.5fr_auto_1fr_auto_auto_auto_auto_auto_auto]">
-          <ColHeaders />
-          {groups.map(g => (
-            <JobGroup
-              key={g.key}
-              label={g.label}
-              jobs={g.jobs}
-              defaultCollapsed={g.defaultCollapsed}
-              selected={selected}
-              busyRows={busyRows}
-              onToggleSelect={toggleSelect}
-              onEdit={setEditing}
-              onArchive={handleSingleArchive}
-              hasLLMKey={hasLLMKey}
-            />
-          ))}
-        </div>
+        <>
+          {/* Mobile card list — below md only */}
+          <div className="md:hidden border border-border/30 rounded-md overflow-hidden">
+            {groups.map(g => (
+              <JobGroup
+                key={g.key}
+                label={g.label}
+                jobs={g.jobs}
+                defaultCollapsed={g.defaultCollapsed}
+                selected={selected}
+                busyRows={busyRows}
+                onToggleSelect={toggleSelect}
+                onEdit={setEditing}
+                onArchive={handleSingleArchive}
+                hasLLMKey={hasLLMKey}
+                isMobile
+              />
+            ))}
+          </div>
+
+          {/* Desktop grid — md and above */}
+          <div className="hidden md:grid grid-cols-[auto_1.5fr_auto_1fr_auto_auto_auto_auto_auto_auto]">
+            <ColHeaders />
+            {groups.map(g => (
+              <JobGroup
+                key={g.key}
+                label={g.label}
+                jobs={g.jobs}
+                defaultCollapsed={g.defaultCollapsed}
+                selected={selected}
+                busyRows={busyRows}
+                onToggleSelect={toggleSelect}
+                onEdit={setEditing}
+                onArchive={handleSingleArchive}
+                hasLLMKey={hasLLMKey}
+              />
+            ))}
+          </div>
+        </>
       ) : (
         <div className="text-sm text-muted-foreground py-6 text-center">
           {query ? "No jobs match your search." : "No jobs yet. Create your first application."}

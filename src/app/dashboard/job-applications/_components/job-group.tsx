@@ -2,8 +2,10 @@
 
 import { useState } from "react"
 import { ChevronDown, ChevronRight } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { type Job } from "@/app/types/job-application"
 import { JobRow } from "./job-row"
+import { JobRowCard } from "./job-row-card"
 
 type JobGroupProps = {
   label: string | null
@@ -15,6 +17,7 @@ type JobGroupProps = {
   onArchive: (id: string) => void
   defaultCollapsed?: boolean
   hasLLMKey: boolean
+  isMobile?: boolean
 }
 
 // One section of the list. Same shape whether it's the sole "All" group
@@ -30,6 +33,7 @@ export function JobGroup({
   onArchive,
   defaultCollapsed = false,
   hasLLMKey,
+  isMobile = false,
 }: JobGroupProps) {
   const [collapsed, setCollapsed] = useState(defaultCollapsed)
 
@@ -38,13 +42,16 @@ export function JobGroup({
   const isCollapsible = label !== null
 
   return (
-    <div className="col-span-full grid grid-cols-subgrid">
+    <div className={isMobile ? undefined : "col-span-full grid grid-cols-subgrid"}>
       {label !== null && (
         <button
           type="button"
           onClick={() => setCollapsed(c => !c)}
           aria-expanded={!collapsed}
-          className="col-span-full flex items-center gap-1.5 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground transition-colors border-b border-border/30 cursor-pointer"
+          className={cn(
+            "flex items-center gap-1.5 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground transition-colors border-b border-border/30 cursor-pointer w-full",
+            !isMobile && "col-span-full",
+          )}
         >
           {isCollapsible && (collapsed
             ? <ChevronRight size={12} className="shrink-0" />
@@ -54,7 +61,18 @@ export function JobGroup({
         </button>
       )}
 
-      {!collapsed && jobs.map(job => (
+      {!collapsed && jobs.map(job => isMobile ? (
+        <JobRowCard
+          key={job.id}
+          job={job}
+          selected={selected.has(job.id)}
+          busyLabel={busyRows.get(job.id)}
+          onToggleSelect={onToggleSelect}
+          onEdit={onEdit}
+          onArchive={onArchive}
+          hasLLMKey={hasLLMKey}
+        />
+      ) : (
         <JobRow
           key={job.id}
           job={job}
