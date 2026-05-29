@@ -157,7 +157,7 @@ export function FeedbackDrawer({ open, onOpenChange }: Props) {
 
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={handleOpenChange}>
+      <Drawer open={open} onOpenChange={handleOpenChange} repositionInputs={false}>
         <DrawerContent>
           <DrawerHeader>
             <DrawerTitle>Report an issue</DrawerTitle>
