@@ -109,6 +109,7 @@ export async function captureJobFromUrl(
       datePublished: data.datePublished ?? null,
       notes: input.notes?.trim() || null,
       applicationSource: input.applicationSource ?? 'cold',
+      salaryBand: data.salaryBand ?? null,
       // status + progress default to "not started"; intake doesn't auto-apply.
     },
     select: { id: true, title: true, company: true },
@@ -130,6 +131,7 @@ function extractedFieldList(data: {
   jobNumber?: string
   jobDescription?: string
   datePublished?: Date
+  salaryBand?: string
 }): string[] {
   return (
     [
@@ -139,6 +141,7 @@ function extractedFieldList(data: {
       ['jobNumber', data.jobNumber],
       ['jobDescription', data.jobDescription],
       ['datePublished', data.datePublished],
+      ['salaryBand', data.salaryBand],
     ] as const
   )
     .filter(([, v]) => v !== undefined && v !== null && v !== '')

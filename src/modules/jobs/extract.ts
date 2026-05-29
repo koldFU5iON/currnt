@@ -12,6 +12,7 @@ export type ExtractedJob = {
   jobDescription?: string
   jobNumber?: string
   datePublished?: Date
+  salaryBand?: string
 }
 
 type ExtractionResult =
@@ -247,12 +248,33 @@ function fromJsonLd(html: string): ExtractedJob | null {
         jobDescription,
         jobNumber: identifier?.value != null ? String(identifier.value) : undefined,
         datePublished,
+        salaryBand: formatSalaryBand(job.baseSalary),
       }
     } catch {
       // malformed block — try the next one
     }
   }
   return null
+}
+
+// ── Salary formatting ─────────────────────────────────────────────────────────
+
+function formatSalaryBand(baseSalary: unknown): string | undefined {
+  if (!baseSalary || typeof baseSalary !== 'object') return undefined
+  const sal = baseSalary as Record<string, unknown>
+  const curr = typeof sal.currency === 'string' ? sal.currency : 'USD'
+  const sym = ({ USD: '$', GBP: '£', EUR: '€', CAD: 'CA$', AUD: 'A$' } as Record<string, string>)[curr] ?? (curr + ' ')
+  const abbrev = (n: number) => n >= 1000 ? `${Math.round(n / 1000)}k` : String(n)
+  const qv = sal.value && typeof sal.value === 'object' ? sal.value as Record<string, unknown> : null
+  if (qv) {
+    const min = typeof qv.minValue === 'number' ? qv.minValue : null
+    const max = typeof qv.maxValue === 'number' ? qv.maxValue : null
+    const flat = typeof qv.value === 'number' ? qv.value : null
+    if (min !== null && max !== null) return `${sym}${abbrev(min)}–${abbrev(max)}`
+    if (flat !== null) return `${sym}${abbrev(flat)}`
+  }
+  if (typeof sal.value === 'number') return `${sym}${abbrev(sal.value)}`
+  return undefined
 }
 
 // ── OpenGraph / meta fallback ──────────────────────────────────────────────────
