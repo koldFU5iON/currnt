@@ -16,6 +16,7 @@ model UserSettings {
   /// Shape is documented in src/modules/onboarding/schema.ts and kept
   /// separate from the detailed Career Profile/CV ingredient models.
   onboardingContext     Json?
+  writingBrief          String?
   onboardingCompletedAt DateTime?
   onboardingSkippedAt   DateTime?
   createdAt             DateTime  @default(now())
