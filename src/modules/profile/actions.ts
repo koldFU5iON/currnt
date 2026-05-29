@@ -14,6 +14,15 @@ export async function updateContactField(field: ContactField, value: string) {
   })
 }
 
+export async function updateProfileSummary(summary: string) {
+  const { profile } = await requireProfile()
+  await prisma.profile.update({
+    where: { id: profile.id },
+    data: { summary: summary.trim() || null },
+  })
+  revalidatePath('/dashboard/profile')
+}
+
 // ── Activities ────────────────────────────────────────────────────────────────
 
 type ActivityData = { kind: string; description: string; impact?: string }
