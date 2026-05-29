@@ -5,6 +5,7 @@ import { ContactBlock } from "./_components/Contact"
 import { QualificationsBlock } from "./_components/Qualifications"
 import { ProfileSummaryCard } from "./_components/ProfileSummaryCard"
 import { getLLMConfigStatus } from "@/modules/llm/client"
+import { requireProfile } from "@/lib/session"
 import type { FullProfile } from "@/app/types/profile"
 
 export type QualificationsType = {
@@ -15,8 +16,11 @@ export type QualificationsType = {
 }
 
 export default async function Page() {
-  const profile = await getFullProfile()
-  const { configured: hasLLMKey } = await getLLMConfigStatus(profile.id)
+  const { profile: sessionProfile } = await requireProfile()
+  const [profile, { configured: hasLLMKey }] = await Promise.all([
+    getFullProfile(),
+    getLLMConfigStatus(sessionProfile.id),
+  ])
 
   const contact = {
     name: profile.name,
