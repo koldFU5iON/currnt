@@ -154,6 +154,19 @@ export async function archiveJobApplication(id: string) {
   revalidatePath(`/dashboard/job-applications/view/${id}`)
 }
 
+export async function updateJobNotes(id: string, notes: string) {
+  const { profile } = await requireProfile()
+
+  const result = await prisma.jobApplication.updateMany({
+    where: { id, profileId: profile.id },
+    data: { notes: notes.trim() || null },
+  })
+  if (result.count === 0) throw new Error('Job not found')
+
+  revalidatePath('/dashboard/job-applications')
+  revalidatePath(`/dashboard/job-applications/view/${id}`)
+}
+
 export async function bulkArchiveJobApplications(ids: string[]) {
   if (ids.length === 0) return { archived: 0 }
   const { profile } = await requireProfile()

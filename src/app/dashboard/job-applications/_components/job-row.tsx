@@ -12,6 +12,7 @@ import { AppControls } from "@/components/app-item-menu"
 import { Loader2, SquareArrowOutUpRight } from "lucide-react"
 import { ApplicationDateBlock } from "./app-date-block"
 import { JobFit } from "./job-fit"
+import { JobNotes } from "./job-notes"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 
@@ -26,7 +27,7 @@ type JobRowProps = {
 }
 
 export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArchive, hasLLMKey }: JobRowProps) {
-  const { id, jobNumber, title, company, countries, url, dateApplied, lastUpdated, status, progress, jobFit, applicationSource, jobDescription } = job
+  const { id, jobNumber, title, company, countries, url, dateApplied, lastUpdated, status, progress, jobFit, notes, applicationSource, jobDescription } = job
   // Cold is the silent default — only surface a badge for sources worth noticing.
   const showSourceBadge = applicationSource !== ApplicationSource.Cold
   const busy = Boolean(busyLabel)
@@ -102,6 +103,7 @@ export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArc
 
       <div className="flex items-center gap-1 px-3 py-3">
         <JobFit jobId={id} jobFit={jobFit || null} canAssess={!!jobDescription?.trim()} hasLLMKey={hasLLMKey} />
+        <JobNotes jobId={id} initialNotes={notes ?? null} />
         <AppControls
           id={id}
           onEdit={() => onEdit(job)}
