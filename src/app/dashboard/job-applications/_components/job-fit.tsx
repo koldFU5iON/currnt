@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from "react"
-import { Flame, Loader2, Sparkles } from "lucide-react"
+import { Flame, Loader2, Sparkles, StickyNote } from "lucide-react"
 import Link from "next/link"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
@@ -121,6 +121,16 @@ export function JobFit({ jobId, jobFit, canAssess = true, hasLLMKey = true }: Jo
                 <p className="text-xs font-semibold mb-1.5">Your trajectory</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">{jobFit.trajectoryNote}</p>
               </div>
+            </>
+          )}
+
+          {jobFit.notesUsed && (
+            <>
+              <Separator />
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <StickyNote size={11} className="shrink-0 fill-amber-200 text-amber-500" />
+                Personal notes were included in this assessment.
+              </p>
             </>
           )}
 
