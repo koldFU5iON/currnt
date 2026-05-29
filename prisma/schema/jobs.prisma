@@ -18,6 +18,7 @@ model JobApplication {
   jobFitAssessedAt    DateTime?
   jobDescription      String?
   notes             String?
+  notesIncludeInFit Boolean   @default(false)
   tags              String[]
   datePublished     DateTime? @default(now())
   lastUpdated       DateTime  @updatedAt
