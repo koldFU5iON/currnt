@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from "react"
-import { Flame, Loader2, Sparkles, StickyNote } from "lucide-react"
+import { Flame, Loader2, Puzzle, StickyNote } from "lucide-react"
 import Link from "next/link"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
@@ -90,7 +90,7 @@ export function JobFit({ jobId, jobFit, canAssess = true, hasLLMKey = true }: Jo
             : "hover:bg-muted hover:text-foreground cursor-pointer",
         )}
       >
-        <Sparkles size={12} />
+        <Puzzle size={12} />
         assess
       </button>
     )
@@ -155,7 +155,7 @@ export function JobFit({ jobId, jobFit, canAssess = true, hasLLMKey = true }: Jo
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              <Sparkles size={11} />
+              <Puzzle size={11} />
               Re-assess
             </button>
           </div>
