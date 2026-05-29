@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
 import {
@@ -15,6 +16,7 @@ import {
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
+  DrawerDescription,
   DrawerFooter,
   DrawerClose,
 } from '@/components/ui/drawer'
@@ -159,10 +161,11 @@ export function FeedbackDrawer({ open, onOpenChange }: Props) {
         <DrawerContent>
           <DrawerHeader>
             <DrawerTitle>Report an issue</DrawerTitle>
+            <DrawerDescription>Tell us what you ran into or share an idea.</DrawerDescription>
           </DrawerHeader>
           <div className="px-4 pb-2">{formFields}</div>
           <DrawerFooter className="flex-row justify-end gap-2">
-            <DrawerClose>
+            <DrawerClose asChild>
               <Button type="button" variant="outline" size="sm" disabled={isPending}>
                 Cancel
               </Button>
@@ -175,10 +178,11 @@ export function FeedbackDrawer({ open, onOpenChange }: Props) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={(next) => handleOpenChange(next)}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Report an issue</DialogTitle>
+          <DialogDescription>Tell us what you ran into or share an idea.</DialogDescription>
         </DialogHeader>
         <div className="px-4">{formFields}</div>
         <DialogFooter>
