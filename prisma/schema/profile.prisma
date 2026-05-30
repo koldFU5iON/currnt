@@ -140,8 +140,8 @@ model Certification {
   id            String    @id @default(cuid())
   profileId     String
   name          String
-  issuer        String
-  issueDate     DateTime
+  issuer        String?
+  issueDate     DateTime?
   expiryDate    DateTime?
   credentialUrl String?
   tags          String    @default("[]")
