@@ -86,9 +86,7 @@ export function ImportProfileDialog() {
 
   return (
     <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset() }}>
-      <DialogTrigger asChild>
-        <Button variant="outline">Import from PDF</Button>
-      </DialogTrigger>
+      <DialogTrigger render={<Button variant="outline" />}>Import from PDF</DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Import profile from PDF</DialogTitle>

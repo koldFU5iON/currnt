@@ -576,9 +576,9 @@ function CertificationsSection({ initial }: { initial: CertType[] }) {
                 <div key={cert.id} className="group flex items-start justify-between gap-2 py-1.5 border-b border-border last:border-0">
                   <div className="space-y-0.5 min-w-0">
                     <p className="text-sm font-semibold truncate">{cert.name}</p>
-                    <p className="text-xs text-muted-foreground">{cert.issuer}</p>
+                    {cert.issuer && <p className="text-xs text-muted-foreground">{cert.issuer}</p>}
                     <p className="text-xs text-muted-foreground">
-                      Issued {cert.issueDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
+                      {cert.issueDate && `Issued ${cert.issueDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`}
                       {cert.expiryDate && ` · Expires ${cert.expiryDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`}
                     </p>
                   </div>
@@ -633,7 +633,7 @@ function CertificationDialog({
             </Field>
             <Field>
               <Label htmlFor="cert-issuer">Issuer</Label>
-              <Input id="cert-issuer" name="issuer" defaultValue={editing?.issuer} required />
+              <Input id="cert-issuer" name="issuer" defaultValue={editing?.issuer ?? undefined} required />
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field>
