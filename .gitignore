@@ -48,3 +48,6 @@ skills-lock.json
 
 # brainstorming session files (local only)
 .superpowers/
+
+# Local benchmark fixtures (may contain PII) — keep out of history
+docs/samples/
