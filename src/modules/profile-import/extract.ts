@@ -17,7 +17,7 @@ const SYSTEM = `You extract a structured career profile from the raw text of a C
 Rules:
 - Extract only what is present. Never invent employers, dates, metrics, or skills.
 - LinkedIn-exported CVs group several roles under one company with a tenure total like "5 years 3 months". Emit ONE experience per role, repeat the company on each, and NEVER use that company-level total as a role's dates.
-- Dates: experiences use "YYYY-MM"; education uses "YYYY". A current role's endDate is null ("Present").
+- Dates: experiences use "YYYY-MM"; education uses "YYYY". For a current/"Present" role, omit endDate. Omit any field you cannot fill rather than guessing.
 - For each role, put the intro paragraph in "summary" and the bullet points in "activities" (responsibility vs achievement; pull any number/outcome into "impact").
 - Use the city/region line for location, never the street address.
 - Output only the JSON schema — no prose.`
