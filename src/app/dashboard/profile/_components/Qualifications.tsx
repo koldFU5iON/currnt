@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/dialog"
 import { H } from "@/app/components/style/Style"
 import { Pencil, Plus, Trash2 } from "lucide-react"
-import clsx from "clsx"
 import {
   createSkill, updateSkill, deleteSkill,
   createLanguage, updateLanguage, deleteLanguage,
@@ -33,12 +32,11 @@ type CertType = QualificationsType['certifications'][number]
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const proficiencyClass: Record<string, string> = {
-  native: "bg-green-500 text-white",
-  fluent: "bg-green-400 text-white",
-  professional: "bg-blue-500 text-white",
-  intermediate: "bg-amber-400 text-white",
-  basic: "bg-muted text-muted-foreground",
+const proficiencyVariant: Record<string, "success" | "info" | "warning"> = {
+  native: "success",
+  fluent: "success",
+  professional: "info",
+  intermediate: "warning",
 }
 
 const toDateInput = (d?: Date | null) =>
@@ -321,7 +319,7 @@ function LanguagesSection({ initial }: { initial: LanguageType[] }) {
               <div key={lang.id} className="group flex items-center justify-between py-1.5 border-b border-border last:border-0">
                 <span className="text-sm font-medium">{lang.name}</span>
                 <div className="flex items-center gap-1.5">
-                  <Badge className={clsx("text-xs capitalize", proficiencyClass[lang.proficiency] ?? "bg-muted text-muted-foreground")}>
+                  <Badge variant={proficiencyVariant[lang.proficiency] ?? "secondary"} className="text-xs capitalize">
                     {lang.proficiency}
                   </Badge>
                   <RowControls label={lang.name} onEdit={() => openEdit(lang)} onDelete={() => handleDelete(lang.id)} />
@@ -583,7 +581,7 @@ function CertificationsSection({ initial }: { initial: CertType[] }) {
                     </p>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    {expiringSoon && <Badge className="bg-amber-400 text-white text-xs">Expires soon</Badge>}
+                    {expiringSoon && <Badge variant="warning" className="text-xs">Expires soon</Badge>}
                     <RowControls label={cert.name} onEdit={() => openEdit(cert)} onDelete={() => handleDelete(cert.id)} />
                   </div>
                 </div>
