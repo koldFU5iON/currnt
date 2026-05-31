@@ -105,7 +105,7 @@ ${job.jobDescription}`
     userPrompt += `\n\n# Personal Notes\n\n${job.notes}`
   }
 
-  userPrompt += `\n\nReturn a single JSON object matching the schema. Two or three sentences in the justification${hasGoals ? '; one or two sentences in trajectoryNote' : ''}${hasNotes ? '. Set notesUsed to true.' : ''}.`
+  userPrompt += `\n\nReturn a single JSON object matching the schema. Two or three sentences in the justification${hasGoals ? '; one or two sentences in trajectoryNote' : ''}.`
 
   let fit: JobFit
   try {
@@ -115,6 +115,10 @@ ${job.jobDescription}`
       temperature: 0.2,
     })
     fit = result.object
+    // notesUsed is ground truth, not the model's self-report: the LLM would
+    // set it true even when no notes were in the prompt, surfacing the badge
+    // on jobs that have none. hasNotes is the per-job source of truth.
+    fit.notesUsed = hasNotes
   } catch (err) {
     if (err instanceof LLMError) {
       return { ok: false, error: err.kind, message: err.message }
