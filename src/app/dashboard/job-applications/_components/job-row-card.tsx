@@ -15,6 +15,7 @@ import { JobNotes } from "./job-notes"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { cn, daysAgo, formatRelative, formatShortDate } from "@/lib/utils"
+import { JobCompletenessDot } from "./job-completeness-dot"
 
 type JobRowCardProps = {
   job: Job
@@ -65,6 +66,7 @@ export function JobRowCard({ job, selected, busyLabel, onToggleSelect, onEdit, o
         />
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-1.5 flex-wrap">
+            <JobCompletenessDot job={job} />
             <Link
               href={`/dashboard/job-applications/view/${id}`}
               className="text-sm font-semibold leading-snug hover:underline truncate"
