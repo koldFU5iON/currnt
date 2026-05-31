@@ -14,7 +14,14 @@ function Separator({
       data-slot="separator"
       orientation={orientation}
       className={cn(
-        "shrink-0 bg-border data-horizontal:h-px data-horizontal:w-full data-vertical:w-px data-vertical:self-stretch",
+        "shrink-0 bg-border",
+        // Branch on the prop with plain utilities (not high-specificity
+        // data-* variants) so consumers can override width/height via cn().
+        // my-auto centers a fixed-height vertical separator; it's a no-op
+        // when the separator stretches to fill its parent.
+        orientation === "horizontal"
+          ? "h-px w-full"
+          : "my-auto w-px self-stretch",
         className
       )}
       {...props}
