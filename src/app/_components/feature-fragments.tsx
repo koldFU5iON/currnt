@@ -19,7 +19,7 @@ const SKILLS = [
 
 export function SkillsFragment() {
   return (
-    <div className="rounded-lg border border-border bg-card p-3.5 shadow-sm">
+    <div aria-hidden="true" className="rounded-lg border border-border bg-card p-3.5 shadow-sm">
       {SKILLS.map((s, i) => (
         <div
           key={s.name}
@@ -35,7 +35,7 @@ export function SkillsFragment() {
 
 export function FitScoreFragment() {
   return (
-    <div className="rounded-lg border border-border bg-card p-3.5 shadow-sm">
+    <div aria-hidden="true" className="rounded-lg border border-border bg-card p-3.5 shadow-sm">
       <div className="flex items-center gap-3">
         <div className="flex size-11 items-center justify-center rounded-full border-2 border-primary text-base font-bold text-foreground">
           8
@@ -54,7 +54,7 @@ export function FitScoreFragment() {
 
 export function JobRowFragment() {
   return (
-    <div className="rounded-lg border border-border bg-card p-3.5 shadow-sm">
+    <div aria-hidden="true" className="rounded-lg border border-border bg-card p-3.5 shadow-sm">
       <div className="flex items-center justify-between">
         <div>
           <div className="text-xs font-semibold text-foreground">Senior Product Manager</div>
