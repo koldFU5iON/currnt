@@ -14,6 +14,7 @@ import { ApplicationDateBlock } from "./app-date-block"
 import { JobFit } from "./job-fit"
 import { JobNotes } from "./job-notes"
 import { SalaryBandCell } from "./salary-band-cell"
+import { JobCompletenessDot } from "./job-completeness-dot"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { daysAgo, formatRelative } from "@/lib/utils"
@@ -66,6 +67,7 @@ export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArc
       {/* Title / company */}
       <div className="min-w-0 px-3 py-2">
         <div className="flex min-w-0 items-center gap-1.5">
+          <JobCompletenessDot job={job} />
           <Link
             href={`/dashboard/job-applications/view/${id}`}
             className="truncate text-sm font-semibold leading-snug hover:underline"
