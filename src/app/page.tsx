@@ -1,10 +1,11 @@
 import Link from 'next/link'
-import { FileText, Search, LayoutGrid, Key, Check } from 'lucide-react'
+import { Key, Check } from 'lucide-react'
 import { buttonVariants } from '@/components/ui/button'
 import { getSession } from '@/lib/session'
 import { CloneSnippet } from './_components/CloneSnippet'
 import { brand } from '@/lib/brand'
 import { Wordmark } from '@/components/brand/wordmark'
+import { FeatureSection } from './_components/feature-section'
 
 function GitHubIcon({ size = 15 }: { size?: number }) {
   return (
@@ -29,11 +30,6 @@ const TRUST_PILLS = [
   { icon: Check, label: 'No job board' },
 ] as const
 
-const FEATURE_ICONS: Record<(typeof brand.features)[number]["pillar"], typeof FileText> = {
-  Structured: FileText,
-  Adaptive: Search,
-  Current: LayoutGrid,
-}
 
 export default async function Home() {
   let isAuthenticated = false
@@ -153,23 +149,8 @@ export default async function Home() {
         </div>
       )}
 
-      {/* Feature callouts */}
-      <div className="border-t border-border bg-muted/30">
-        <div className="mx-auto grid max-w-3xl grid-cols-1 gap-6 px-8 py-12 sm:grid-cols-3">
-          {brand.features.map(({ pillar, title, description }) => {
-            const Icon = FEATURE_ICONS[pillar]
-            return (
-              <div key={title} className="rounded-lg border border-border bg-background p-6">
-                <div className="mb-4 flex h-8 w-8 items-center justify-center rounded-md bg-muted">
-                  <Icon size={15} className="text-muted-foreground" />
-                </div>
-                <h3 className="mb-2 text-sm font-semibold">{title}</h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
-              </div>
-            )
-          })}
-        </div>
-      </div>
+      {/* Feature section */}
+      <FeatureSection />
 
       {/* Footer */}
       <footer className="flex items-center justify-between border-t border-border px-8 py-5">
