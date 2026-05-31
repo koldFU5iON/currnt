@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { CommandPalette } from "./command-palette"
+import { ThemeToggle } from "@/components/shell/theme-toggle"
 
 type CommandBarProps = {
   chatOpen: boolean
@@ -45,16 +46,19 @@ export function CommandBar({ chatOpen, onToggleChat }: CommandBarProps) {
         </kbd>
       </button>
 
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onToggleChat}
-        aria-pressed={chatOpen}
-        aria-label="Toggle assistant"
-        className={cn("ml-auto size-9 [&_svg]:size-5", chatOpen && "bg-accent text-accent-foreground")}
-      >
-        <Sparkles />
-      </Button>
+      <div className="ml-auto flex items-center gap-1">
+        <ThemeToggle />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggleChat}
+          aria-pressed={chatOpen}
+          aria-label="Toggle assistant"
+          className={cn("size-9 [&_svg]:size-5", chatOpen && "bg-accent text-accent-foreground")}
+        >
+          <Sparkles />
+        </Button>
+      </div>
 
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
     </header>
