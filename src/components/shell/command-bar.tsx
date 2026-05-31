@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { PanelRight, Search } from "lucide-react"
+import { Sparkles, Search } from "lucide-react"
 
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
@@ -30,7 +30,7 @@ export function CommandBar({ chatOpen, onToggleChat }: CommandBarProps) {
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-background px-3">
-      <SidebarTrigger />
+      <SidebarTrigger className="size-9 [&_svg]:size-5" />
       <Separator orientation="vertical" className="h-5" />
 
       <button
@@ -51,9 +51,9 @@ export function CommandBar({ chatOpen, onToggleChat }: CommandBarProps) {
         onClick={onToggleChat}
         aria-pressed={chatOpen}
         aria-label="Toggle assistant"
-        className={cn("ml-auto", chatOpen && "bg-accent text-accent-foreground")}
+        className={cn("ml-auto size-9 [&_svg]:size-5", chatOpen && "bg-accent text-accent-foreground")}
       >
-        <PanelRight />
+        <Sparkles />
       </Button>
 
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />

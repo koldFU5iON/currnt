@@ -148,6 +148,7 @@ export function FeedbackDrawer({ open, onOpenChange }: Props) {
     <Button
       type="submit"
       size="sm"
+      className="min-w-28"
       onClick={handleSubmit}
       disabled={isPending || !title.trim()}
     >
@@ -166,7 +167,7 @@ export function FeedbackDrawer({ open, onOpenChange }: Props) {
           <div className="flex-1 overflow-y-auto px-4 pb-2">{formFields}</div>
           <DrawerFooter className="flex-row justify-end gap-2">
             <DrawerClose asChild>
-              <Button type="button" variant="outline" size="sm" disabled={isPending}>
+              <Button type="button" variant="outline" size="sm" className="min-w-28" disabled={isPending}>
                 Cancel
               </Button>
             </DrawerClose>
@@ -186,7 +187,7 @@ export function FeedbackDrawer({ open, onOpenChange }: Props) {
         </DialogHeader>
         <div className="px-4">{formFields}</div>
         <DialogFooter>
-          <DialogClose render={<Button type="button" variant="outline" size="sm" disabled={isPending} />}>
+          <DialogClose render={<Button type="button" variant="outline" size="sm" className="min-w-28" disabled={isPending} />}>
             Cancel
           </DialogClose>
           {submitButton}
