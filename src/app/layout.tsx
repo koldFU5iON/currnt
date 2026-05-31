@@ -4,14 +4,14 @@ import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { ThemeProvider } from '@/components/theme-provider'
+import { brand } from '@/lib/brand'
 
 const jakarta = Plus_Jakarta_Sans({ variable: '--font-jakarta', subsets: ['latin'] })
 const firaCode = Fira_Code({ variable: '--font-fira-code', subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Job search operations',
-  description:
-    'Track applications, understand fit, and sharpen how you present yourself. Open source, bring your own AI key.',
+  title: { default: brand.name, template: `%s · ${brand.name}` },
+  description: brand.metaDescription,
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
