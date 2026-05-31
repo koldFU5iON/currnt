@@ -48,8 +48,8 @@ export type ProfileSnapshot = {
 
   certifications: Array<{
     name: string
-    issuer: string
-    issueDate: Date
+    issuer: string | null
+    issueDate: Date | null
     expiryDate: Date | null
   }>
 
@@ -198,7 +198,9 @@ export function serializeProfileForLLM(snapshot: ProfileSnapshot): string {
     lines.push('## Certifications\n')
     for (const cert of snapshot.certifications) {
       const exp = cert.expiryDate ? ` (expires ${formatMonth(cert.expiryDate)})` : ''
-      lines.push(`- **${cert.name}** — ${cert.issuer}, ${formatMonth(cert.issueDate)}${exp}`)
+      const issuer = cert.issuer ? ` — ${cert.issuer}` : ''
+      const issued = cert.issueDate ? `, ${formatMonth(cert.issueDate)}` : ''
+      lines.push(`- **${cert.name}**${issuer}${issued}${exp}`)
     }
     lines.push('')
   }

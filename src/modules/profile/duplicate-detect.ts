@@ -5,7 +5,7 @@ import type { ExtractedActivity, ExtractedSkill } from './extract-schema'
 // migration"), tight enough to avoid flagging unrelated short sentences.
 const JACCARD_THRESHOLD = 0.5
 
-function normalize(s: string): string {
+export function normalize(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim()
 }
 

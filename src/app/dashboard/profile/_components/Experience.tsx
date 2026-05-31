@@ -104,6 +104,11 @@ export function ExperienceBlock({ exp }: { exp: ExperienceWithActivities[] }) {
             </CardHeader>
             <CardContent>
               <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
+                {experience.summary && (
+                  <p className="text-xs text-muted-foreground whitespace-pre-line">
+                    {experience.summary}
+                  </p>
+                )}
                 {(['responsibility', 'achievement'] as const).map(kind => {
                   const items = experience.activities.filter(a => a.kind === kind)
                   if (items.length === 0) return null

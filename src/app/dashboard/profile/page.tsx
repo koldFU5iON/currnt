@@ -4,6 +4,7 @@ import { getFullProfile } from "@/modules/profile/queries"
 import { ContactBlock } from "./_components/Contact"
 import { QualificationsBlock } from "./_components/Qualifications"
 import { ProfileSummaryCard } from "./_components/ProfileSummaryCard"
+import { ImportProfileDialog } from "./_components/ImportProfileDialog"
 import { getLLMConfigStatus } from "@/modules/llm/client"
 import { requireProfile } from "@/lib/session"
 import type { FullProfile } from "@/app/types/profile"
@@ -46,6 +47,9 @@ export default async function Page() {
 
   return (
     <ContentContainer title="Profile Page" fullWidth>
+      <div className="mb-4 flex justify-end">
+        <ImportProfileDialog />
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div>
           {contact.name && <ContactBlock contact={contact} />}
