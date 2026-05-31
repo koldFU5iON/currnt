@@ -47,6 +47,7 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <Link href="/dashboard">
+              {/* tooltip={brand.name} is the accessible label when the sidebar is collapsed — keep it */}
               <SidebarMenuButton size="lg" tooltip={brand.name}>
                 <div className="flex aspect-square size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
                   <FileText className="size-4" />

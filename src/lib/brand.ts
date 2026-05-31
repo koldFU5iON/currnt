@@ -1,11 +1,12 @@
 const name = "currnt"
+const tagline = "Stay current."
 
 export const brand = {
   name,
-  tagline: "Stay current.",
+  tagline,
   metaDescription: `${name} keeps a structured record of your career and shapes it to fit each role you go after. Open source, bring your own AI key.`,
   hero: {
-    eyebrow: "Stay current.",
+    eyebrow: tagline,
     title: "Everything you've done, ready for what's next.",
     body: `${name} keeps a structured record of your career and shapes it to fit each role you go after. No job board. No templates. Just your work, presented clearly.`,
   },
