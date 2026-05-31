@@ -1,8 +1,10 @@
 import Link from 'next/link'
-import { Key, Check, LayoutGrid, Search, FileText } from 'lucide-react'
+import { FileText, Search, LayoutGrid, Key, Check } from 'lucide-react'
 import { buttonVariants } from '@/components/ui/button'
 import { getSession } from '@/lib/session'
 import { CloneSnippet } from './_components/CloneSnippet'
+import { brand } from '@/lib/brand'
+import { Wordmark } from '@/components/brand/wordmark'
 
 function GitHubIcon({ size = 15 }: { size?: number }) {
   return (
@@ -27,26 +29,8 @@ const TRUST_PILLS = [
   { icon: Check, label: 'No job board' },
 ] as const
 
-const FEATURES = [
-  {
-    icon: LayoutGrid,
-    title: 'Keep track of the chase',
-    description:
-      "All the roles you're pursuing, in one place. No more piecing it together from emails, tabs, and notes.",
-  },
-  {
-    icon: Search,
-    title: 'Understand the fit',
-    description:
-      "See how well your experience matches a role before you apply. Spend your energy where it's most likely to land.",
-  },
-  {
-    icon: FileText,
-    title: 'Present yourself clearly',
-    description:
-      'Extract your skills, shape your story, and prepare your pitch — accurately, for each specific opportunity.',
-  },
-] as const
+// Icons align to brand.features order: Structured, Adaptive, Current
+const FEATURE_ICONS = [FileText, Search, LayoutGrid] as const
 
 export default async function Home() {
   let isAuthenticated = false
@@ -61,21 +45,22 @@ export default async function Home() {
     <div className="min-h-screen bg-background text-foreground">
       {/* Nav */}
       <nav className="flex items-center justify-between border-b border-border px-8 py-4">
-        <a
-          href={GITHUB_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:text-foreground"
-        >
-          <GitHubIcon size={15} />
-          Open source
-        </a>
+        <Wordmark size="md" />
         {isAuthenticated ? (
           <Link href="/dashboard" className={buttonVariants({ size: 'sm' })}>
             Go to dashboard &rarr;
           </Link>
         ) : (
           <div className="flex items-center gap-3">
+            <a
+              href={GITHUB_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:text-foreground"
+            >
+              <GitHubIcon size={15} />
+              Open source
+            </a>
             <Link
               href="/sign-in"
               className="text-sm text-muted-foreground transition-colors duration-150 hover:text-foreground"
@@ -92,14 +77,13 @@ export default async function Home() {
       {/* Hero */}
       <div className="mx-auto max-w-2xl px-8 pb-10 pt-20 text-center">
         <p className="mb-5 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-          Job search operations
+          {brand.hero.eyebrow}
         </p>
         <h1 className="mb-5 text-5xl font-bold leading-tight tracking-tight">
-          Not another job site.
+          {brand.hero.title}
         </h1>
         <p className="mx-auto mb-7 max-w-lg text-lg leading-relaxed text-muted-foreground">
-          Keep track of the roles you&apos;re chasing, understand how well you fit, and sharpen
-          how you present yourself &mdash; without the noise of a job board.
+          {brand.hero.body}
         </p>
 
         {/* Trust pills */}
@@ -123,7 +107,7 @@ export default async function Home() {
         ) : (
           <div className="flex flex-col items-center gap-3.5">
             <Link href="/sign-up" className={buttonVariants({ size: 'lg' })}>
-              Get started &mdash; it&apos;s free
+              Get started for free
             </Link>
             <p className="text-sm text-muted-foreground">
               Already have an account?{' '}
@@ -160,7 +144,7 @@ export default async function Home() {
       {!isAuthenticated && (
         <div className="mx-auto max-w-xl px-8 pb-10 text-center">
           <p className="border-t border-border pt-6 text-sm italic text-muted-foreground">
-            Already using ChatGPT or Claude in your job search? Plug in your own API key &mdash; the
+            Already using ChatGPT or Claude in your job search? Plug in your own API key. The
             AI runs on your account, not ours.
           </p>
         </div>
@@ -169,15 +153,18 @@ export default async function Home() {
       {/* Feature callouts */}
       <div className="border-t border-border bg-muted/30">
         <div className="mx-auto grid max-w-3xl grid-cols-1 gap-6 px-8 py-12 sm:grid-cols-3">
-          {FEATURES.map(({ icon: Icon, title, description }) => (
-            <div key={title} className="rounded-lg border border-border bg-background p-6">
-              <div className="mb-4 flex h-8 w-8 items-center justify-center rounded-md bg-muted">
-                <Icon size={15} className="text-muted-foreground" />
+          {brand.features.map(({ title, description }, i) => {
+            const Icon = FEATURE_ICONS[i]
+            return (
+              <div key={title} className="rounded-lg border border-border bg-background p-6">
+                <div className="mb-4 flex h-8 w-8 items-center justify-center rounded-md bg-muted">
+                  <Icon size={15} className="text-muted-foreground" />
+                </div>
+                <h3 className="mb-2 text-sm font-semibold">{title}</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
               </div>
-              <h3 className="mb-2 text-sm font-semibold">{title}</h3>
-              <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 
