@@ -19,11 +19,13 @@ Calm, intelligent, precise (see `PRODUCT.md`). Precision over decoration: white 
 | muted | `#1A1C1F` | `#F0F0EE` |
 | muted-foreground | `#9BA1A6` | `#6B7177` |
 | border / input | `#26282C` | `#E6E6E3` |
-| primary (accent) | `#4FB3BF` | `#2E8C99` |
+| primary (accent) | `#4FB3BF` | `#207580` |
 | primary-foreground | `#0E0F11` | `#FFFFFF` |
-| ring | `#4FB3BF` | `#2E8C99` |
+| ring | `#4FB3BF` | `#207580` |
 | destructive | `#E5484D` | `#E5484D` |
 | sidebar | `#0B0C0E` | `#F7F7F5` |
+
+> The table lists the most-referenced tokens. See `src/app/globals.css` for the complete set (secondary, accent, and the full sidebar-* tokens).
 
 ## Accent usage
 The muted cyan (`--primary` / `--ring`) is the **only** brand accent. Use it for primary actions, focus rings, and active/selected states — not for decoration or large fills.

@@ -7,7 +7,6 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { ThemeProvider } from '@/components/theme-provider'
 import { brand } from '@/lib/brand'
 
-
 export const metadata: Metadata = {
   title: { default: brand.name, template: `%s · ${brand.name}` },
   description: brand.metaDescription,
@@ -17,6 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body className="antialiased">
+        {/* dark-first: new visitors get dark regardless of OS; enableSystem still lets them choose "System" via the toggle */}
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
