@@ -1,13 +1,14 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { PanelRight, Search } from "lucide-react"
+import { Sparkles, Search } from "lucide-react"
 
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { CommandPalette } from "./command-palette"
+import { ThemeToggle } from "@/components/shell/theme-toggle"
 
 type CommandBarProps = {
   chatOpen: boolean
@@ -30,7 +31,7 @@ export function CommandBar({ chatOpen, onToggleChat }: CommandBarProps) {
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-background px-3">
-      <SidebarTrigger />
+      <SidebarTrigger className="size-9 [&_svg]:size-5" />
       <Separator orientation="vertical" className="h-5" />
 
       <button
@@ -45,16 +46,19 @@ export function CommandBar({ chatOpen, onToggleChat }: CommandBarProps) {
         </kbd>
       </button>
 
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onToggleChat}
-        aria-pressed={chatOpen}
-        aria-label="Toggle assistant"
-        className={cn("ml-auto", chatOpen && "bg-accent text-accent-foreground")}
-      >
-        <PanelRight />
-      </Button>
+      <div className="ml-auto flex items-center gap-1">
+        <ThemeToggle />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggleChat}
+          aria-pressed={chatOpen}
+          aria-label="Toggle assistant"
+          className={cn("size-9 [&_svg]:size-5", chatOpen && "bg-accent text-accent-foreground")}
+        >
+          <Sparkles />
+        </Button>
+      </div>
 
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
     </header>

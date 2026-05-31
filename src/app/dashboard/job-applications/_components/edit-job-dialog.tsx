@@ -73,7 +73,7 @@ export function EditJobDialog({ job, open, onOpenChange }: EditJobDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Edit Job</DialogTitle>
           <DialogDescription>

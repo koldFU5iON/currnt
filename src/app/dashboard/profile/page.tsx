@@ -46,7 +46,7 @@ export default async function Page() {
   }
 
   return (
-    <ContentContainer title="Profile Page" fullWidth>
+    <ContentContainer title="Professional Profile" fullWidth>
       <div className="mb-4 flex justify-end">
         <ImportProfileDialog />
       </div>
