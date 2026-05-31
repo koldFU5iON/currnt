@@ -37,6 +37,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { authClient, useSession } from "@/lib/auth-client"
 import { mainNav, type NavItem } from "@/lib/nav-menu"
 import { FeedbackDrawer } from "@/app/components/FeedbackDrawer"
+import { Wordmark } from "@/components/brand/wordmark"
 
 export function AppSidebar() {
   return (
@@ -50,8 +51,7 @@ export function AppSidebar() {
                   <FileText className="size-4" />
                 </div>
                 <div className="flex flex-col text-left">
-                  <span className="font-semibold text-sm">Resume</span>
-                  <span className="text-xs text-muted-foreground">Job Tracker</span>
+                  <Wordmark size="sm" />
                 </div>
               </SidebarMenuButton>
             </Link>
