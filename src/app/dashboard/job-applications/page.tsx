@@ -12,7 +12,7 @@ export default async function Page() {
   const { configured: hasLLMKey } = await getLLMConfigStatus(profile.id)
 
   return (
-    <ContentContainer title="Job Applications" description="Track all the jobs you're currently interested in. Update the status to keep up to date on the current process and where you stand with your application">
+    <ContentContainer fullWidth title="Job Applications" description="Track all the jobs you're currently interested in. Update the status to keep up to date on the current process and where you stand with your application">
       <JobList jobs={jobs} hasLLMKey={hasLLMKey} />
     </ContentContainer>
   )
