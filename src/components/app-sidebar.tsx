@@ -36,6 +36,7 @@ import { useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { authClient, useSession } from "@/lib/auth-client"
 import { mainNav, type NavItem } from "@/lib/nav-menu"
+import { brand } from "@/lib/brand"
 import { FeedbackDrawer } from "@/app/components/FeedbackDrawer"
 import { Wordmark } from "@/components/brand/wordmark"
 
@@ -46,7 +47,7 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <Link href="/dashboard">
-              <SidebarMenuButton size="lg" tooltip="Resume">
+              <SidebarMenuButton size="lg" tooltip={brand.name}>
                 <div className="flex aspect-square size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
                   <FileText className="size-4" />
                 </div>
