@@ -63,7 +63,7 @@ export function ImportProfileDialog() {
     setStage((s) => {
       if (s.name !== "review") return s
       const data = structuredClone(s.data)
-      data.experiences[idx][field] = value || null
+      data.experiences[idx][field] = value || undefined
       return { ...s, data }
     })
   }

@@ -88,9 +88,9 @@ export function buildCommitPlan(extracted: ExtractedProfile, existing: ExistingP
       role: exp.role,
       startDate,
       endDate: parseMonthYear(exp.endDate),
-      location: exp.location,
+      location: exp.location ?? null,
       remote: exp.remote,
-      summary: exp.summary,
+      summary: exp.summary ?? null,
       activities: exp.activities,
     })
   }
@@ -105,15 +105,16 @@ export function buildCommitPlan(extracted: ExtractedProfile, existing: ExistingP
     plan.education.push({
       institution: ed.institution,
       qualification: ed.qualification,
-      field: ed.field,
+      field: ed.field ?? null,
       startDate,
       endDate: parseYear(ed.endDate),
     })
   }
 
-  // Certifications: issuer/issueDate are now nullable in the schema.
+  // Certifications: issuer/issueDate are optional in the schema; normalize the
+  // absent case to null for the planned (DB-facing) shape.
   for (const cert of extracted.certifications) {
-    plan.certifications.push({ name: cert.name, issuer: cert.issuer, issueDate: parseMonthYear(cert.issueDate) })
+    plan.certifications.push({ name: cert.name, issuer: cert.issuer ?? null, issueDate: parseMonthYear(cert.issueDate) })
   }
 
   // Skills: dedup against existing by normalized name; apply DB defaults.

@@ -13,9 +13,9 @@ function withExperience(over: Partial<ExtractedProfile["experiences"][number]> =
   return {
     ...emptyExtractedProfile,
     experiences: [{
-      company: "Unity", role: "Snr Program Manager", startDate: "2024-07", endDate: null,
+      company: "Unity", role: "Snr Program Manager", startDate: "2024-07",
       location: "France", remote: false, summary: "intro",
-      activities: [{ kind: "responsibility", description: "Lead delivery", impact: null }],
+      activities: [{ kind: "responsibility", description: "Lead delivery" }],
       ...over,
     }],
   }
@@ -58,16 +58,16 @@ test("skips an experience that duplicates an existing company+role", () => {
 })
 
 test("skips an experience with no parseable start date", () => {
-  const plan = buildCommitPlan(withExperience({ startDate: null }), emptyExisting)
+  const plan = buildCommitPlan(withExperience({ startDate: undefined }), emptyExisting)
   expect(plan.experiences).toHaveLength(0)
   expect(plan.skipped[0].reason).toBe("missing start date")
 })
 
-test("certifications keep nullable issuer/date; skills get defaults", () => {
+test("certifications keep optional issuer/date; skills get defaults", () => {
   const extracted: ExtractedProfile = {
     ...emptyExtractedProfile,
-    certifications: [{ name: "Learn SQL Course", issuer: null, issueDate: null }],
-    skills: [{ name: "AI Fluency", category: null }],
+    certifications: [{ name: "Learn SQL Course" }],
+    skills: [{ name: "AI Fluency" }],
   }
   const plan = buildCommitPlan(extracted, emptyExisting)
   expect(plan.certifications[0]).toEqual({ name: "Learn SQL Course", issuer: null, issueDate: null })
@@ -75,7 +75,7 @@ test("certifications keep nullable issuer/date; skills get defaults", () => {
 })
 
 test("dedups skills against existing by normalized name", () => {
-  const extracted: ExtractedProfile = { ...emptyExtractedProfile, skills: [{ name: "AI Fluency", category: null }] }
+  const extracted: ExtractedProfile = { ...emptyExtractedProfile, skills: [{ name: "AI Fluency" }] }
   const existing: ExistingProfileState = { ...emptyExisting, skillKeys: new Set(["ai fluency"]) }
   const plan = buildCommitPlan(extracted, existing)
   expect(plan.skills).toHaveLength(0)

@@ -10,8 +10,6 @@ test("schema parses a representative extracted profile", () => {
       email: "devon.stanton@gmail.com",
       phone: "+330610036295",
       linkedIn: "www.linkedin.com/in/devonstanton",
-      website: null,
-      github: null,
     },
     summary: "Some people tell the story. Some people build the stage.",
     experiences: [
@@ -19,12 +17,11 @@ test("schema parses a representative extracted profile", () => {
         company: "Unity",
         role: "Snr Program Manager",
         startDate: "2024-07",
-        endDate: null,
         location: "France",
         remote: false,
         summary: "Promoted into global program ownership role.",
         activities: [
-          { kind: "responsibility", description: "Lead global delivery of partner-facing initiatives", impact: null },
+          { kind: "responsibility", description: "Lead global delivery of partner-facing initiatives" },
           { kind: "achievement", description: "Scaled campaign visibility infrastructure", impact: "40 → 5,000+ tracked projects" },
         ],
       },
@@ -33,15 +30,15 @@ test("schema parses a representative extracted profile", () => {
       { institution: "Vega", qualification: "Business Communications", field: "Branding", startDate: "2008", endDate: "2011" },
     ],
     certifications: [
-      { name: "Learn SQL Course", issuer: null, issueDate: null },
+      { name: "Learn SQL Course" },
     ],
     skills: [
-      { name: "AI Fluency", category: null },
+      { name: "AI Fluency" },
     ],
   }
   const parsed = ExtractedProfileSchema.parse(input)
   expect(parsed.experiences[0].activities[1].kind).toBe("achievement")
-  expect(parsed.certifications[0].issuer).toBeNull()
+  expect(parsed.certifications[0].issuer).toBeUndefined()
 })
 
 test("emptyExtractedProfile is a valid parse", () => {
@@ -50,8 +47,8 @@ test("emptyExtractedProfile is a valid parse", () => {
 
 test("schema rejects an invalid activity kind", () => {
   const bad = { ...emptyExtractedProfile, experiences: [{
-    company: "X", role: "Y", startDate: "2020-01", endDate: null, location: null, remote: false, summary: null,
-    activities: [{ kind: "duty", description: "z", impact: null }],
+    company: "X", role: "Y", startDate: "2020-01", remote: false,
+    activities: [{ kind: "duty", description: "z" }],
   }] }
   expect(() => ExtractedProfileSchema.parse(bad)).toThrow()
 })
