@@ -36,7 +36,9 @@ import { useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { authClient, useSession } from "@/lib/auth-client"
 import { mainNav, type NavItem } from "@/lib/nav-menu"
+import { brand } from "@/lib/brand"
 import { FeedbackDrawer } from "@/app/components/FeedbackDrawer"
+import { Wordmark } from "@/components/brand/wordmark"
 
 export function AppSidebar() {
   return (
@@ -45,13 +47,13 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <Link href="/dashboard">
-              <SidebarMenuButton size="lg" tooltip="Resume">
+              {/* tooltip={brand.name} is the accessible label when the sidebar is collapsed — keep it */}
+              <SidebarMenuButton size="lg" tooltip={brand.name}>
                 <div className="flex aspect-square size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
                   <FileText className="size-4" />
                 </div>
                 <div className="flex flex-col text-left">
-                  <span className="font-semibold text-sm">Resume</span>
-                  <span className="text-xs text-muted-foreground">Job Tracker</span>
+                  <Wordmark size="sm" />
                 </div>
               </SidebarMenuButton>
             </Link>

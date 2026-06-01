@@ -12,6 +12,7 @@ import {
 } from "@/modules/onboarding/actions"
 import { getOnboardingSettings } from "@/modules/onboarding/queries"
 import { onboardingContextHasContent } from "@/modules/onboarding/schema"
+import { brand } from "@/lib/brand"
 
 export default async function Page() {
   const { context, completedAt, skippedAt } = await getOnboardingSettings()
@@ -21,7 +22,7 @@ export default async function Page() {
     <div className="max-w-3xl p-4 md:p-8">
       <div className="mb-6 space-y-2">
         <p className="text-sm font-medium text-muted-foreground">Optional setup</p>
-        <h1 className="text-3xl font-semibold tracking-tight">Tell Resume what kind of search you are running</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Tell {brand.name} what kind of search you are running</h1>
         <p className="text-muted-foreground">
           Keep this light. This is not your CV or career profile; it is gentle context that helps future assistance understand your direction, preferences, and constraints.
         </p>
