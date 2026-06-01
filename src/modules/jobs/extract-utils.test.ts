@@ -14,6 +14,9 @@ describe('decodeEntities', () => {
   it('decodes &amp; last to avoid double-decoding', () => {
     expect(decodeEntities('&amp;lt;')).toBe('&lt;')
   })
+  it('decodes emoji numeric entities (above U+FFFF)', () => {
+    expect(decodeEntities('&#128512;')).toBe('😀')
+  })
 })
 
 describe('formatSalaryBand', () => {
