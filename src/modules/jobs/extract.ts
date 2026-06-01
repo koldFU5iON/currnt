@@ -1,32 +1,43 @@
 'use server'
 
-import TurndownService from 'turndown'
-
-const td = new TurndownService({ headingStyle: 'atx', bulletListMarker: '-' })
-td.remove(['script', 'style', 'noscript'])
-
-export type ExtractedJob = {
-  title?: string
-  company?: string
-  location?: string
-  jobDescription?: string
-  jobNumber?: string
-  datePublished?: Date
-  salaryBand?: string
-}
-
-type ExtractionResult =
-  | { ok: true; data: ExtractedJob }
-  | { ok: false; error: string }
+import type { ExtractionResult, ExtractedJob } from './extract-utils'
+export type { ExtractedJob }
+import { decode, td, formatSalaryBand } from './extract-utils'
+import {
+  linkedInJobId, extractLinkedIn,
+  greenhouseFromUrl, greenhouseFromHtml, extractGreenhouse,
+  matchSiteOverride,
+  leverFromUrl, extractLever,
+  ashbyFromUrl, extractAshby,
+  workdayFromUrl, extractWorkday,
+} from './extract-ats'
+import { extractWithLLM } from './extract-llm'
 
 export async function extractJobFromUrl(url: string): Promise<ExtractionResult> {
+  // ── Tier 1: ATS routing (no HTML fetch) ──────────────────────────────────
   const linkedInId = linkedInJobId(url)
   if (linkedInId) return extractLinkedIn(linkedInId)
 
-  // Direct Greenhouse URL — call the API without fetching the wrapper page
+  const siteOverride = matchSiteOverride(url)
+  if (siteOverride) return extractGreenhouse(siteOverride.board, siteOverride.jobId)
+
   const directGh = greenhouseFromUrl(url)
   if (directGh) return extractGreenhouse(directGh.board, directGh.jobId)
 
+  const lever = leverFromUrl(url)
+  if (lever) return extractLever(lever.company, lever.jobId)
+
+  const ashby = ashbyFromUrl(url)
+  if (ashby) return extractAshby(ashby.company, ashby.jobSlug)
+
+  const workday = workdayFromUrl(url)
+  if (workday) {
+    const result = await extractWorkday(workday.subdomain, workday.tenant, workday.group, workday.jobId)
+    if (result) return result
+    // null = API unavailable, fall through to HTML fetch
+  }
+
+  // ── Tier 2: HTML fetch + structural parse ─────────────────────────────────
   let html: string
   try {
     const res = await fetch(url, {
@@ -38,7 +49,10 @@ export async function extractJobFromUrl(url: string): Promise<ExtractionResult> 
       signal: AbortSignal.timeout(12_000),
     })
     if (!res.ok) {
-      return { ok: false, error: `Page returned ${res.status} — the URL may require a login or no longer exists.` }
+      return {
+        ok: false,
+        error: `Could not reach that page — it may block automated access (${res.status}). Try pasting the details manually.`,
+      }
     }
     html = await res.text()
   } catch (e) {
@@ -46,168 +60,22 @@ export async function extractJobFromUrl(url: string): Promise<ExtractionResult> 
     return { ok: false, error: `Could not reach that URL: ${msg}` }
   }
 
-  // Greenhouse embedded on a wrapper site (e.g. mongodb.com/careers, many corporate sites)
   const embeddedGh = greenhouseFromHtml(url, html)
   if (embeddedGh) {
     const ghResult = await extractGreenhouse(embeddedGh.board, embeddedGh.jobId)
     if (ghResult.ok) return ghResult
-    // If the API didn't have the job, fall through to JSON-LD / meta below
   }
 
   const extracted = fromJsonLd(html) ?? fromMetaTags(html)
-
-  if (!extracted.title && !extracted.company && !extracted.jobDescription) {
-    return {
-      ok: false,
-      error: 'No job details found on that page. The site may block automated access — try pasting the details manually.',
-    }
+  if (extracted.title || extracted.company || extracted.jobDescription) {
+    return { ok: true, data: extracted }
   }
 
-  return { ok: true, data: extracted }
+  // ── Tier 3: LLM extraction ────────────────────────────────────────────────
+  return extractWithLLM(html)
 }
 
-// ── LinkedIn (/jobs/view/{id}) — uses the crawler-friendly guest API ──────────
-
-function linkedInJobId(url: string): string | null {
-  const m = url.match(/linkedin\.com\/jobs\/view\/(?:[^/]+-)?(\d+)/i)
-  return m?.[1] ?? null
-}
-
-async function extractLinkedIn(jobId: string): Promise<ExtractionResult> {
-  const apiUrl = `https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/${jobId}`
-  let html: string
-  try {
-    const res = await fetch(apiUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
-        'Accept': 'text/html,application/xhtml+xml',
-        'Accept-Language': 'en-US,en;q=0.9',
-      },
-      signal: AbortSignal.timeout(12_000),
-    })
-    if (!res.ok) {
-      return { ok: false, error: `LinkedIn returned ${res.status} — the job may no longer be available.` }
-    }
-    html = await res.text()
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Network error'
-    return { ok: false, error: `Could not reach LinkedIn: ${msg}` }
-  }
-
-  const attr = (pattern: RegExp) => decode(html.match(pattern)?.[1]?.trim())
-
-  const title = attr(/class="[^"]*topcard__title[^"]*"[^>]*>([^<]+)</)
-    ?? attr(/<h2[^>]*class="[^"]*top-card-layout__title[^"]*"[^>]*>([^<]+)</)
-
-  // company name sits inside the org-name link
-  const company = attr(/class="[^"]*topcard__org-name-link[^"]*"[^>]*>\s*([^<\n]+)\s*<\/a>/i)
-
-  // first topcard__flavor--bullet is always the location
-  const location = attr(/class="[^"]*topcard__flavor--bullet[^"]*"[^>]*>\s*([^<\n]+)\s*<\//)
-
-  // job description lives in the show-more-less markup div
-  const descHtml = attr(/class="[^"]*show-more-less-html__markup[^"]*"[^>]*>([\s\S]+?)<\/div>/)
-  const jobDescription = descHtml ? td.turndown(descHtml) : undefined
-
-  if (!title && !company && !jobDescription) {
-    return {
-      ok: false,
-      error: 'Could not extract details from this LinkedIn job. Try copying the details manually.',
-    }
-  }
-
-  return {
-    ok: true,
-    data: { title, company, location, jobDescription, jobNumber: jobId },
-  }
-}
-
-// ── Greenhouse (public Boards API) ────────────────────────────────────────────
-//
-// Works for two cases:
-//   1. Direct URLs like boards.greenhouse.io/{board}/jobs/{id}
-//   2. Wrapper sites (e.g. mongodb.com/careers/jobs/{id}) that embed Greenhouse
-//      via boards.greenhouse.io/embed/job_board/js?for={board}. The wrapper HTML
-//      is just a shell — the job content is rendered client-side, so a server
-//      fetch sees no description. Calling the API directly bypasses this.
-
-function greenhouseFromUrl(url: string): { board: string; jobId: string } | null {
-  const m = url.match(/(?:^|\/\/)(?:boards|job-boards)\.greenhouse\.io\/([^/?#]+)\/jobs\/(\d+)/i)
-  return m ? { board: m[1], jobId: m[2] } : null
-}
-
-function greenhouseFromHtml(url: string, html: string): { board: string; jobId: string } | null {
-  const board = html.match(/(?:boards|job-boards)\.greenhouse\.io\/embed\/job_board\/js\?for=([a-z0-9_-]+)/i)?.[1]
-  if (!board) return null
-
-  // gh_jid is Greenhouse's canonical query param; many wrappers expose only the path id
-  const jobId =
-    url.match(/[?&]gh_jid=(\d+)/i)?.[1] ??
-    html.match(/gh_jid=(\d+)/i)?.[1] ??
-    url.match(/\/(?:jobs?|positions?)\/(\d+)/i)?.[1]
-
-  return jobId ? { board, jobId } : null
-}
-
-async function extractGreenhouse(board: string, jobId: string): Promise<ExtractionResult> {
-  const apiUrl = `https://boards-api.greenhouse.io/v1/boards/${board}/jobs/${jobId}?content=true`
-  let payload: Record<string, unknown>
-  try {
-    const res = await fetch(apiUrl, {
-      headers: { Accept: 'application/json' },
-      signal: AbortSignal.timeout(12_000),
-    })
-    if (!res.ok) {
-      return { ok: false, error: `Greenhouse returned ${res.status} — the job may no longer be available.` }
-    }
-    payload = (await res.json()) as Record<string, unknown>
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Network error'
-    return { ok: false, error: `Could not reach Greenhouse: ${msg}` }
-  }
-
-  // Greenhouse returns description HTML with entities encoded (&lt;p&gt;…),
-  // so we must decode before handing it to Turndown or it'll render literally.
-  const contentRaw = typeof payload.content === 'string' ? payload.content : ''
-  const jobDescription = contentRaw ? td.turndown(decodeEntities(contentRaw)) : undefined
-
-  const rawDate = typeof payload.first_published === 'string' ? payload.first_published : undefined
-  const parsed = rawDate ? new Date(rawDate) : undefined
-  const datePublished = parsed && !isNaN(parsed.getTime()) ? parsed : undefined
-
-  const location = (payload.location as Record<string, unknown> | undefined)?.name
-  const idValue = payload.id != null ? String(payload.id) : jobId
-
-  return {
-    ok: true,
-    data: {
-      title: decode(typeof payload.title === 'string' ? payload.title.trim() : undefined),
-      company: decode(typeof payload.company_name === 'string' ? payload.company_name.trim() : undefined),
-      location: decode(typeof location === 'string' ? location : undefined),
-      jobDescription,
-      jobNumber: idValue,
-      datePublished,
-    },
-  }
-}
-
-function decode(s: string | undefined): string | undefined {
-  return s ? decodeEntities(s) : s
-}
-
-function decodeEntities(s: string): string {
-  return s
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
-    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&') // last, so e.g. &amp;lt; doesn't get over-decoded
-}
-
-// ── JSON-LD JobPosting (used by Lever, Workday, Indeed, and many ATSs) ────────
+// ── JSON-LD JobPosting ────────────────────────────────────────────────────────
 
 function fromJsonLd(html: string): ExtractedJob | null {
   const blocks = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)]
@@ -226,7 +94,6 @@ function fromJsonLd(html: string): ExtractedJob | null {
       const city = addr?.addressLocality as string | undefined
       const country = addr?.addressCountry as string | undefined
       const isRemote = job.jobLocationType === 'TELECOMMUTE'
-
       const locationParts = isRemote
         ? ['Remote', city, country].filter(Boolean)
         : [city, country].filter(Boolean)
@@ -257,27 +124,7 @@ function fromJsonLd(html: string): ExtractedJob | null {
   return null
 }
 
-// ── Salary formatting ─────────────────────────────────────────────────────────
-
-function formatSalaryBand(baseSalary: unknown): string | undefined {
-  if (!baseSalary || typeof baseSalary !== 'object') return undefined
-  const sal = baseSalary as Record<string, unknown>
-  const curr = typeof sal.currency === 'string' ? sal.currency : 'USD'
-  const sym = ({ USD: '$', GBP: '£', EUR: '€', CAD: 'CA$', AUD: 'A$' } as Record<string, string>)[curr] ?? (curr + ' ')
-  const abbrev = (n: number) => n >= 1000 ? `${Math.round(n / 1000)}k` : String(n)
-  const qv = sal.value && typeof sal.value === 'object' ? sal.value as Record<string, unknown> : null
-  if (qv) {
-    const min = typeof qv.minValue === 'number' ? qv.minValue : null
-    const max = typeof qv.maxValue === 'number' ? qv.maxValue : null
-    const flat = typeof qv.value === 'number' ? qv.value : null
-    if (min !== null && max !== null) return `${sym}${abbrev(min)}–${abbrev(max)}`
-    if (flat !== null) return `${sym}${abbrev(flat)}`
-  }
-  if (typeof sal.value === 'number') return `${sym}${abbrev(sal.value)}`
-  return undefined
-}
-
-// ── OpenGraph / meta fallback ──────────────────────────────────────────────────
+// ── OpenGraph / meta fallback ─────────────────────────────────────────────────
 
 function fromMetaTags(html: string): ExtractedJob {
   const og = (prop: string) => {
