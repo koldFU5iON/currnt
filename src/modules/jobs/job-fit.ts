@@ -71,8 +71,8 @@ export async function assessJobFit(jobId: string): Promise<AssessJobFitResult> {
 
 Be honest and concrete. Overclaiming the candidate's fit makes them waste an interview slot; understating loses them an opportunity they could land. Calibrate the rating against real-world hiring bars:
 
-- 0–2 (poor): missing core requirements; would be rejected at first screen.
-- 3–4 (ok): partial overlap; would need an exceptional cover letter to advance.
+- 0–2 (unlikely): missing core requirements; would be rejected at first screen.
+- 3–4 (weak): partial overlap; would need an exceptional cover letter to advance.
 - 5–6 (stretch): meets most requirements but has a meaningful gap; viable with strong story.
 - 7–8 (good): strong baseline match; can credibly compete in interviews.
 - 9–10 (excellent): unusually well-aligned across role, level, and stack.
@@ -105,13 +105,13 @@ ${job.jobDescription}`
     userPrompt += `\n\n# Personal Notes\n\n${job.notes}`
   }
 
-  userPrompt += `\n\nReturn a single JSON object matching the schema. Two or three sentences in the justification${hasGoals ? '; one or two sentences in trajectoryNote' : ''}.`
+  userPrompt += `\n\nReturn a single JSON object matching the schema. In the justification, write markdown: a **Strengths:** section and a **Weaknesses:** section (2–3 bullet points each), then one sentence of overall summary.${hasGoals ? ' One or two sentences in trajectoryNote.' : ''}`
 
   let fit: JobFit
   try {
     const result = await completeStructured(profile.id, userPrompt, JobFitSchema, {
       system,
-      maxOutputTokens: 600,
+      maxOutputTokens: 900,
       temperature: 0.2,
     })
     fit = result.object
