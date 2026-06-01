@@ -4,7 +4,7 @@ import * as z from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm, FormProvider } from 'react-hook-form'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Loader2, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Field, FieldLabel, FieldError } from '@/components/ui/field'
@@ -24,7 +24,7 @@ const SOURCE_OPTIONS = APPLICATION_SOURCES.map(value => ({
   label: APPLICATION_SOURCE_LABEL[value],
 }))
 
-export function CreateJobForm() {
+export function CreateJobForm({ initialUrl }: { initialUrl?: string }) {
   const [extracting, setExtracting] = useState(false)
   const [duplicates, setDuplicates] = useState<DuplicateMatch[]>([])
   const [acknowledgedDupes, setAcknowledgedDupes] = useState(false)
@@ -44,6 +44,11 @@ export function CreateJobForm() {
       applicationSource: 'cold',
     },
   })
+
+  useEffect(() => {
+    if (initialUrl) form.setValue('url', initialUrl, { shouldValidate: false })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function handleExtract() {
     const url = form.getValues('url')
