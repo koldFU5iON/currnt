@@ -1,0 +1,52 @@
+import TurndownService from 'turndown'
+
+export type ExtractedJob = {
+  title?: string
+  company?: string
+  location?: string
+  jobDescription?: string
+  jobNumber?: string
+  datePublished?: Date
+  salaryBand?: string
+}
+
+export type ExtractionResult =
+  | { ok: true; data: ExtractedJob }
+  | { ok: false; error: string }
+
+export const td = new TurndownService({ headingStyle: 'atx', bulletListMarker: '-' })
+td.remove(['script', 'style', 'noscript'])
+
+export function decode(s: string | undefined): string | undefined {
+  return s ? decodeEntities(s) : s
+}
+
+export function decodeEntities(s: string): string {
+  return s
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+}
+
+export function formatSalaryBand(baseSalary: unknown): string | undefined {
+  if (!baseSalary || typeof baseSalary !== 'object') return undefined
+  const sal = baseSalary as Record<string, unknown>
+  const curr = typeof sal.currency === 'string' ? sal.currency : 'USD'
+  const sym = ({ USD: '$', GBP: '£', EUR: '€', CAD: 'CA$', AUD: 'A$' } as Record<string, string>)[curr] ?? (curr + ' ')
+  const abbrev = (n: number) => n >= 1000 ? `${Math.round(n / 1000)}k` : String(n)
+  const qv = sal.value && typeof sal.value === 'object' ? sal.value as Record<string, unknown> : null
+  if (qv) {
+    const min = typeof qv.minValue === 'number' ? qv.minValue : null
+    const max = typeof qv.maxValue === 'number' ? qv.maxValue : null
+    const flat = typeof qv.value === 'number' ? qv.value : null
+    if (min !== null && max !== null) return `${sym}${abbrev(min)}–${sym}${abbrev(max)}`
+    if (flat !== null) return `${sym}${abbrev(flat)}`
+  }
+  if (typeof sal.value === 'number') return `${sym}${abbrev(sal.value)}`
+  return undefined
+}
