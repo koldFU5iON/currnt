@@ -38,6 +38,7 @@ export function CreateJobForm() {
       url: '',
       location: '',
       jobNumber: '',
+      salaryBand: '',
       jobDescription: '',
       datePublished: new Date(),
       applicationSource: 'cold',
@@ -64,6 +65,7 @@ export function CreateJobForm() {
       if (data.jobDescription) form.setValue('jobDescription', data.jobDescription)
       if (data.jobNumber) form.setValue('jobNumber', data.jobNumber)
       if (data.datePublished) form.setValue('datePublished', data.datePublished)
+      if (data.salaryBand) form.setValue('salaryBand', data.salaryBand)
       toast.success('Details extracted — review and submit')
 
       // Re-check for duplicates against the freshly-extracted values
@@ -152,13 +154,15 @@ export function CreateJobForm() {
 
         <div className="grid grid-cols-2 gap-4">
           <FormField name="datePublished" label="Date Published" type="date" />
-          <FormField
-            name="applicationSource"
-            label="Source"
-            type="select"
-            options={SOURCE_OPTIONS}
-          />
+          <FormField name="salaryBand" label="Salary Band" placeholder="e.g. $120k–$160k" />
         </div>
+
+        <FormField
+          name="applicationSource"
+          label="Source"
+          type="select"
+          options={SOURCE_OPTIONS}
+        />
 
         <FormField
           name="jobDescription"
