@@ -1,4 +1,4 @@
-import { td, decode, decodeEntities, type ExtractedJob, type ExtractionResult } from './extract-utils'
+import { td, decode, decodeEntities, CURRENCY_SYMBOLS, abbrevAmount, type ExtractedJob, type ExtractionResult } from './extract-utils'
 
 // ── Site-specific Greenhouse overrides ──────────────────────────────────────
 // Corporate SPAs that use Greenhouse but render client-side — we can't detect
@@ -178,12 +178,11 @@ function formatLeverSalary(salaryRange: unknown): string | undefined {
   if (!salaryRange || typeof salaryRange !== 'object') return undefined
   const s = salaryRange as Record<string, unknown>
   const curr = typeof s.currency === 'string' ? s.currency : 'USD'
-  const sym = ({ USD: '$', GBP: '£', EUR: '€', CAD: 'CA$', AUD: 'A$' } as Record<string, string>)[curr] ?? (curr + ' ')
-  const abbrev = (n: number) => n >= 1000 ? `${Math.round(n / 1000)}k` : String(n)
+  const sym = CURRENCY_SYMBOLS[curr] ?? (curr + ' ')
   const min = typeof s.min === 'number' ? s.min : null
   const max = typeof s.max === 'number' ? s.max : null
-  if (min !== null && max !== null) return `${sym}${abbrev(min)}–${abbrev(max)}`
-  if (min !== null) return `${sym}${abbrev(min)}+`
+  if (min !== null && max !== null) return `${sym}${abbrevAmount(min)}–${abbrevAmount(max)}`
+  if (min !== null) return `${sym}${abbrevAmount(min)}+`
   return undefined
 }
 

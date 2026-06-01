@@ -33,20 +33,27 @@ export function decodeEntities(s: string): string {
     .replace(/&amp;/g, '&')
 }
 
+export const CURRENCY_SYMBOLS: Record<string, string> = {
+  USD: '$', GBP: '£', EUR: '€', CAD: 'CA$', AUD: 'A$',
+}
+
+export function abbrevAmount(n: number): string {
+  return n >= 1000 ? `${Math.round(n / 1000)}k` : String(n)
+}
+
 export function formatSalaryBand(baseSalary: unknown): string | undefined {
   if (!baseSalary || typeof baseSalary !== 'object') return undefined
   const sal = baseSalary as Record<string, unknown>
   const curr = typeof sal.currency === 'string' ? sal.currency : 'USD'
-  const sym = ({ USD: '$', GBP: '£', EUR: '€', CAD: 'CA$', AUD: 'A$' } as Record<string, string>)[curr] ?? (curr + ' ')
-  const abbrev = (n: number) => n >= 1000 ? `${Math.round(n / 1000)}k` : String(n)
+  const sym = CURRENCY_SYMBOLS[curr] ?? (curr + ' ')
   const qv = sal.value && typeof sal.value === 'object' ? sal.value as Record<string, unknown> : null
   if (qv) {
     const min = typeof qv.minValue === 'number' ? qv.minValue : null
     const max = typeof qv.maxValue === 'number' ? qv.maxValue : null
     const flat = typeof qv.value === 'number' ? qv.value : null
-    if (min !== null && max !== null) return `${sym}${abbrev(min)}–${sym}${abbrev(max)}`
-    if (flat !== null) return `${sym}${abbrev(flat)}`
+    if (min !== null && max !== null) return `${sym}${abbrevAmount(min)}–${sym}${abbrevAmount(max)}`
+    if (flat !== null) return `${sym}${abbrevAmount(flat)}`
   }
-  if (typeof sal.value === 'number') return `${sym}${abbrev(sal.value)}`
+  if (typeof sal.value === 'number') return `${sym}${abbrevAmount(sal.value)}`
   return undefined
 }
