@@ -4,6 +4,7 @@ import { useState, useTransition } from "react"
 import { Flame, Info, Loader2, Puzzle, StickyNote } from "lucide-react"
 import Link from "next/link"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
+import { Drawer, DrawerTrigger, DrawerContent } from "@/components/ui/drawer"
 import { Separator } from "@/components/ui/separator"
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import { MarkdownProse } from "@/app/dashboard/job-applications/view/[id]/_components/markdown-prose"
@@ -99,22 +100,49 @@ export function JobFit({ jobId, jobFit, canAssess = true, hasLLMKey = true }: Jo
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
-        aria-label={`Fit: ${jobFit.label}, ${jobFit.rating} out of 10. Click for details.`}
-        className="rounded-md hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        <FitPill fit={jobFit} />
-      </PopoverTrigger>
-      <PopoverContent className="w-96">
-        <FitDetail
-          jobFit={jobFit}
-          hasLLMKey={hasLLMKey}
-          canAssess={canAssess}
-          onReassess={handleAssess}
-        />
-      </PopoverContent>
-    </Popover>
+    <>
+      {/* Desktop: popover — hidden below sm breakpoint */}
+      <span className="max-sm:hidden">
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger
+            aria-label={`Fit: ${jobFit.label}, ${jobFit.rating} out of 10. Click for details.`}
+            className="rounded-md hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <FitPill fit={jobFit} />
+          </PopoverTrigger>
+          <PopoverContent className="w-96">
+            <FitDetail
+              jobFit={jobFit}
+              hasLLMKey={hasLLMKey}
+              canAssess={canAssess}
+              onReassess={handleAssess}
+            />
+          </PopoverContent>
+        </Popover>
+      </span>
+
+      {/* Mobile: bottom drawer — hidden at sm and above */}
+      <span className="sm:hidden">
+        <Drawer open={open} onOpenChange={setOpen}>
+          <DrawerTrigger
+            aria-label={`Fit: ${jobFit.label}, ${jobFit.rating} out of 10. Tap for details.`}
+            className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <FitPill fit={jobFit} />
+          </DrawerTrigger>
+          <DrawerContent>
+            <div className="px-4 pb-6 pt-2">
+              <FitDetail
+                jobFit={jobFit}
+                hasLLMKey={hasLLMKey}
+                canAssess={canAssess}
+                onReassess={handleAssess}
+              />
+            </div>
+          </DrawerContent>
+        </Drawer>
+      </span>
+    </>
   )
 }
 
