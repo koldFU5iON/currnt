@@ -139,7 +139,7 @@ export function JobFit({ jobId, jobFit, canAssess = true, hasLLMKey = true }: Jo
             <DrawerTitle className="sr-only">
               {jobFit.label} – {jobFit.rating}/10 fit detail
             </DrawerTitle>
-            <div className="px-4 pb-6 pt-2">
+            <div className="overflow-y-auto px-4 pb-6 pt-2">
               <FitDetail
                 jobFit={jobFit}
                 hasLLMKey={hasLLMKey}
