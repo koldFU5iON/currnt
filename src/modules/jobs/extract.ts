@@ -13,7 +13,37 @@ import {
 } from './extract-ats'
 import { extractWithLLM } from './extract-llm'
 
+// Reject URLs that could reach internal infrastructure (SSRF guard).
+// Tier 1 extractors build their own API URLs from parsed IDs — only the
+// tier 2 HTML fetch uses the raw user-supplied URL, but we validate once
+// here so the check covers all current and future fetch paths.
+function isSafeUrl(raw: string): boolean {
+  let parsed: URL
+  try { parsed = new URL(raw) } catch { return false }
+  if (parsed.protocol !== 'https:') return false
+  const h = parsed.hostname.toLowerCase()
+  return !(
+    h === 'localhost' ||
+    h.endsWith('.local') ||
+    h.endsWith('.internal') ||
+    h === 'metadata.google.internal' ||
+    h === '0.0.0.0' ||
+    h === '::1' ||
+    /^127\./.test(h) ||
+    /^10\./.test(h) ||
+    /^192\.168\./.test(h) ||
+    /^172\.(1[6-9]|2[0-9]|3[01])\./.test(h) ||
+    /^169\.254\./.test(h) ||       // AWS/GCP link-local metadata
+    /^\[f[cd]/.test(h) ||          // IPv6 ULA (fc00::/7)
+    /^\[fe80/.test(h)              // IPv6 link-local
+  )
+}
+
 export async function extractJobFromUrl(url: string): Promise<ExtractionResult> {
+  if (!isSafeUrl(url)) {
+    return { ok: false, error: 'Invalid URL — only public HTTPS job pages are supported.' }
+  }
+
   // ── Tier 1: ATS routing (no HTML fetch) ──────────────────────────────────
   const linkedInId = linkedInJobId(url)
   if (linkedInId) return extractLinkedIn(linkedInId)
