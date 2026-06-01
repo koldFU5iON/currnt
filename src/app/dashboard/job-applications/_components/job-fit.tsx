@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useTransition } from "react"
-import { Flame, Loader2, Puzzle, StickyNote } from "lucide-react"
+import { Flame, Info, Loader2, Puzzle, StickyNote } from "lucide-react"
 import Link from "next/link"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
+import { MarkdownProse } from "@/app/dashboard/job-applications/view/[id]/_components/markdown-prose"
 import type { JobFit as JobFitType } from "@/app/types/job-application"
 import { assessJobFit } from "@/modules/jobs/job-fit"
 import { toast } from "sonner"
@@ -104,64 +106,109 @@ export function JobFit({ jobId, jobFit, canAssess = true, hasLLMKey = true }: Jo
       >
         <FitPill fit={jobFit} />
       </PopoverTrigger>
-      <PopoverContent className="w-80">
-        <div className="space-y-3">
-          <div>
-            <div className="flex items-center justify-between gap-2 mb-1.5">
-              <p className="text-sm font-semibold capitalize">{jobFit.label}</p>
-              <span className="font-mono text-xs text-muted-foreground">{jobFit.rating}/10</span>
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">{jobFit.justification}</p>
-          </div>
-
-          {jobFit.trajectoryNote && (
-            <>
-              <Separator />
-              <div>
-                <p className="text-xs font-semibold mb-1.5">Your trajectory</p>
-                <p className="text-xs text-muted-foreground leading-relaxed">{jobFit.trajectoryNote}</p>
-              </div>
-            </>
-          )}
-
-          {jobFit.notesUsed && (
-            <>
-              <Separator />
-              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <StickyNote size={11} className="shrink-0 fill-amber-200 text-amber-500" />
-                Personal notes were included when this assessment was run.
-              </p>
-            </>
-          )}
-
-          <Separator />
-
-          <div className="flex items-start justify-between gap-3">
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              AI assessments can be wrong — trust your gut.{' '}
-              <Link href="/dashboard/career-profile" className="underline underline-offset-2 hover:text-foreground transition-colors">
-                Update your profile
-              </Link>
-            </p>
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); handleAssess() }}
-              disabled={!hasLLMKey || !canAssess}
-              title={!hasLLMKey ? 'Add an LLM API key to re-assess' : !canAssess ? 'Add a job description to re-assess' : undefined}
-              className={cn(
-                "shrink-0 text-xs inline-flex items-center gap-1 transition-colors",
-                (!hasLLMKey || !canAssess)
-                  ? "text-muted-foreground/40 cursor-not-allowed"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <Puzzle size={11} />
-              Re-assess
-            </button>
-          </div>
-        </div>
+      <PopoverContent className="w-96">
+        <FitDetail
+          jobFit={jobFit}
+          hasLLMKey={hasLLMKey}
+          canAssess={canAssess}
+          onReassess={handleAssess}
+        />
       </PopoverContent>
     </Popover>
+  )
+}
+
+type FitDetailProps = {
+  jobFit: JobFitType
+  hasLLMKey: boolean
+  canAssess: boolean
+  onReassess: () => void
+}
+
+function FitDetail({ jobFit, hasLLMKey, canAssess, onReassess }: FitDetailProps) {
+  return (
+    <div className="space-y-3">
+      <div>
+        <div className="flex items-center justify-between gap-2 mb-1.5">
+          <p className="text-sm font-semibold capitalize">{jobFit.label}</p>
+          <span className="font-mono text-xs text-muted-foreground">{jobFit.rating}/10</span>
+        </div>
+        <MarkdownProse content={jobFit.justification} />
+      </div>
+
+      {jobFit.trajectoryNote && (
+        <>
+          <Separator />
+          <div>
+            <p className="text-xs font-semibold mb-1.5">Your trajectory</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">{jobFit.trajectoryNote}</p>
+          </div>
+        </>
+      )}
+
+      {jobFit.notesUsed && (
+        <>
+          <Separator />
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <StickyNote size={11} className="shrink-0 fill-amber-200 text-amber-500" />
+            Personal notes were included when this assessment was run.
+          </p>
+        </>
+      )}
+
+      <Separator />
+
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          AI assessments can be wrong — trust your gut.{' '}
+          <Link href="/dashboard/career-profile" className="underline underline-offset-2 hover:text-foreground transition-colors">
+            Update your profile
+          </Link>
+        </p>
+        <div className="shrink-0 flex items-center gap-2">
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <button
+                  type="button"
+                  aria-label="How fit is assessed"
+                  className="text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                >
+                  <Info size={11} />
+                </button>
+              }
+            />
+            <TooltipContent side="top">
+              Fit is assessed by comparing your career profile (experience, skills,
+              education) against the job description using an LLM. Your career goals
+              and personal notes are included when available. Scores reflect
+              real-world hiring bars — not a guarantee.
+            </TooltipContent>
+          </Tooltip>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onReassess() }}
+            disabled={!hasLLMKey || !canAssess}
+            title={
+              !hasLLMKey
+                ? 'Add an LLM API key to re-assess'
+                : !canAssess
+                  ? 'Add a job description to re-assess'
+                  : undefined
+            }
+            className={cn(
+              "text-xs inline-flex items-center gap-1 transition-colors",
+              (!hasLLMKey || !canAssess)
+                ? "text-muted-foreground/40 cursor-not-allowed"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <Puzzle size={11} />
+            Re-assess
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
 
