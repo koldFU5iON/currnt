@@ -197,7 +197,7 @@ function FitDetail({ jobFit, hasLLMKey, canAssess, onReassess }: FitDetailProps)
                   : undefined
             }
             className={cn(
-              "text-xs inline-flex items-center gap-1 transition-colors",
+              "shrink-0 text-xs inline-flex items-center gap-1 transition-colors",
               (!hasLLMKey || !canAssess)
                 ? "text-muted-foreground/40 cursor-not-allowed"
                 : "text-muted-foreground hover:text-foreground",
