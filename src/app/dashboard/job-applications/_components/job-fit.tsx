@@ -38,7 +38,8 @@ const PILL_TEXT_STYLES: Record<JobFitType['label'], string> = {
 
 export function JobFit({ jobId, jobFit, canAssess = true, hasLLMKey = true }: JobFitProps) {
   const [isPending, startTransition] = useTransition()
-  const [open, setOpen] = useState(false)
+  const [popoverOpen, setPopoverOpen] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   // Display-only context (e.g. no jobId passed)
   if (!jobId) {
@@ -51,7 +52,11 @@ export function JobFit({ jobId, jobFit, canAssess = true, hasLLMKey = true }: Jo
     startTransition(async () => {
       const result = await assessJobFit(jobId)
       if (result.ok) {
-        setOpen(true)
+        if (window.innerWidth >= 640) {
+          setPopoverOpen(true)
+        } else {
+          setDrawerOpen(true)
+        }
       } else {
         toast.error(result.message, {
           action: result.error === 'not_configured'
@@ -93,7 +98,7 @@ export function JobFit({ jobId, jobFit, canAssess = true, hasLLMKey = true }: Jo
             : "hover:bg-muted hover:text-foreground cursor-pointer",
         )}
       >
-        <Puzzle size={12} />
+        <Puzzle size={12} className={disabled ? undefined : "text-accent"} />
         assess
       </button>
     )
@@ -103,7 +108,7 @@ export function JobFit({ jobId, jobFit, canAssess = true, hasLLMKey = true }: Jo
     <>
       {/* Desktop: popover — hidden below sm breakpoint */}
       <span className="max-sm:hidden">
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
           <PopoverTrigger
             aria-label={`Fit: ${jobFit.label}, ${jobFit.rating} out of 10. Click for details.`}
             className="rounded-md hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -123,7 +128,7 @@ export function JobFit({ jobId, jobFit, canAssess = true, hasLLMKey = true }: Jo
 
       {/* Mobile: bottom drawer — hidden at sm and above */}
       <span className="sm:hidden">
-        <Drawer open={open} onOpenChange={setOpen}>
+        <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
           <DrawerTrigger
             aria-label={`Fit: ${jobFit.label}, ${jobFit.rating} out of 10. Tap for details.`}
             className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -234,7 +239,7 @@ function FitDetail({ jobFit, hasLLMKey, canAssess, onReassess }: FitDetailProps)
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
-            <Puzzle size={11} />
+            <Puzzle size={11} className={(!hasLLMKey || !canAssess) ? undefined : "text-accent"} />
             Re-assess
           </button>
         </div>
