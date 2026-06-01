@@ -4,7 +4,7 @@ import { useState, useTransition } from "react"
 import { Flame, Info, Loader2, Puzzle, StickyNote } from "lucide-react"
 import Link from "next/link"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
-import { Drawer, DrawerTrigger, DrawerContent } from "@/components/ui/drawer"
+import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer"
 import { Separator } from "@/components/ui/separator"
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import { MarkdownProse } from "@/app/dashboard/job-applications/view/[id]/_components/markdown-prose"
@@ -131,6 +131,9 @@ export function JobFit({ jobId, jobFit, canAssess = true, hasLLMKey = true }: Jo
             <FitPill fit={jobFit} />
           </DrawerTrigger>
           <DrawerContent>
+            <DrawerTitle className="sr-only">
+              {jobFit.label} – {jobFit.rating}/10 fit detail
+            </DrawerTitle>
             <div className="px-4 pb-6 pt-2">
               <FitDetail
                 jobFit={jobFit}
