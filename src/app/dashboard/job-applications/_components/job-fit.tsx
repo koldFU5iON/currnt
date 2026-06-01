@@ -115,7 +115,7 @@ export function JobFit({ jobId, jobFit, canAssess = true, hasLLMKey = true }: Jo
           >
             <FitPill fit={jobFit} />
           </PopoverTrigger>
-          <PopoverContent className="w-96">
+          <PopoverContent className="w-96 max-h-[min(28rem,80vh)] overflow-y-auto">
             <FitDetail
               jobFit={jobFit}
               hasLLMKey={hasLLMKey}

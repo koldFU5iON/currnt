@@ -105,13 +105,13 @@ ${job.jobDescription}`
     userPrompt += `\n\n# Personal Notes\n\n${job.notes}`
   }
 
-  userPrompt += `\n\nReturn a single JSON object matching the schema. In the justification, write markdown: a **Strengths:** section and a **Weaknesses:** section (2–3 bullet points each), then one sentence of overall summary.${hasGoals ? ' One or two sentences in trajectoryNote.' : ''}`
+  userPrompt += `\n\nReturn a single JSON object matching the schema. In the justification, write markdown: a **Strengths:** section and a **Weaknesses:** section (exactly 2 bullets each, one concise sentence per bullet — no paragraph prose), then one sentence of overall summary.${hasGoals ? ' One sentence in trajectoryNote.' : ''}`
 
   let fit: JobFit
   try {
     const result = await completeStructured(profile.id, userPrompt, JobFitSchema, {
       system,
-      maxOutputTokens: 900,
+      maxOutputTokens: 700,
       temperature: 0.2,
     })
     fit = result.object

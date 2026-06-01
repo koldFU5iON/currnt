@@ -31,7 +31,7 @@ export const JobFitSchema = z.object({
   label: z.enum(['unlikely', 'weak', 'stretch', 'good', 'excellent'])
     .describe('Bucketed verdict. "unlikely" = rejected at first screen; "weak" = needs exceptional pitch; "stretch" = viable with effort; "good" = strong baseline match.'),
   justification: z.string().min(1)
-    .describe('Markdown with **Strengths:** and **Weaknesses:** sections (2–3 bullets each), then one sentence overall summary. Concrete reasoning grounded in candidate and role specifics, no fluff.'),
+    .describe('Markdown with **Strengths:** and **Weaknesses:** sections (2 bullets each, one concise sentence per bullet), then one sentence overall summary. Concrete reasoning grounded in candidate and role specifics, no fluff.'),
   trajectoryNote: z.string().optional()
     .describe("One or two sentences on how this role relates to the candidate's stated career goals and target direction. Omit entirely when no career goals are provided."),
   notesUsed: z.boolean().optional()
