@@ -28,10 +28,10 @@ export const updateJobSchema = createJobSchema.partial()
 // it's still useful. Keep enum bounded — that one's load-bearing for the UI.
 export const JobFitSchema = z.object({
   rating: z.number().min(0).max(10).describe('Overall fit score, 0 = no match, 10 = perfect match.'),
-  label: z.enum(['poor', 'ok', 'stretch', 'good', 'excellent'])
-    .describe('Bucketed verdict. "stretch" = could land it with effort; "good" = strong baseline match.'),
+  label: z.enum(['unlikely', 'weak', 'stretch', 'good', 'excellent'])
+    .describe('Bucketed verdict. "unlikely" = rejected at first screen; "weak" = needs exceptional pitch; "stretch" = viable with effort; "good" = strong baseline match.'),
   justification: z.string().min(1)
-    .describe('Two or three sentences. Concrete reasoning grounded in candidate and role specifics, no fluff.'),
+    .describe('Markdown with **Strengths:** and **Weaknesses:** sections (2–3 bullets each), then one sentence overall summary. Concrete reasoning grounded in candidate and role specifics, no fluff.'),
   trajectoryNote: z.string().optional()
     .describe("One or two sentences on how this role relates to the candidate's stated career goals and target direction. Omit entirely when no career goals are provided."),
   notesUsed: z.boolean().optional()

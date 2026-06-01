@@ -18,16 +18,16 @@ type JobFitProps = {
 }
 
 const FLAME_STYLES: Record<JobFitType['label'], string> = {
-  poor:      'fill-blue-400 text-blue-400',
-  ok:        'fill-amber-200 text-amber-300',
+  unlikely:  'fill-blue-400 text-blue-400',
+  weak:      'fill-amber-200 text-amber-300',
   stretch:   'fill-amber-400 text-amber-500',
   good:      'fill-orange-500 text-orange-600',
   excellent: 'fill-red-500 text-red-600',
 }
 
 const PILL_TEXT_STYLES: Record<JobFitType['label'], string> = {
-  poor:      'text-blue-400',
-  ok:        'text-amber-300',
+  unlikely:  'text-blue-400',
+  weak:      'text-amber-300',
   stretch:   'text-amber-500',
   good:      'text-orange-600',
   excellent: 'text-red-600',
