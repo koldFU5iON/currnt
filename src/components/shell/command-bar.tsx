@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { CommandPalette } from "./command-palette"
 import { ThemeToggle } from "@/components/shell/theme-toggle"
+import { QuickCaptureInput } from "./quick-capture-input"
 
 type CommandBarProps = {
   chatOpen: boolean
@@ -45,6 +46,8 @@ export function CommandBar({ chatOpen, onToggleChat }: CommandBarProps) {
           <span className="text-xs">⌘</span>K
         </kbd>
       </button>
+
+      <QuickCaptureInput />
 
       <div className="ml-auto flex items-center gap-1">
         <ThemeToggle />
