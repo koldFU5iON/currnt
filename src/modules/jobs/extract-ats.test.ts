@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   linkedInJobId,
   greenhouseFromUrl,
+  greenhouseFromHtml,
   matchSiteOverride,
   leverFromUrl,
   ashbyFromUrl,
@@ -71,6 +72,29 @@ describe('ashbyFromUrl', () => {
   })
   it('returns null for non-Ashby URLs', () => {
     expect(ashbyFromUrl('https://jobs.lever.co/acme/abc')).toBeNull()
+  })
+})
+
+describe('greenhouseFromHtml', () => {
+  it('extracts board from embed script and jobId from gh_jid param', () => {
+    const html = '<script src="https://boards.greenhouse.io/embed/job_board/js?for=acme"></script>'
+    const url = 'https://acme.com/careers?gh_jid=12345'
+    expect(greenhouseFromHtml(url, html)).toEqual({ board: 'acme', jobId: '12345' })
+  })
+
+  it('falls back to job ID from URL path', () => {
+    const html = '<script src="https://boards.greenhouse.io/embed/job_board/js?for=acme"></script>'
+    const url = 'https://acme.com/jobs/12345'
+    expect(greenhouseFromHtml(url, html)).toEqual({ board: 'acme', jobId: '12345' })
+  })
+
+  it('returns null when no Greenhouse embed script in HTML', () => {
+    expect(greenhouseFromHtml('https://acme.com/jobs/123', '<html><body>No embed</body></html>')).toBeNull()
+  })
+
+  it('returns null when board found but no job ID can be determined', () => {
+    const html = '<script src="https://boards.greenhouse.io/embed/job_board/js?for=acme"></script>'
+    expect(greenhouseFromHtml('https://acme.com/careers', html)).toBeNull()
   })
 })
 

@@ -181,7 +181,7 @@ function formatLeverSalary(salaryRange: unknown): string | undefined {
   const sym = CURRENCY_SYMBOLS[curr] ?? (curr + ' ')
   const min = typeof s.min === 'number' ? s.min : null
   const max = typeof s.max === 'number' ? s.max : null
-  if (min !== null && max !== null) return `${sym}${abbrevAmount(min)}–${abbrevAmount(max)}`
+  if (min !== null && max !== null) return `${sym}${abbrevAmount(min)}–${sym}${abbrevAmount(max)}`
   if (min !== null) return `${sym}${abbrevAmount(min)}+`
   return undefined
 }
