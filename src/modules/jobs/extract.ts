@@ -11,36 +11,69 @@ import {
   ashbyFromUrl, extractAshby,
   workdayFromUrl, extractWorkday,
 } from './extract-ats'
+import { lookup as dnsLookup } from 'dns/promises'
 import { extractWithLLM } from './extract-llm'
 
-// Reject URLs that could reach internal infrastructure (SSRF guard).
-// Tier 1 extractors build their own API URLs from parsed IDs — only the
-// tier 2 HTML fetch uses the raw user-supplied URL, but we validate once
-// here so the check covers all current and future fetch paths.
-function isSafeUrl(raw: string): boolean {
-  let parsed: URL
-  try { parsed = new URL(raw) } catch { return false }
-  if (parsed.protocol !== 'https:') return false
-  const h = parsed.hostname.toLowerCase()
+// ── SSRF guard ────────────────────────────────────────────────────────────────
+// Three-layer defence: scheme check → hostname/IP blocklist → DNS resolution.
+// DNS resolution catches rebinding attacks and alternate IP encodings (e.g.
+// decimal 2130706433 → 127.0.0.1) that bypass pure string matching.
+// The post-fetch redirect check (res.url) closes the redirect-hop gap.
+
+function isPrivateIp(ip: string): boolean {
+  if (ip.includes(':')) {
+    // Bare IPv6 (brackets already stripped by caller)
+    const h = ip.toLowerCase()
+    return (
+      h === '::1' || h === '::' ||
+      h.startsWith('fc') || h.startsWith('fd') ||   // ULA fc00::/7
+      h.startsWith('fe80') ||                        // link-local fe80::/10
+      h.startsWith('::ffff:127.') ||                 // IPv4-mapped loopback
+      h.startsWith('::ffff:10.') ||                  // IPv4-mapped RFC-1918
+      h.startsWith('::ffff:192.168.') ||
+      /^::ffff:172\.(1[6-9]|2[0-9]|3[01])\./.test(h)
+    )
+  }
+  return (
+    ip === '0.0.0.0' ||
+    /^127\./.test(ip) ||
+    /^10\./.test(ip) ||
+    /^192\.168\./.test(ip) ||
+    /^172\.(1[6-9]|2[0-9]|3[01])\./.test(ip) ||
+    /^169\.254\./.test(ip)
+  )
+}
+
+function isSafeHostname(hostname: string): boolean {
+  const h = hostname.toLowerCase()
+  // URL.hostname wraps IPv6 literals in brackets — strip them before IP check
+  const bare = h.startsWith('[') && h.endsWith(']') ? h.slice(1, -1) : h
+  if (bare.includes(':')) return !isPrivateIp(bare)   // IPv6 literal in URL
   return !(
     h === 'localhost' ||
     h.endsWith('.local') ||
     h.endsWith('.internal') ||
     h === 'metadata.google.internal' ||
-    h === '0.0.0.0' ||
-    h === '::1' ||
-    /^127\./.test(h) ||
-    /^10\./.test(h) ||
-    /^192\.168\./.test(h) ||
-    /^172\.(1[6-9]|2[0-9]|3[01])\./.test(h) ||
-    /^169\.254\./.test(h) ||       // AWS/GCP link-local metadata
-    /^\[f[cd]/.test(h) ||          // IPv6 ULA (fc00::/7)
-    /^\[fe80/.test(h)              // IPv6 link-local
+    isPrivateIp(h)
   )
 }
 
+async function isSafeUrl(raw: string): Promise<boolean> {
+  let parsed: URL
+  try { parsed = new URL(raw) } catch { return false }
+  if (parsed.protocol !== 'https:') return false
+  if (!isSafeHostname(parsed.hostname)) return false
+  // DNS resolution: normalises alternate encodings and catches rebinding
+  try {
+    const addrs = await dnsLookup(parsed.hostname, { all: true })
+    return !addrs.some(a => isPrivateIp(a.address))
+  } catch {
+    return false   // unresolvable hostname → reject
+  }
+}
+
 export async function extractJobFromUrl(url: string): Promise<ExtractionResult> {
-  if (!isSafeUrl(url)) {
+  if (!(await isSafeUrl(url))) {
     return { ok: false, error: 'Invalid URL — only public HTTPS job pages are supported.' }
   }
 
@@ -78,6 +111,12 @@ export async function extractJobFromUrl(url: string): Promise<ExtractionResult> 
       },
       signal: AbortSignal.timeout(12_000),
     })
+    // Re-check the final URL after any redirects to block redirect-hop SSRF
+    try {
+      if (!isSafeHostname(new URL(res.url).hostname)) {
+        return { ok: false, error: 'Invalid URL — only public HTTPS job pages are supported.' }
+      }
+    } catch { /* unparseable final URL — proceed */ }
     if (!res.ok) {
       return {
         ok: false,
