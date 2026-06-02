@@ -1,7 +1,11 @@
 import { betterAuth } from "better-auth"
 import { prismaAdapter } from "better-auth/adapters/prisma"
 import { nextCookies } from "better-auth/next-js"
+import { Resend } from "resend"
 import { prisma } from "@/lib/db"
+
+const resend = new Resend(process.env.RESEND_API_KEY)
+const senderEmail = process.env.SENDER_EMAIL ?? "no-reply@example.com"
 
 type SocialProviderConfig = { clientId: string; clientSecret: string }
 
@@ -60,6 +64,32 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
+    sendResetPassword: async ({ user, url }) => {
+      await resend.emails.send({
+        from: senderEmail,
+        to: user.email,
+        subject: "Reset your password",
+        html: `
+          <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
+            <h2 style="font-size:20px;font-weight:600;margin:0 0 8px">Reset your password</h2>
+            <p style="color:#6b7280;margin:0 0 24px">
+              We received a request to reset the password for your account.
+              Click the button below to choose a new password.
+              This link expires in 1 hour.
+            </p>
+            <a href="${url}"
+               style="display:inline-block;background:#09090b;color:#fafafa;text-decoration:none;
+                      padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500">
+              Reset password
+            </a>
+            <p style="color:#9ca3af;font-size:12px;margin:24px 0 0">
+              If you didn't request this, you can safely ignore this email.
+              Your password won't change.
+            </p>
+          </div>
+        `,
+      })
+    },
   },
   socialProviders,
   account: {
