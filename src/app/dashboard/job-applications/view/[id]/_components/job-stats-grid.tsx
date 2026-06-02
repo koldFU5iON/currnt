@@ -10,7 +10,7 @@ interface Props {
 
 export function JobStatsGrid({ job, hasLLMKey }: Props) {
   return (
-    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border md:grid-cols-5">
+    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border md:grid-cols-5 [&>*:last-child]:col-span-2 md:[&>*:last-child]:col-span-1">
       <MetaCell label="Status">
         <Badge variant="secondary" className="w-fit capitalize">{job.status}</Badge>
       </MetaCell>

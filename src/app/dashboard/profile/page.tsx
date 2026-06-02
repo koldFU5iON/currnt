@@ -34,9 +34,9 @@ export default async function Page() {
     <ContentContainer title="Professional Profile" fullWidth>
       <ProfileHeader name={profile.name} headline={profile.headline ?? undefined} />
 
-      <div className="flex gap-8 items-start">
+      <div className="flex flex-col gap-8 items-start md:flex-row">
         {/* Left rail — sticky sidebar */}
-        <aside className="w-56 md:w-64 lg:w-72 xl:w-80 shrink-0 sticky top-6 max-h-[calc(100vh-6rem)] overflow-y-auto space-y-6 pb-6">
+        <aside className="w-full rounded-xl border bg-card p-4 md:w-56 lg:w-64 xl:w-72 2xl:w-80 md:shrink-0 md:sticky md:top-6 md:max-h-[calc(100vh-6rem)] md:overflow-y-auto md:rounded-none md:border-0 md:bg-transparent md:p-0 space-y-6 pb-6">
           <ContactBlock contact={contact} />
           <LeftRail
             skills={profile.skills}

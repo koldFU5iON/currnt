@@ -75,7 +75,7 @@ function SectionHeader({ title, helpText, onAdd }: { title: string; helpText: st
 
 function RowControls({ onEdit, onDelete, label }: { onEdit: () => void; onDelete: () => void; label: string }) {
   return (
-    <div className="absolute right-0 inset-y-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity bg-card pl-1 rounded-r">
+    <div className="absolute right-0 inset-y-0 flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity bg-card pl-1 rounded-r">
       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit} aria-label={`Edit ${label}`}>
         <Pencil size={11} />
       </Button>
