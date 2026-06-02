@@ -10,6 +10,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 import { MarkdownProse } from "@/app/dashboard/job-applications/view/[id]/_components/markdown-prose"
 import type { JobFit as JobFitType } from "@/app/types/job-application"
 import { assessJobFit } from "@/modules/jobs/job-fit"
+import { notifyUsageUpdated } from "@/lib/usage-events"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
@@ -52,6 +53,7 @@ export function JobFit({ jobId, jobFit, canAssess = true, hasLLMKey = true }: Jo
     startTransition(async () => {
       const result = await assessJobFit(jobId)
       if (result.ok) {
+        notifyUsageUpdated()
         if (window.innerWidth >= 640) {
           setPopoverOpen(true)
         } else {

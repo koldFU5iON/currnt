@@ -13,10 +13,25 @@ export function AppFooter() {
   const [tokens, setTokens] = useState<{ today: number; thisMonth: number } | null>(null)
 
   useEffect(() => {
-    fetch('/api/usage/summary', { cache: 'no-store' })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data) setTokens(data) })
-      .catch(() => {})
+    function fetchTokens() {
+      fetch('/api/usage/summary', { cache: 'no-store' })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => { if (data) setTokens(data) })
+        .catch(() => {})
+    }
+
+    fetchTokens()
+
+    // Re-fetch when an LLM call completes anywhere in the app.
+    window.addEventListener('llm-usage-updated', fetchTokens)
+    // Re-fetch when the user switches back to this tab.
+    const onVisible = () => { if (document.visibilityState === 'visible') fetchTokens() }
+    document.addEventListener('visibilitychange', onVisible)
+
+    return () => {
+      window.removeEventListener('llm-usage-updated', fetchTokens)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [])
 
   return (

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/popover"
 import { Progress } from "@/components/ui/progress"
 import { extractProfileFromPdf, type ExtractResult } from "@/modules/profile-import/extract"
+import { notifyUsageUpdated } from "@/lib/usage-events"
 import { commitImportedProfile, type CommitResult } from "@/modules/profile-import/commit"
 import type { ExtractedProfile } from "@/modules/profile-import/schema"
 
@@ -51,6 +52,7 @@ export function ImportProfileDialog() {
       setStage({ name: "error", message: result.message })
       return
     }
+    notifyUsageUpdated()
     setStage({ name: "review", data: result.data, excluded: new Set() })
   }
 
