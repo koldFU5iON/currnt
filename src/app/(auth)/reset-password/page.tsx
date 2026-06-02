@@ -41,6 +41,12 @@ export default async function ResetPasswordPage({
       </div>
 
       <ResetPasswordForm token={token} />
+
+      <p className="text-center text-sm text-muted-foreground">
+        <Link href="/sign-in" className="text-foreground font-medium hover:underline">
+          Back to sign in
+        </Link>
+      </p>
     </>
   )
 }

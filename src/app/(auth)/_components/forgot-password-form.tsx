@@ -27,10 +27,11 @@ export function ForgotPasswordForm() {
   async function onSubmit(values: FormValues) {
     setSubmitting(true)
     try {
-      await authClient.requestPasswordReset({
+      const { error } = await authClient.requestPasswordReset({
         email: values.email,
         redirectTo: "/reset-password",
       })
+      if (error) throw new Error(error.message || "Request failed")
       setSent(true)
     } catch (err) {
       const message = err instanceof Error ? err.message : "Something went wrong"

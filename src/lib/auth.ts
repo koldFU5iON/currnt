@@ -4,9 +4,6 @@ import { nextCookies } from "better-auth/next-js"
 import { Resend } from "resend"
 import { prisma } from "@/lib/db"
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-const senderEmail = process.env.SENDER_EMAIL ?? "no-reply@example.com"
-
 type SocialProviderConfig = { clientId: string; clientSecret: string }
 
 function normalizeOrigin(value?: string) {
@@ -65,6 +62,8 @@ export const auth = betterAuth({
     enabled: true,
     requireEmailVerification: false,
     sendResetPassword: async ({ user, url }) => {
+      const resend = new Resend(process.env.RESEND_API_KEY)
+      const senderEmail = process.env.SENDER_EMAIL ?? "no-reply@example.com"
       await resend.emails.send({
         from: senderEmail,
         to: user.email,
@@ -90,6 +89,7 @@ export const auth = betterAuth({
         `,
       })
     },
+    revokeSessionsOnPasswordReset: true,
   },
   socialProviders,
   account: {

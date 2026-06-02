@@ -11,7 +11,7 @@ import { FormField } from "@/app/dashboard/job-applications/create/_components/f
 import { Button } from "@/components/ui/button"
 
 const schema = z.object({
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z.string().min(8, "Password must be at least 8 characters").max(128, "Password must be 128 characters or fewer"),
   confirm: z.string(),
 }).refine((d) => d.password === d.confirm, {
   message: "Passwords don't match",
