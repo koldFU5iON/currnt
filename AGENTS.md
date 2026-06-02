@@ -20,11 +20,11 @@ npm run build        # production build
 npm run typecheck    # tsc --noEmit
 npm run lint         # next lint
 
-npm run db:push      # push schema to Postgres (no migration file)
-npm run db:migrate   # create + apply a named migration
+npm run db:migrate   # create + apply a named migration ← USE THIS for all schema changes
 npm run db:seed      # seed default CV template + test user (test@example.com/password) + dummy jobs
-npm run db:reset     # force-reset DB then re-seed
+npm run db:reset     # force-reset DB then re-seed (local dev only — never against production)
 npm run db:studio    # open Prisma Studio in browser
+npm run db:push      # ⚠ PROTOTYPE ONLY — skips migration files, never use for production schema changes
 
 docker compose up -d   # start Postgres (port 5435)
 docker compose down    # stop Postgres
@@ -50,6 +50,17 @@ Prisma 7 moved database connection config out of `schema.prisma` into `prisma.co
 - `prisma/schema/*.prisma` — multi-file schema split by domain (`main`, `auth`, `profile`, `cv`, `cover-letter`, `jobs`, `settings`). Prisma 7 auto-merges every `*.prisma` file in this folder at validate/generate time.
 - `src/lib/db.ts` — PrismaClient singleton wired through the `PrismaPg` driver adapter with a `pg` connection pool; reads `DATABASE_URL` from environment at runtime (Next.js loads `.env.local` automatically)
 - Do **not** put `url` back into the schema files — it's no longer valid in Prisma 7
+
+### Schema change workflow — ALWAYS follow this
+
+Every schema change, no exceptions:
+
+1. **Edit** `prisma/schema/*.prisma`
+2. **Create a migration**: `npm run db:migrate -- --name <short_description>` — this creates a timestamped SQL file in `prisma/migrations/` and applies it to the local Docker DB
+3. **Commit the migration file** alongside the schema and code changes in the same PR/commit
+4. **Push** — Vercel's build runs `prisma migrate deploy` automatically, applying the migration to the Neon production DB before `next build`
+
+**Never use `db:push` for schema changes.** It applies changes without creating a migration file, causing the production DB to drift from the migration history. The next `migrate deploy` will then fail because it tries to re-create structures that already exist. `db:push` exists only for quick local prototyping where you don't care about data.
 
 ---
 
