@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type FormEvent } from 'react'
+import { useState, useMemo, type FormEvent } from 'react'
 import type { FullProfile } from '@/app/types/profile'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -43,7 +43,7 @@ const proficiencyVariant: Record<string, 'success' | 'info' | 'warning'> = {
   intermediate: 'warning',
 }
 
-const toDateInput = (d?: Date | null) =>
+const toDateInput = (d?: Date | string | null) =>
   d ? new Date(d).toISOString().split('T')[0] : ''
 
 const HELP: Record<string, string> = {
@@ -160,13 +160,14 @@ function SkillsSection({ initial, careerYears }: { initial: SkillType[]; careerY
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<SkillType | null>(null)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
-  const openAdd = () => { setEditing(null); setOpen(true) }
-  const openEdit = (s: SkillType) => { setEditing(s); setOpen(true) }
+  const openAdd = () => { setEditing(null); setSaveError(null); setOpen(true) }
+  const openEdit = (s: SkillType) => { setEditing(s); setSaveError(null); setOpen(true) }
 
   const handleDelete = async (id: string) => {
     const prev = skills
-    setSkills(s => s.filter(s => s.id !== id))
+    setSkills(prev => prev.filter(item => item.id !== id))
     try { await deleteSkill(id) } catch { setSkills(prev) }
   }
 
@@ -175,13 +176,15 @@ function SkillsSection({ initial, careerYears }: { initial: SkillType[]; careerY
     try {
       if (editing) {
         const updated = await updateSkill(editing.id, data)
-        setSkills(s => s.map(x => x.id === editing.id ? updated as unknown as SkillType : x))
+        setSkills(prev => prev.map(x => x.id === editing.id ? updated as unknown as SkillType : x))
       } else {
         const created = await createSkill(data)
-        setSkills(s => [...s, created as unknown as SkillType])
+        setSkills(prev => [...prev, created as unknown as SkillType])
       }
       setOpen(false)
-    } catch { } finally {
+    } catch {
+      setSaveError('Failed to save. Please try again.')
+    } finally {
       setSaving(false)
     }
   }
@@ -206,19 +209,20 @@ function SkillsSection({ initial, careerYears }: { initial: SkillType[]; careerY
           </div>
         )
       }
-      <SkillDialog key={editing?.id ?? 'new'} open={open} onOpenChange={setOpen} editing={editing} onSave={handleSave} saving={saving} />
+      <SkillDialog key={editing?.id ?? 'new'} open={open} onOpenChange={setOpen} editing={editing} onSave={handleSave} saving={saving} saveError={saveError} />
     </div>
   )
 }
 
 function SkillDialog({
-  open, onOpenChange, editing, onSave, saving,
+  open, onOpenChange, editing, onSave, saving, saveError,
 }: {
   open: boolean
   onOpenChange: (o: boolean) => void
   editing: SkillType | null
   onSave: (data: Parameters<typeof createSkill>[0]) => void
   saving: boolean
+  saveError: string | null
 }) {
   const [level, setLevel] = useState(editing?.level?.toLowerCase() ?? 'intermediate')
 
@@ -266,6 +270,7 @@ function SkillDialog({
               <Input id="skill-yoe" name="yearsOfExperience" type="number" min="0" step="0.5" defaultValue={editing?.yearsOfExperience ?? ''} />
             </Field>
           </FieldGroup>
+          {saveError && <p className="mt-3 text-sm text-destructive">{saveError}</p>}
           <DialogFooter className="mt-4">
             <DialogClose render={<Button type="button" variant="secondary" disabled={saving}>Cancel</Button>} />
             <Button type="submit" disabled={saving}>{saving ? 'Saving...' : editing ? 'Save' : 'Add'}</Button>
@@ -283,13 +288,14 @@ function ToolsSection({ initial }: { initial: ToolType[] }) {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<ToolType | null>(null)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
-  const openAdd = () => { setEditing(null); setOpen(true) }
-  const openEdit = (t: ToolType) => { setEditing(t); setOpen(true) }
+  const openAdd = () => { setEditing(null); setSaveError(null); setOpen(true) }
+  const openEdit = (t: ToolType) => { setEditing(t); setSaveError(null); setOpen(true) }
 
   const handleDelete = async (id: string) => {
     const prev = tools
-    setTools(t => t.filter(t => t.id !== id))
+    setTools(prev => prev.filter(item => item.id !== id))
     try { await deleteTool(id) } catch { setTools(prev) }
   }
 
@@ -298,13 +304,15 @@ function ToolsSection({ initial }: { initial: ToolType[] }) {
     try {
       if (editing) {
         const updated = await updateTool(editing.id, data)
-        setTools(t => t.map(x => x.id === editing.id ? updated as unknown as ToolType : x))
+        setTools(prev => prev.map(x => x.id === editing.id ? updated as unknown as ToolType : x))
       } else {
         const created = await createTool(data)
-        setTools(t => [...t, created as unknown as ToolType])
+        setTools(prev => [...prev, created as unknown as ToolType])
       }
       setOpen(false)
-    } catch { } finally {
+    } catch {
+      setSaveError('Failed to save. Please try again.')
+    } finally {
       setSaving(false)
     }
   }
@@ -326,19 +334,20 @@ function ToolsSection({ initial }: { initial: ToolType[] }) {
           </div>
         )
       }
-      <ToolDialog key={editing?.id ?? 'new'} open={open} onOpenChange={setOpen} editing={editing} onSave={handleSave} saving={saving} />
+      <ToolDialog key={editing?.id ?? 'new'} open={open} onOpenChange={setOpen} editing={editing} onSave={handleSave} saving={saving} saveError={saveError} />
     </div>
   )
 }
 
 function ToolDialog({
-  open, onOpenChange, editing, onSave, saving,
+  open, onOpenChange, editing, onSave, saving, saveError,
 }: {
   open: boolean
   onOpenChange: (o: boolean) => void
   editing: ToolType | null
   onSave: (data: Parameters<typeof createTool>[0]) => void
   saving: boolean
+  saveError: string | null
 }) {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -367,6 +376,7 @@ function ToolDialog({
               <Input id="tool-category" name="category" placeholder="e.g. Design, Project Management" defaultValue={editing?.category ?? ''} />
             </Field>
           </FieldGroup>
+          {saveError && <p className="mt-3 text-sm text-destructive">{saveError}</p>}
           <DialogFooter className="mt-4">
             <DialogClose render={<Button type="button" variant="secondary" disabled={saving}>Cancel</Button>} />
             <Button type="submit" disabled={saving}>{saving ? 'Saving...' : editing ? 'Save' : 'Add'}</Button>
@@ -384,13 +394,14 @@ function LanguagesSection({ initial }: { initial: LanguageType[] }) {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<LanguageType | null>(null)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
-  const openAdd = () => { setEditing(null); setOpen(true) }
-  const openEdit = (l: LanguageType) => { setEditing(l); setOpen(true) }
+  const openAdd = () => { setEditing(null); setSaveError(null); setOpen(true) }
+  const openEdit = (l: LanguageType) => { setEditing(l); setSaveError(null); setOpen(true) }
 
   const handleDelete = async (id: string) => {
     const prev = languages
-    setLanguages(l => l.filter(l => l.id !== id))
+    setLanguages(prev => prev.filter(item => item.id !== id))
     try { await deleteLanguage(id) } catch { setLanguages(prev) }
   }
 
@@ -399,13 +410,15 @@ function LanguagesSection({ initial }: { initial: LanguageType[] }) {
     try {
       if (editing) {
         const updated = await updateLanguage(editing.id, data)
-        setLanguages(l => l.map(x => x.id === editing.id ? updated as unknown as LanguageType : x))
+        setLanguages(prev => prev.map(x => x.id === editing.id ? updated as unknown as LanguageType : x))
       } else {
         const created = await createLanguage(data)
-        setLanguages(l => [...l, created as unknown as LanguageType])
+        setLanguages(prev => [...prev, created as unknown as LanguageType])
       }
       setOpen(false)
-    } catch { } finally {
+    } catch {
+      setSaveError('Failed to save. Please try again.')
+    } finally {
       setSaving(false)
     }
   }
@@ -431,19 +444,20 @@ function LanguagesSection({ initial }: { initial: LanguageType[] }) {
           </div>
         )
       }
-      <LanguageDialog key={editing?.id ?? 'new'} open={open} onOpenChange={setOpen} editing={editing} onSave={handleSave} saving={saving} />
+      <LanguageDialog key={editing?.id ?? 'new'} open={open} onOpenChange={setOpen} editing={editing} onSave={handleSave} saving={saving} saveError={saveError} />
     </div>
   )
 }
 
 function LanguageDialog({
-  open, onOpenChange, editing, onSave, saving,
+  open, onOpenChange, editing, onSave, saving, saveError,
 }: {
   open: boolean
   onOpenChange: (o: boolean) => void
   editing: LanguageType | null
   onSave: (data: Parameters<typeof createLanguage>[0]) => void
   saving: boolean
+  saveError: string | null
 }) {
   const [proficiency, setProficiency] = useState(editing?.proficiency ?? 'intermediate')
 
@@ -477,6 +491,7 @@ function LanguageDialog({
               </Select>
             </Field>
           </FieldGroup>
+          {saveError && <p className="mt-3 text-sm text-destructive">{saveError}</p>}
           <DialogFooter className="mt-4">
             <DialogClose render={<Button type="button" variant="secondary" disabled={saving}>Cancel</Button>} />
             <Button type="submit" disabled={saving}>{saving ? 'Saving...' : editing ? 'Save' : 'Add'}</Button>
@@ -494,13 +509,14 @@ function CompetenciesSection({ initial }: { initial: CompetencyType[] }) {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<CompetencyType | null>(null)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
-  const openAdd = () => { setEditing(null); setOpen(true) }
-  const openEdit = (c: CompetencyType) => { setEditing(c); setOpen(true) }
+  const openAdd = () => { setEditing(null); setSaveError(null); setOpen(true) }
+  const openEdit = (c: CompetencyType) => { setEditing(c); setSaveError(null); setOpen(true) }
 
   const handleDelete = async (id: string) => {
     const prev = competencies
-    setCompetencies(c => c.filter(c => c.id !== id))
+    setCompetencies(prev => prev.filter(item => item.id !== id))
     try { await deleteCompetency(id) } catch { setCompetencies(prev) }
   }
 
@@ -509,13 +525,15 @@ function CompetenciesSection({ initial }: { initial: CompetencyType[] }) {
     try {
       if (editing) {
         const updated = await updateCompetency(editing.id, data)
-        setCompetencies(c => c.map(x => x.id === editing.id ? updated as unknown as CompetencyType : x))
+        setCompetencies(prev => prev.map(x => x.id === editing.id ? updated as unknown as CompetencyType : x))
       } else {
         const created = await createCompetency(data)
-        setCompetencies(c => [...c, created as unknown as CompetencyType])
+        setCompetencies(prev => [...prev, created as unknown as CompetencyType])
       }
       setOpen(false)
-    } catch { } finally {
+    } catch {
+      setSaveError('Failed to save. Please try again.')
+    } finally {
       setSaving(false)
     }
   }
@@ -536,19 +554,20 @@ function CompetenciesSection({ initial }: { initial: CompetencyType[] }) {
           </div>
         )
       }
-      <CompetencyDialog key={editing?.id ?? 'new'} open={open} onOpenChange={setOpen} editing={editing} onSave={handleSave} saving={saving} />
+      <CompetencyDialog key={editing?.id ?? 'new'} open={open} onOpenChange={setOpen} editing={editing} onSave={handleSave} saving={saving} saveError={saveError} />
     </div>
   )
 }
 
 function CompetencyDialog({
-  open, onOpenChange, editing, onSave, saving,
+  open, onOpenChange, editing, onSave, saving, saveError,
 }: {
   open: boolean
   onOpenChange: (o: boolean) => void
   editing: CompetencyType | null
   onSave: (data: Parameters<typeof createCompetency>[0]) => void
   saving: boolean
+  saveError: string | null
 }) {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -569,6 +588,7 @@ function CompetencyDialog({
               <Input id="competency-name" name="name" placeholder="e.g. Leadership, Communication" defaultValue={editing?.name} required />
             </Field>
           </FieldGroup>
+          {saveError && <p className="mt-3 text-sm text-destructive">{saveError}</p>}
           <DialogFooter className="mt-4">
             <DialogClose render={<Button type="button" variant="secondary" disabled={saving}>Cancel</Button>} />
             <Button type="submit" disabled={saving}>{saving ? 'Saving...' : editing ? 'Save' : 'Add'}</Button>
@@ -586,13 +606,14 @@ function EducationSection({ initial }: { initial: EducationType[] }) {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<EducationType | null>(null)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
-  const openAdd = () => { setEditing(null); setOpen(true) }
-  const openEdit = (e: EducationType) => { setEditing(e); setOpen(true) }
+  const openAdd = () => { setEditing(null); setSaveError(null); setOpen(true) }
+  const openEdit = (e: EducationType) => { setEditing(e); setSaveError(null); setOpen(true) }
 
   const handleDelete = async (id: string) => {
     const prev = educations
-    setEducations(e => e.filter(e => e.id !== id))
+    setEducations(prev => prev.filter(item => item.id !== id))
     try { await deleteEducation(id) } catch { setEducations(prev) }
   }
 
@@ -601,13 +622,15 @@ function EducationSection({ initial }: { initial: EducationType[] }) {
     try {
       if (editing) {
         const updated = await updateEducation(editing.id, data)
-        setEducations(e => e.map(x => x.id === editing.id ? updated as unknown as EducationType : x))
+        setEducations(prev => prev.map(x => x.id === editing.id ? updated as unknown as EducationType : x))
       } else {
         const created = await createEducation(data)
-        setEducations(e => [...e, created as unknown as EducationType])
+        setEducations(prev => [...prev, created as unknown as EducationType])
       }
       setOpen(false)
-    } catch { } finally {
+    } catch {
+      setSaveError('Failed to save. Please try again.')
+    } finally {
       setSaving(false)
     }
   }
@@ -634,10 +657,10 @@ function EducationSection({ initial }: { initial: EducationType[] }) {
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {edu.startDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
+                  {new Date(edu.startDate).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
                   {' – '}
                   {edu.endDate
-                    ? edu.endDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+                    ? new Date(edu.endDate).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
                     : 'Present'}
                 </p>
                 <Separator className="mt-2" />
@@ -646,19 +669,20 @@ function EducationSection({ initial }: { initial: EducationType[] }) {
           </div>
         )
       }
-      <EducationDialog open={open} onOpenChange={setOpen} editing={editing} onSave={handleSave} saving={saving} />
+      <EducationDialog key={editing?.id ?? 'new'} open={open} onOpenChange={setOpen} editing={editing} onSave={handleSave} saving={saving} saveError={saveError} />
     </div>
   )
 }
 
 function EducationDialog({
-  open, onOpenChange, editing, onSave, saving,
+  open, onOpenChange, editing, onSave, saving, saveError,
 }: {
   open: boolean
   onOpenChange: (o: boolean) => void
   editing: EducationType | null
   onSave: (data: Parameters<typeof createEducation>[0]) => void
   saving: boolean
+  saveError: string | null
 }) {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -709,6 +733,7 @@ function EducationDialog({
               <Input id="edu-grade" name="grade" placeholder="e.g. First Class, 3.8 GPA" defaultValue={editing?.grade ?? ''} />
             </Field>
           </FieldGroup>
+          {saveError && <p className="mt-3 text-sm text-destructive">{saveError}</p>}
           <DialogFooter className="mt-4">
             <DialogClose render={<Button type="button" variant="secondary" disabled={saving}>Cancel</Button>} />
             <Button type="submit" disabled={saving}>{saving ? 'Saving...' : editing ? 'Save' : 'Add'}</Button>
@@ -726,16 +751,20 @@ function CertificationsSection({ initial }: { initial: CertType[] }) {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<CertType | null>(null)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
-  const sixMonthsFromNow = new Date()
-  sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6)
+  const sixMonthsFromNow = useMemo(() => {
+    const d = new Date()
+    d.setMonth(d.getMonth() + 6)
+    return d
+  }, [])
 
-  const openAdd = () => { setEditing(null); setOpen(true) }
-  const openEdit = (c: CertType) => { setEditing(c); setOpen(true) }
+  const openAdd = () => { setEditing(null); setSaveError(null); setOpen(true) }
+  const openEdit = (c: CertType) => { setEditing(c); setSaveError(null); setOpen(true) }
 
   const handleDelete = async (id: string) => {
     const prev = certs
-    setCerts(c => c.filter(c => c.id !== id))
+    setCerts(prev => prev.filter(item => item.id !== id))
     try { await deleteCertification(id) } catch { setCerts(prev) }
   }
 
@@ -744,13 +773,15 @@ function CertificationsSection({ initial }: { initial: CertType[] }) {
     try {
       if (editing) {
         const updated = await updateCertification(editing.id, data)
-        setCerts(c => c.map(x => x.id === editing.id ? updated as unknown as CertType : x))
+        setCerts(prev => prev.map(x => x.id === editing.id ? updated as unknown as CertType : x))
       } else {
         const created = await createCertification(data)
-        setCerts(c => [...c, created as unknown as CertType])
+        setCerts(prev => [...prev, created as unknown as CertType])
       }
       setOpen(false)
-    } catch { } finally {
+    } catch {
+      setSaveError('Failed to save. Please try again.')
+    } finally {
       setSaving(false)
     }
   }
@@ -763,15 +794,15 @@ function CertificationsSection({ initial }: { initial: CertType[] }) {
         : (
           <div className="space-y-1">
             {certs.map(cert => {
-              const expiringSoon = cert.expiryDate && cert.expiryDate < sixMonthsFromNow
+              const expiringSoon = cert.expiryDate && new Date(cert.expiryDate) < sixMonthsFromNow
               return (
                 <div key={cert.id} className="group flex items-start justify-between gap-2 py-1.5 border-b border-border last:border-0">
                   <div className="space-y-0.5 min-w-0">
                     <p className="text-sm font-semibold truncate">{cert.name}</p>
                     {cert.issuer && <p className="text-xs text-muted-foreground">{cert.issuer}</p>}
                     <p className="text-xs text-muted-foreground">
-                      {cert.issueDate && `Issued ${cert.issueDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`}
-                      {cert.expiryDate && ` · Expires ${cert.expiryDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`}
+                      {cert.issueDate && `Issued ${new Date(cert.issueDate).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`}
+                      {cert.expiryDate && ` · Expires ${new Date(cert.expiryDate).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`}
                     </p>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
@@ -784,28 +815,31 @@ function CertificationsSection({ initial }: { initial: CertType[] }) {
           </div>
         )
       }
-      <CertificationDialog open={open} onOpenChange={setOpen} editing={editing} onSave={handleSave} saving={saving} />
+      <CertificationDialog key={editing?.id ?? 'new'} open={open} onOpenChange={setOpen} editing={editing} onSave={handleSave} saving={saving} saveError={saveError} />
     </div>
   )
 }
 
 function CertificationDialog({
-  open, onOpenChange, editing, onSave, saving,
+  open, onOpenChange, editing, onSave, saving, saveError,
 }: {
   open: boolean
   onOpenChange: (o: boolean) => void
   editing: CertType | null
   onSave: (data: Parameters<typeof createCertification>[0]) => void
   saving: boolean
+  saveError: string | null
 }) {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
+    const issueDateStr = fd.get('issueDate') as string
+    if (!issueDateStr) return // input is required, this is a safety guard
     const expiryStr = fd.get('expiryDate') as string
     onSave({
       name: fd.get('name') as string,
       issuer: fd.get('issuer') as string,
-      issueDate: new Date(fd.get('issueDate') as string),
+      issueDate: new Date(issueDateStr),
       expiryDate: expiryStr ? new Date(expiryStr) : undefined,
       credentialUrl: (fd.get('credentialUrl') as string) || undefined,
     })
@@ -825,7 +859,7 @@ function CertificationDialog({
             </Field>
             <Field>
               <Label htmlFor="cert-issuer">Issuer</Label>
-              <Input id="cert-issuer" name="issuer" defaultValue={editing?.issuer ?? undefined} required />
+              <Input id="cert-issuer" name="issuer" defaultValue={editing?.issuer ?? ''} required />
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field>
@@ -842,6 +876,7 @@ function CertificationDialog({
               <Input id="cert-url" name="credentialUrl" type="url" placeholder="https://..." defaultValue={editing?.credentialUrl ?? ''} />
             </Field>
           </FieldGroup>
+          {saveError && <p className="mt-3 text-sm text-destructive">{saveError}</p>}
           <DialogFooter className="mt-4">
             <DialogClose render={<Button type="button" variant="secondary" disabled={saving}>Cancel</Button>} />
             <Button type="submit" disabled={saving}>{saving ? 'Saving...' : editing ? 'Save' : 'Add'}</Button>
