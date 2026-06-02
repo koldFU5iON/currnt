@@ -375,10 +375,17 @@ function ToolBar({
 }: ToolBarProps) {
   return (
     <div className="flex flex-col space-y-1">
-      <div className="flex space-x-2 items-center">
+      <div className="flex flex-wrap gap-2 items-center">
         <JobSearchBar value={query} onChange={onQueryChange} />
         <Separator orientation="vertical" className="h-8" />
         <ViewModeToggle value={viewMode} onChange={onViewModeChange} />
+        <Separator orientation="vertical" className="h-8" />
+        <FilterBar
+          filter={filter}
+          sort={sort}
+          onFilterChange={onFilterChange}
+          onSortChange={onSortChange}
+        />
 
         {selectedCount > 0 && (
           <>
@@ -404,12 +411,6 @@ function ToolBar({
           Add Job
         </Link>
       </div>
-      <FilterBar
-        filter={filter}
-        sort={sort}
-        onFilterChange={onFilterChange}
-        onSortChange={onSortChange}
-      />
       <div className="text-xs text-muted-foreground">
         {selectedCount > 0
           ? `${selectedCount} selected`
