@@ -1,7 +1,8 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
+import { Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -9,6 +10,10 @@ import { Label } from "@/components/ui/label"
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  Popover, PopoverContent, PopoverHeader, PopoverTitle, PopoverDescription, PopoverTrigger,
+} from "@/components/ui/popover"
+import { Progress } from "@/components/ui/progress"
 import { extractProfileFromPdf, type ExtractResult } from "@/modules/profile-import/extract"
 import { commitImportedProfile, type CommitResult } from "@/modules/profile-import/commit"
 import type { ExtractedProfile } from "@/modules/profile-import/schema"
@@ -86,7 +91,36 @@ export function ImportProfileDialog() {
 
   return (
     <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset() }}>
-      <DialogTrigger render={<Button variant="outline" />}>Import from PDF</DialogTrigger>
+      <div className="flex items-center gap-1.5">
+        <DialogTrigger render={<Button variant="outline" />}>Import from PDF</DialogTrigger>
+        <Popover>
+          <PopoverTrigger
+            render={
+              <button
+                type="button"
+                aria-label="LinkedIn PDF export guide"
+                className="text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+              />
+            }
+          >
+            <Info size={14} />
+          </PopoverTrigger>
+          <PopoverContent side="bottom" align="start" className="w-80">
+            <PopoverHeader>
+              <PopoverTitle>Best source: LinkedIn export</PopoverTitle>
+              <PopoverDescription className="mt-0.5">
+                LinkedIn's PDF export is the most complete input — it includes all roles, dates, and skills in a consistent format.
+              </PopoverDescription>
+            </PopoverHeader>
+            <ol className="mt-2 space-y-1 text-xs text-muted-foreground list-decimal pl-4">
+              <li>Open your LinkedIn profile</li>
+              <li>Click <strong className="text-foreground">More</strong> (or <strong className="text-foreground">Resources</strong>)</li>
+              <li>Select <strong className="text-foreground">Save to PDF</strong></li>
+              <li>Upload the downloaded file here</li>
+            </ol>
+          </PopoverContent>
+        </Popover>
+      </div>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Import profile from PDF</DialogTitle>
@@ -96,13 +130,13 @@ export function ImportProfileDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        {(stage.name === "idle" || stage.name === "error" || stage.name === "extracting") && (
+        {stage.name === "extracting" ? (
+          <ExtractionProgress />
+        ) : (stage.name === "idle" || stage.name === "error") && (
           <div className="space-y-3">
             <Input ref={fileRef} type="file" accept="application/pdf" />
             {stage.name === "error" && <p className="text-sm text-destructive">{stage.message}</p>}
-            <Button onClick={onExtract} disabled={stage.name === "extracting"}>
-              {stage.name === "extracting" ? "Reading…" : "Extract"}
-            </Button>
+            <Button onClick={onExtract}>Extract</Button>
           </div>
         )}
 
@@ -161,6 +195,30 @@ export function ImportProfileDialog() {
         )}
       </DialogContent>
     </Dialog>
+  )
+}
+
+const EXTRACTION_STEPS = [
+  'Reading PDF…',
+  'Identifying experience and skills…',
+  'Structuring your profile…',
+  'Almost there…',
+]
+const STEP_VALUES = [20, 45, 68, 85]
+
+function ExtractionProgress() {
+  const [step, setStep] = useState(0)
+
+  useEffect(() => {
+    const id = setInterval(() => setStep(s => Math.min(s + 1, EXTRACTION_STEPS.length - 1)), 3500)
+    return () => clearInterval(id)
+  }, [])
+
+  return (
+    <div className="space-y-3 py-2">
+      <Progress value={STEP_VALUES[step]} />
+      <p className="text-sm text-muted-foreground">{EXTRACTION_STEPS[step]}</p>
+    </div>
   )
 }
 
