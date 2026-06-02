@@ -10,6 +10,13 @@ import {
   type ApplicationStatusType,
   type Job,
 } from "@/app/types/job-application"
+import {
+  FilterBar,
+  DEFAULT_FILTER,
+  DEFAULT_SORT,
+  type FilterState,
+  type SortState,
+} from './filter-bar'
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
@@ -22,6 +29,8 @@ import { archiveJobApplication, bulkArchiveJobApplications } from "@/modules/job
 
 type ViewMode = 'grouped' | 'all'
 const VIEW_MODE_KEY = 'jobs-view-mode'
+const FILTER_KEY = 'jobs-filter'
+const SORT_KEY = 'jobs-sort'
 
 // Priority order for open work — interviews top (most time-pressing), then
 // active prep work, then sent-and-waiting, then untouched leads.
@@ -37,6 +46,8 @@ const CLOSED_SET: ReadonlySet<string> = new Set(ClosedStatuses)
 export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }) {
   const [query, setQuery] = useState("")
   const [viewMode, setViewMode] = useState<ViewMode>('grouped')
+  const [filter, setFilter] = useState<FilterState>(DEFAULT_FILTER)
+  const [sort, setSort] = useState<SortState>(DEFAULT_SORT)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [editing, setEditing] = useState<Job | null>(null)
   // Per-row in-flight label so the user sees "Archiving…" the instant they click,
@@ -50,6 +61,25 @@ export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }
     const saved = window.localStorage.getItem(VIEW_MODE_KEY)
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (saved === 'all' || saved === 'grouped') setViewMode(saved)
+
+    try {
+      const savedFilter = window.localStorage.getItem(FILTER_KEY)
+      if (savedFilter) {
+        const p = JSON.parse(savedFilter)
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setFilter({
+          status: new Set(p.status ?? []),
+          source: new Set(p.source ?? []),
+          fit: new Set(p.fit ?? []),
+        })
+      }
+      const savedSort = window.localStorage.getItem(SORT_KEY)
+      if (savedSort) {
+        const p = JSON.parse(savedSort)
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        if (p.field && p.direction) setSort(p)
+      }
+    } catch { /* ignore malformed cache */ }
   }, [])
 
   function changeViewMode(next: ViewMode) {
@@ -57,14 +87,70 @@ export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }
     window.localStorage.setItem(VIEW_MODE_KEY, next)
   }
 
+  function changeFilter(next: FilterState) {
+    setFilter(next)
+    window.localStorage.setItem(FILTER_KEY, JSON.stringify({
+      status: [...next.status],
+      source: [...next.source],
+      fit: [...next.fit],
+    }))
+  }
+
+  function changeSort(next: SortState) {
+    setSort(next)
+    window.localStorage.setItem(SORT_KEY, JSON.stringify(next))
+  }
+
   const filteredJobs = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return jobs
-    return jobs.filter(j =>
-      j.title.toLowerCase().includes(q) ||
-      j.company.toLowerCase().includes(q),
-    )
-  }, [jobs, query])
+
+    let result = q
+      ? jobs.filter(j =>
+          j.title.toLowerCase().includes(q) ||
+          j.company.toLowerCase().includes(q) ||
+          j.countries.join(' ').toLowerCase().includes(q) ||
+          (j.notes ?? '').toLowerCase().includes(q) ||
+          APPLICATION_STATUS_LABEL[j.status].toLowerCase().includes(q)
+        )
+      : [...jobs]
+
+    if (filter.status.size > 0) {
+      result = result.filter(j => filter.status.has(j.status))
+    }
+    if (filter.source.size > 0) {
+      result = result.filter(j => filter.source.has(j.applicationSource))
+    }
+    if (filter.fit.size > 0) {
+      result = result.filter(j => {
+        const label = j.jobFit?.label ?? 'none'
+        return filter.fit.has(label as never)
+      })
+    }
+
+    result.sort((a, b) => {
+      let cmp = 0
+      switch (sort.field) {
+        case 'dateApplied':
+          cmp = (a.dateApplied?.getTime() ?? 0) - (b.dateApplied?.getTime() ?? 0)
+          break
+        case 'datePublished':
+          cmp = (a.datePublished?.getTime() ?? 0) - (b.datePublished?.getTime() ?? 0)
+          break
+        case 'company':
+          cmp = a.company.localeCompare(b.company)
+          break
+        case 'fitRating':
+          cmp = (a.jobFit?.rating ?? -1) - (b.jobFit?.rating ?? -1)
+          break
+        case 'lastUpdated':
+          cmp = a.lastUpdated.getTime() - b.lastUpdated.getTime()
+          break
+      }
+      return sort.direction === 'asc' ? cmp : -cmp
+    })
+
+    return result
+  }, [jobs, query, filter, sort])
 
   // Search auto-switches to "All" so matches aren't visually split across groups.
   // User's view-mode preference is preserved — restored when the query clears.
@@ -168,6 +254,10 @@ export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }
         selectedCount={selected.size}
         onClearSelection={clearSelection}
         onBulkArchive={handleBulkArchive}
+        filter={filter}
+        sort={sort}
+        onFilterChange={changeFilter}
+        onSortChange={changeSort}
       />
       <Separator className="my-3" />
 
@@ -244,6 +334,10 @@ type ToolBarProps = {
   selectedCount: number
   onClearSelection: () => void
   onBulkArchive: () => void
+  filter: FilterState
+  sort: SortState
+  onFilterChange: (f: FilterState) => void
+  onSortChange: (s: SortState) => void
 }
 
 function ToolBar({
@@ -256,6 +350,10 @@ function ToolBar({
   selectedCount,
   onClearSelection,
   onBulkArchive,
+  filter,
+  sort,
+  onFilterChange,
+  onSortChange,
 }: ToolBarProps) {
   return (
     <div className="flex flex-col space-y-1">
@@ -288,6 +386,12 @@ function ToolBar({
           Add Job
         </Link>
       </div>
+      <FilterBar
+        filter={filter}
+        sort={sort}
+        onFilterChange={onFilterChange}
+        onSortChange={onSortChange}
+      />
       <div className="text-xs text-muted-foreground">
         {selectedCount > 0
           ? `${selectedCount} selected`
