@@ -28,6 +28,16 @@ export default async function SignInPage({
       </div>
 
       <EmailPasswordForm mode="signin" callbackUrl={target} />
+
+      <p className="text-right -mt-2">
+        <Link
+          href="/forgot-password"
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Forgot password?
+        </Link>
+      </p>
+
       <SocialButtons providers={providers} callbackUrl={target} />
 
       <p className="text-center text-sm text-muted-foreground">

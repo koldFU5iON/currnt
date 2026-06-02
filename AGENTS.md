@@ -159,6 +159,10 @@ TWITTER_CLIENT_ID=""               # X uses the "twitter" provider key in Better
 TWITTER_CLIENT_SECRET=""
 
 ENCRYPTION_KEY="dev-encryption-key-32-bytes-long!!"  # AES-256-GCM key for at-rest secrets (LLM keys, etc.)
+
+# Email (Resend) — required for password reset
+RESEND_API_KEY=""
+SENDER_EMAIL="no-reply@yourdomain.com"
 ```
 
 The LLM layer is bring-your-own-key — each user enters their own provider API key at `/dashboard/settings/llm`. No app-level LLM env vars; costs land on the user, not the app owner.
