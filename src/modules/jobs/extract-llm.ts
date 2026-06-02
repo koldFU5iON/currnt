@@ -50,6 +50,7 @@ export async function extractWithLLM(html: string): Promise<ExtractionResult> {
     const result = await completeStructured(profileId, prompt, ExtractedJobLLMSchema, {
       maxOutputTokens: 400,
       temperature: 0,
+      feature: 'job-extract',
     })
     const raw = result.object
     const parsedDate = raw.datePublished ? new Date(raw.datePublished) : undefined

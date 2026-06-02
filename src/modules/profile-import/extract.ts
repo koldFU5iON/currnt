@@ -56,7 +56,7 @@ export async function extractProfileFromPdf(formData: FormData): Promise<Extract
       profile.id,
       `# CV text\n\n${text}\n\nExtract the structured profile as JSON matching the schema.`,
       ExtractedProfileSchema,
-      { system: SYSTEM, temperature: 0.1, maxOutputTokens: 6000 },
+      { system: SYSTEM, temperature: 0.1, maxOutputTokens: 6000, feature: 'cv-import' },
     )
     return { ok: true, data: result.object }
   } catch (err) {

@@ -91,6 +91,7 @@ Extract activities (responsibilities and achievements) and skills from the notes
           system,
           maxOutputTokens: 1500,
           temperature: 0.2,
+          feature: 'profile-extract',
         })
         llmActivities = result.object.activities.map((a) => ({ ...a, source: 'llm' as const }))
         llmSkills = result.object.skills.map((s) => ({ ...s, source: 'llm' as const }))

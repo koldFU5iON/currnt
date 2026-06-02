@@ -26,6 +26,7 @@ export async function generateProfileSummary(): Promise<GenerateSummaryResult> {
       system: composeSystem(rules, brief, featureInstructions),
       maxOutputTokens: 300,
       temperature: 0.4,
+      feature: 'profile-summary',
     })
     return { ok: true, summary: result.text.trim() }
   } catch (err) {

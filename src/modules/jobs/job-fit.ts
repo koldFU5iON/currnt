@@ -113,6 +113,7 @@ ${job.jobDescription}`
       system,
       maxOutputTokens: 700,
       temperature: 0.2,
+      feature: 'job-fit',
     })
     fit = result.object
     // notesUsed is ground truth, not the model's self-report: the LLM would
