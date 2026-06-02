@@ -30,6 +30,7 @@ model Profile {
   languages       Language[]
   settings        UserSettings?
   apiTokens       ApiToken[]
+  usageLogs       LlmUsageLog[]
 }
 
 model Skill {

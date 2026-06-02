@@ -1,0 +1,21 @@
+// ------------------------------------------------------------
+// LLM USAGE LOGGING
+// ------------------------------------------------------------
+
+model LlmUsageLog {
+  id               String   @id @default(cuid())
+  profileId        String
+  provider         String
+  model            String
+  feature          String?
+  promptTokens     Int
+  completionTokens Int
+  totalTokens      Int
+  latencyMs        Int
+  createdAt        DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([profileId, createdAt])
+}

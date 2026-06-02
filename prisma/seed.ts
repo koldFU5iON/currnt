@@ -46,6 +46,12 @@ async function main() {
     console.log(`Created test user: ${TEST_EMAIL} / ${TEST_PASSWORD}`)
   }
 
+  await prisma.user.update({
+    where: { email: TEST_EMAIL },
+    data: { role: 'admin' },
+  })
+  console.log(`Set ${TEST_EMAIL} as admin`)
+
   const profile = await prisma.profile.findFirst({ where: { user: { email: TEST_EMAIL } } })
   if (!profile) throw new Error(`Profile not auto-created for ${TEST_EMAIL}`)
 
