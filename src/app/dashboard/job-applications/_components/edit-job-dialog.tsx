@@ -4,7 +4,7 @@ import { useEffect, useState, useTransition } from 'react'
 import * as z from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm, FormProvider } from 'react-hook-form'
-import { Loader2, RefreshCw } from 'lucide-react'
+import { Loader2, RefreshCw, SquareArrowOutUpRight } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   Dialog,
@@ -21,6 +21,7 @@ import { updateJobSchema } from '@/modules/jobs/schema'
 import { updateJobApplication } from '@/modules/jobs/mutations'
 import { extractJobFromUrl } from '@/modules/jobs/extract'
 import { notifyUsageUpdated } from '@/lib/usage-events'
+import { cn } from '@/lib/utils'
 import {
   APPLICATION_SOURCES,
   APPLICATION_SOURCE_LABEL,
@@ -144,6 +145,19 @@ export function EditJobDialog({ job, open, onOpenChange }: EditJobDialogProps) {
                     {...form.register('url')}
                   />
                   <InputGroupAddon align="inline-end">
+                    <a
+                      href={urlValue || undefined}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Open job listing"
+                      tabIndex={urlValue ? 0 : -1}
+                      className={cn(
+                        "inline-flex size-6 items-center justify-center rounded-[calc(var(--radius)-3px)] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+                        !urlValue && "pointer-events-none opacity-40",
+                      )}
+                    >
+                      <SquareArrowOutUpRight size={13} />
+                    </a>
                     <InputGroupButton
                       type="button"
                       onClick={handleExtract}
