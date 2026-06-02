@@ -19,6 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { daysAgo, formatRelative, formatShortDate } from "@/lib/utils"
 import { FreshnessChip } from "./freshness-chip"
+import { PostingAge } from "./posting-age"
 
 type JobRowProps = {
   job: Job
@@ -126,10 +127,11 @@ export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArc
 
       {/* Published date */}
       <div className="px-3 py-2">
-        {datePublished
-          ? <span className="text-xs text-muted-foreground">{formatShortDate(datePublished)}</span>
-          : <span className="text-xs text-muted-foreground/30">—</span>
-        }
+        <PostingAge
+          datePublished={datePublished ?? null}
+          dateApplied={dateApplied ?? null}
+          status={status}
+        />
       </div>
 
       {/* Notes */}
