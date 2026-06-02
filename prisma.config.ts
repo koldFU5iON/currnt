@@ -1,8 +1,11 @@
 import path from 'node:path'
 import { defineConfig } from 'prisma/config'
 
-// Prisma CLI doesn't load .env.local (Next.js convention) — bridge the gap
-try { process.loadEnvFile(path.join(process.cwd(), '.env.local')) } catch {}
+// Prisma CLI doesn't load .env.local (Next.js convention) — bridge the gap.
+// Skip if DATABASE_URL is already set (Vercel build env, shell export, etc.)
+if (!process.env.DATABASE_URL) {
+  try { process.loadEnvFile(path.join(process.cwd(), '.env.local')) } catch {}
+}
 
 export default defineConfig({
   // Multi-file schema directory — Prisma 7 auto-merges every *.prisma file.

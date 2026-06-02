@@ -1,0 +1,3 @@
+{
+  "buildCommand": "npm run db:push && next build"
+}
