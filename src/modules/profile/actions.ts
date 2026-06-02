@@ -12,6 +12,7 @@ export async function updateContactField(field: ContactField, value: string) {
     where: { id: profile.id },
     data: { [field]: value.trim() || null },
   })
+  revalidatePath('/dashboard/profile')
 }
 
 export async function updateProfileSummary(summary: string) {
@@ -129,6 +130,7 @@ export async function updateExperienceNotes(id: string, summary: string) {
     where: { id, profileId: profile.id },
     data: { summary, notesUpdatedAt: new Date() },
   })
+  revalidatePath('/dashboard/profile')
   revalidatePath(`/dashboard/profile/experience/${id}`)
   return experience
 }
@@ -169,7 +171,7 @@ export async function acceptSuggestions(payload: AcceptSuggestionsPayload) {
     ...payload.activities.map((a) =>
       a.replaceId
         ? prisma.roleActivity.update({
-            where: { id: a.replaceId },
+            where: { id: a.replaceId, experienceId: payload.experienceId },
             data: { description: a.description, impact: a.impact ?? undefined, kind: a.kind },
           })
         : prisma.roleActivity.create({
@@ -186,7 +188,7 @@ export async function acceptSuggestions(payload: AcceptSuggestionsPayload) {
     ...payload.skills.map((s) =>
       s.replaceId
         ? prisma.skill.update({
-            where: { id: s.replaceId },
+            where: { id: s.replaceId, profileId: profile.id },
             data: {
               name: s.name,
               ...(s.category ? { category: s.category } : {}),
