@@ -1,11 +1,6 @@
 import type { UserUsageSummary } from '@/modules/llm/usage'
 import { formatDate } from '@/lib/utils'
-
-function formatTokens(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`
-  return String(n)
-}
+import { formatTokens } from '@/modules/llm/format'
 
 const FEATURE_LABELS: Record<string, string> = {
   'job-fit': 'Job fit',
