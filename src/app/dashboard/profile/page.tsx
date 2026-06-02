@@ -36,7 +36,7 @@ export default async function Page() {
 
       <div className="flex gap-8 items-start">
         {/* Left rail — sticky sidebar */}
-        <aside className="w-64 shrink-0 sticky top-6 max-h-[calc(100vh-6rem)] overflow-y-auto space-y-6 pb-6">
+        <aside className="w-56 md:w-64 lg:w-72 xl:w-80 shrink-0 sticky top-6 max-h-[calc(100vh-6rem)] overflow-y-auto space-y-6 pb-6">
           <ContactBlock contact={contact} />
           <LeftRail
             skills={profile.skills}

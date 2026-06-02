@@ -75,12 +75,12 @@ function SectionHeader({ title, helpText, onAdd }: { title: string; helpText: st
 
 function RowControls({ onEdit, onDelete, label }: { onEdit: () => void; onDelete: () => void; label: string }) {
   return (
-    <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
-      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onEdit} aria-label={`Edit ${label}`}>
-        <Pencil size={12} />
+    <div className="absolute right-0 inset-y-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity bg-card pl-1 rounded-r">
+      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit} aria-label={`Edit ${label}`}>
+        <Pencil size={11} />
       </Button>
-      <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive" onClick={onDelete} aria-label={`Delete ${label}`}>
-        <Trash2 size={12} />
+      <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={onDelete} aria-label={`Delete ${label}`}>
+        <Trash2 size={11} />
       </Button>
     </div>
   )
@@ -197,8 +197,8 @@ function SkillsSection({ initial, careerYears }: { initial: SkillType[]; careerY
         : (
           <div className="space-y-1">
             {skills.map(skill => (
-              <div key={skill.id} className="group flex items-center gap-2 py-0.5">
-                <span className="text-sm font-medium flex-1 min-w-0 truncate">{skill.name}</span>
+              <div key={skill.id} className="group relative flex items-center gap-2 py-0.5">
+                <span className="text-sm font-medium flex-1">{skill.name}</span>
                 {skill.yearsOfExperience != null && (
                   <RadialGauge years={skill.yearsOfExperience} totalYears={careerYears} />
                 )}
@@ -325,8 +325,8 @@ function ToolsSection({ initial }: { initial: ToolType[] }) {
         : (
           <div className="space-y-1">
             {tools.map(tool => (
-              <div key={tool.id} className="group flex items-center gap-2 py-0.5">
-                <span className="text-sm font-medium flex-1 min-w-0 truncate">{tool.name}</span>
+              <div key={tool.id} className="group relative flex items-center gap-2 py-0.5">
+                <span className="text-sm font-medium flex-1">{tool.name}</span>
                 {tool.category && <Badge variant="secondary" className="text-xs">{tool.category}</Badge>}
                 <RowControls label={tool.name} onEdit={() => openEdit(tool)} onDelete={() => handleDelete(tool.id)} />
               </div>
@@ -431,14 +431,12 @@ function LanguagesSection({ initial }: { initial: LanguageType[] }) {
         : (
           <div className="space-y-1">
             {languages.map(lang => (
-              <div key={lang.id} className="group flex items-center justify-between py-1.5 border-b border-border last:border-0">
+              <div key={lang.id} className="group relative flex items-center justify-between py-1.5 border-b border-border last:border-0">
                 <span className="text-sm font-medium">{lang.name}</span>
-                <div className="flex items-center gap-1.5">
-                  <Badge variant={proficiencyVariant[lang.proficiency] ?? 'secondary'} className="text-xs capitalize">
-                    {lang.proficiency}
-                  </Badge>
-                  <RowControls label={lang.name} onEdit={() => openEdit(lang)} onDelete={() => handleDelete(lang.id)} />
-                </div>
+                <Badge variant={proficiencyVariant[lang.proficiency] ?? 'secondary'} className="text-xs capitalize">
+                  {lang.proficiency}
+                </Badge>
+                <RowControls label={lang.name} onEdit={() => openEdit(lang)} onDelete={() => handleDelete(lang.id)} />
               </div>
             ))}
           </div>
@@ -546,7 +544,7 @@ function CompetenciesSection({ initial }: { initial: CompetencyType[] }) {
         : (
           <div className="space-y-1">
             {competencies.map(c => (
-              <div key={c.id} className="group flex items-center gap-2 py-0.5">
+              <div key={c.id} className="group relative flex items-center gap-2 py-0.5">
                 <span className="text-sm flex-1">{c.name}</span>
                 <RowControls label={c.name} onEdit={() => openEdit(c)} onDelete={() => handleDelete(c.id)} />
               </div>
@@ -643,7 +641,7 @@ function EducationSection({ initial }: { initial: EducationType[] }) {
         : (
           <div className="space-y-4">
             {educations.map(edu => (
-              <div key={edu.id} className="group space-y-1">
+              <div key={edu.id} className="group relative space-y-1">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="font-semibold text-sm">{edu.institution}</p>
@@ -796,7 +794,7 @@ function CertificationsSection({ initial }: { initial: CertType[] }) {
             {certs.map(cert => {
               const expiringSoon = cert.expiryDate && new Date(cert.expiryDate) < sixMonthsFromNow
               return (
-                <div key={cert.id} className="group flex items-start justify-between gap-2 py-1.5 border-b border-border last:border-0">
+                <div key={cert.id} className="group relative flex items-start justify-between gap-2 py-1.5 border-b border-border last:border-0">
                   <div className="space-y-0.5 min-w-0">
                     <p className="text-sm font-semibold truncate">{cert.name}</p>
                     {cert.issuer && <p className="text-xs text-muted-foreground">{cert.issuer}</p>}
