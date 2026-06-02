@@ -12,6 +12,7 @@ import { createAnthropic } from '@ai-sdk/anthropic'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import type { z } from 'zod'
+import { after } from 'next/server'
 import { prisma } from '@/lib/db'
 import { decrypt } from '@/lib/encryption'
 import { LLMError, normalizeLLMError } from './errors'
@@ -37,18 +38,20 @@ function logUsage(
   usage: LanguageModelUsage,
   latencyMs: number,
 ): void {
-  prisma.llmUsageLog.create({
-    data: {
-      profileId,
-      provider,
-      model,
-      feature: feature ?? null,
-      promptTokens: usage.inputTokens ?? 0,
-      completionTokens: usage.outputTokens ?? 0,
-      totalTokens: usage.totalTokens ?? 0,
-      latencyMs,
-    },
-  }).catch(() => {}) // fire-and-forget: log failures never block the caller
+  after(async () => {
+    await prisma.llmUsageLog.create({
+      data: {
+        profileId,
+        provider,
+        model,
+        feature: feature ?? null,
+        promptTokens: usage.inputTokens ?? 0,
+        completionTokens: usage.outputTokens ?? 0,
+        totalTokens: usage.totalTokens ?? 0,
+        latencyMs,
+      },
+    }).catch(() => {}) // swallow errors — usage logging must never crash the caller
+  })
 }
 
 type ResolvedConfig = {

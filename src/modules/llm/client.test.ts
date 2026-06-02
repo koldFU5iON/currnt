@@ -29,6 +29,8 @@ vi.mock('@ai-sdk/google', () => ({
   createGoogleGenerativeAI: vi.fn().mockReturnValue(() => 'mock-model'),
 }))
 
+vi.mock('next/server', () => ({ after: vi.fn(cb => cb()) }))
+
 import { complete, completeStructured } from './client'
 import { prisma } from '@/lib/db'
 import * as z from 'zod'
@@ -42,7 +44,7 @@ const fakeSettings = {
   llmApiKey: 'enc-key',
 }
 
-describe('complete() logging', () => {
+describe('LLM client logging', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockFindUnique.mockResolvedValue(fakeSettings as never)
@@ -51,7 +53,7 @@ describe('complete() logging', () => {
 
   it('calls llmUsageLog.create after a successful complete()', async () => {
     await complete('profile-1', 'hello')
-    await Promise.resolve()
+    await vi.waitFor(() => expect(mockLogCreate).toHaveBeenCalled())
     expect(mockLogCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -68,7 +70,7 @@ describe('complete() logging', () => {
 
   it('passes feature label through to the log', async () => {
     await complete('profile-1', 'hello', { feature: 'job-fit' })
-    await Promise.resolve()
+    await vi.waitFor(() => expect(mockLogCreate).toHaveBeenCalled())
     expect(mockLogCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ feature: 'job-fit' }),
@@ -79,7 +81,7 @@ describe('complete() logging', () => {
   it('calls llmUsageLog.create after completeStructured()', async () => {
     const schema = z.object({ name: z.string() })
     await completeStructured('profile-1', 'hello', schema, { feature: 'cv-import' })
-    await Promise.resolve()
+    await vi.waitFor(() => expect(mockLogCreate).toHaveBeenCalled())
     expect(mockLogCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ feature: 'cv-import', totalTokens: 30 }),
