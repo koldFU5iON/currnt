@@ -11,6 +11,7 @@ import {
   type Job,
 } from "@/app/types/job-application"
 import { Button, buttonVariants } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { Separator } from "@/components/ui/separator"
@@ -99,6 +100,19 @@ export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }
     setSelected(new Set())
   }
 
+  const isAllSelected = filteredJobs.length > 0 && filteredJobs.every(j => selected.has(j.id))
+  const isSomeSelected = !isAllSelected && filteredJobs.some(j => selected.has(j.id))
+
+  function toggleSelectAll() {
+    const allIds = filteredJobs.map(j => j.id)
+    const allSelected = allIds.every(id => selected.has(id))
+    if (allSelected) {
+      setSelected(new Set())
+    } else {
+      setSelected(new Set(allIds))
+    }
+  }
+
   function markBusy(ids: string[], label: string | null) {
     setBusyRows(prev => {
       const next = new Map(prev)
@@ -164,6 +178,7 @@ export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }
             {groups.map(g => (
               <JobGroup
                 key={g.key}
+                groupKey={g.key}
                 label={g.label}
                 jobs={g.jobs}
                 defaultCollapsed={g.defaultCollapsed}
@@ -180,10 +195,15 @@ export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }
 
           {/* Desktop grid — md and above */}
           <div className="hidden md:grid grid-cols-[auto_1.5fr_auto_1fr_auto_auto_auto_auto_auto_auto_auto]">
-            <ColHeaders />
+            <ColHeaders
+              isAllSelected={isAllSelected}
+              isSomeSelected={isSomeSelected}
+              onToggleAll={toggleSelectAll}
+            />
             {groups.map(g => (
               <JobGroup
                 key={g.key}
+                groupKey={g.key}
                 label={g.label}
                 jobs={g.jobs}
                 defaultCollapsed={g.defaultCollapsed}
@@ -335,10 +355,23 @@ function JobSearchBar({ value, onChange }: JobSearchBarProps) {
   )
 }
 
-function ColHeaders() {
+type ColHeadersProps = {
+  isAllSelected: boolean
+  isSomeSelected: boolean
+  onToggleAll: () => void
+}
+
+function ColHeaders({ isAllSelected, isSomeSelected, onToggleAll }: ColHeadersProps) {
   return (
     <div className="col-span-full grid grid-cols-subgrid border-b border-border/50">
-      <div className="px-2 py-1.5" />
+      <div className="flex items-center justify-center px-2 py-1.5">
+        <Checkbox
+          checked={isAllSelected}
+          indeterminate={isSomeSelected}
+          onCheckedChange={onToggleAll}
+          aria-label={isAllSelected ? 'Deselect all' : 'Select all'}
+        />
+      </div>
       {(["Role", "Status", "Progress", "Salary", "Fit", "Applied", "Published", "Notes", "Updated"] as const).map(label => (
         <div key={label} className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/50">
           {label}
