@@ -31,7 +31,7 @@ type JobRowCardProps = {
 export function JobRowCard({ job, selected, busyLabel, onToggleSelect, onEdit, onArchive, hasLLMKey }: JobRowCardProps) {
   const {
     id, jobNumber, title, company, countries, url,
-    dateApplied, lastUpdated, status, progress,
+    dateApplied, datePublished, lastUpdated, status, progress,
     jobFit, notes, notesIncludeInFit, applicationSource,
     jobDescription, salaryBand,
   } = job
@@ -118,6 +118,11 @@ export function JobRowCard({ job, selected, busyLabel, onToggleSelect, onEdit, o
         <JobFit jobId={id} jobFit={jobFit ?? null} canAssess={!!jobDescription?.trim()} hasLLMKey={hasLLMKey} />
         {dateApplied && (
           <span className="text-xs text-muted-foreground">{formatShortDate(dateApplied)}</span>
+        )}
+        {datePublished && (
+          <span className="text-xs text-muted-foreground">
+            Posted {formatShortDate(datePublished)}
+          </span>
         )}
         <FreshnessChip lastUpdated={lastUpdated} status={status} />
         <JobNotes jobId={id} initialNotes={notes ?? null} initialIncludeInFit={notesIncludeInFit} />

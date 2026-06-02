@@ -179,7 +179,7 @@ export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }
           </div>
 
           {/* Desktop grid — md and above */}
-          <div className="hidden md:grid grid-cols-[auto_1.5fr_auto_1fr_auto_auto_auto_auto_auto_auto]">
+          <div className="hidden md:grid grid-cols-[auto_1.5fr_auto_1fr_auto_auto_auto_auto_auto_auto_auto]">
             <ColHeaders />
             {groups.map(g => (
               <JobGroup
@@ -339,7 +339,7 @@ function ColHeaders() {
   return (
     <div className="col-span-full grid grid-cols-subgrid border-b border-border/50">
       <div className="px-2 py-1.5" />
-      {(["Role", "Status", "Progress", "Salary", "Fit", "Applied", "Notes", "Updated"] as const).map(label => (
+      {(["Role", "Status", "Progress", "Salary", "Fit", "Applied", "Published", "Notes", "Updated"] as const).map(label => (
         <div key={label} className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/50">
           {label}
         </div>
