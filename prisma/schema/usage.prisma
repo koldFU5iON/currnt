@@ -16,6 +16,5 @@ model LlmUsageLog {
 
   profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
-  @@index([profileId])
   @@index([profileId, createdAt])
 }

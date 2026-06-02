@@ -46,6 +46,7 @@ async function main() {
     console.log(`Created test user: ${TEST_EMAIL} / ${TEST_PASSWORD}`)
   }
 
+  // Unconditional — ensures the dev user is always admin even after manual role changes.
   await prisma.user.update({
     where: { email: TEST_EMAIL },
     data: { role: 'admin' },
