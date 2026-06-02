@@ -1,7 +1,6 @@
 'use server'
 
 import type { ExtractionResult, ExtractedJob } from './extract-utils'
-export type { ExtractedJob }
 import { decode, td, formatSalaryBand } from './extract-utils'
 import {
   linkedInJobId, extractLinkedIn,
