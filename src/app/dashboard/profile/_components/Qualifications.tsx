@@ -219,7 +219,7 @@ function SkillDialog({
   onSave: (data: Parameters<typeof createSkill>[0]) => void
   saving: boolean
 }) {
-  const [level, setLevel] = useState(editing?.level ?? 'Intermediate')
+  const [level, setLevel] = useState(editing?.level?.toLowerCase() ?? 'intermediate')
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -254,8 +254,8 @@ function SkillDialog({
               <Select value={level} onValueChange={(v) => v && setLevel(v)}>
                 <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {['Beginner', 'Intermediate', 'Advanced', 'Expert'].map(l => (
-                    <SelectItem key={l} value={l}>{l}</SelectItem>
+                  {['beginner', 'intermediate', 'advanced', 'expert'].map(l => (
+                    <SelectItem key={l} value={l} className="capitalize">{l}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

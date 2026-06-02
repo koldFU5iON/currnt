@@ -4,7 +4,7 @@ import { useState } from "react"
 import { H } from "@/app/components/style/Style"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { AlertTriangleIcon, Check, Globe, Link2, Mail, MapPin, Pencil, Phone, X } from "lucide-react"
+import { AlertTriangleIcon, Check, Globe, Link2, Mail, MapPin, Pencil, Phone, User, X } from "lucide-react"
 import { updateContactField, type ContactField } from "@/modules/profile/actions"
 
 type ContactBlockProps = {
@@ -95,17 +95,13 @@ function EditableField({ icon, field, value, label }: EditableFieldProps) {
 
 export function ContactBlock({ contact }: { contact: ContactBlockProps }) {
   return (
-    <div className="ml-2 mt-2">
-      <div className="border-l-4 pl-3 py-1 border-primary/90">
-        <H size={2} className="text-primary/80">{contact.name}</H>
-      </div>
-      <div className="mt-3 space-y-0.5">
-        <EditableField icon={<Mail size={14} />} field="email" value={contact.email} label="Email" />
-        <EditableField icon={<Phone size={14} />} field="phone" value={contact.phone} label="Phone" />
-        <EditableField icon={<Link2 size={14} />} field="linkedIn" value={contact.profile} label="LinkedIn" />
-        <EditableField icon={<Globe size={14} />} field="website" value={contact.site} label="Website" />
-        <EditableField icon={<MapPin size={14} />} field="location" value={contact.location} label="Location" />
-      </div>
+    <div className="ml-2 mt-2 space-y-0.5">
+      <EditableField icon={<User size={14} />} field="name" value={contact.name} label="Name" />
+      <EditableField icon={<Mail size={14} />} field="email" value={contact.email} label="Email" />
+      <EditableField icon={<Phone size={14} />} field="phone" value={contact.phone} label="Phone" />
+      <EditableField icon={<Link2 size={14} />} field="linkedIn" value={contact.profile} label="LinkedIn" />
+      <EditableField icon={<Globe size={14} />} field="website" value={contact.site} label="Website" />
+      <EditableField icon={<MapPin size={14} />} field="location" value={contact.location} label="Location" />
     </div>
   )
 }

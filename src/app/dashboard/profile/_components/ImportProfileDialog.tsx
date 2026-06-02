@@ -111,7 +111,7 @@ export function ImportProfileDialog() {
             <PopoverHeader>
               <PopoverTitle>Best source: LinkedIn export</PopoverTitle>
               <PopoverDescription className="mt-0.5">
-                LinkedIn's PDF export is the most complete input — it includes all roles, dates, and skills in a consistent format.
+                LinkedIn&apos;s PDF export is the most complete input — it includes all roles, dates, and skills in a consistent format.
               </PopoverDescription>
             </PopoverHeader>
             <ol className="mt-2 space-y-1 text-xs text-muted-foreground list-decimal pl-4">
