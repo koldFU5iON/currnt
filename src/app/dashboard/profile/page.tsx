@@ -2,19 +2,12 @@ import { ContentContainer } from "@/app/components/ContentContainer"
 import { ExperienceBlock } from "./_components/Experience"
 import { getFullProfile } from "@/modules/profile/queries"
 import { ContactBlock } from "./_components/Contact"
-import { QualificationsBlock } from "./_components/Qualifications"
+import { ProfileHeader } from "./_components/ProfileHeader"
+import { LeftRail } from "./_components/LeftRail"
+import { ProjectBlock } from "./_components/ProjectBlock"
 import { ProfileSummaryCard } from "./_components/ProfileSummaryCard"
-import { ImportProfileDialog } from "./_components/ImportProfileDialog"
 import { getLLMConfigStatus } from "@/modules/llm/client"
 import { requireProfile } from "@/lib/session"
-import type { FullProfile } from "@/app/types/profile"
-
-export type QualificationsType = {
-  skills: FullProfile['skills']
-  education: FullProfile['educations']
-  certifications: FullProfile['certifications']
-  tools: FullProfile['languages']
-}
 
 export default async function Page() {
   const { profile: sessionProfile } = await requireProfile()
@@ -22,6 +15,12 @@ export default async function Page() {
     getFullProfile(),
     getLLMConfigStatus(sessionProfile.id),
   ])
+
+  const currentYear = new Date().getFullYear()
+  const earliestYear = profile.experiences.length > 0
+    ? Math.min(...profile.experiences.map(e => new Date(e.startDate).getFullYear()))
+    : currentYear - 10
+  const careerYears = Math.max(currentYear - earliestYear, 1)
 
   const contact = {
     name: profile.name,
@@ -32,40 +31,35 @@ export default async function Page() {
     location: profile.location ?? undefined,
   }
 
-  const currentYear = new Date().getFullYear()
-  const earliestYear = profile.experiences.length > 0
-    ? Math.min(...profile.experiences.map(e => e.startDate.getFullYear()))
-    : currentYear - 10
-  const careerYears = Math.max(currentYear - earliestYear, 1)
-
-  const qualifications = {
-    skills: profile.skills,
-    education: profile.educations,
-    certifications: profile.certifications,
-    tools: profile.languages,
-  }
-
   return (
     <ContentContainer title="Professional Profile" fullWidth>
-      <div className="mb-4 flex justify-end">
-        <ImportProfileDialog />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div>
+      <ProfileHeader name={profile.name} headline={profile.headline ?? undefined} />
+
+      <div className="flex gap-8 items-start">
+        {/* Left rail — sticky sidebar */}
+        <aside className="w-64 shrink-0 sticky top-6 max-h-[calc(100vh-6rem)] overflow-y-auto space-y-6 pb-6">
           <ContactBlock contact={contact} />
-        </div>
-        <div className="md:col-span-2">
-          <QualificationsBlock qualifications={qualifications} careerYears={careerYears} />
-        </div>
+          <LeftRail
+            skills={profile.skills}
+            tools={profile.tools}
+            languages={profile.languages}
+            competencies={profile.competencies}
+            educations={profile.educations}
+            certifications={profile.certifications}
+            careerYears={careerYears}
+          />
+        </aside>
+
+        {/* Main content */}
+        <main className="flex-1 min-w-0 space-y-8">
+          <ProfileSummaryCard
+            initialSummary={profile.summary}
+            hasLLMKey={hasLLMKey}
+          />
+          <ExperienceBlock exp={profile.experiences} />
+          <ProjectBlock initial={profile.projects} hasLLMKey={hasLLMKey} />
+        </main>
       </div>
-      <div className="mb-8">
-        <p className="text-sm font-semibold mb-3">Professional Summary</p>
-        <ProfileSummaryCard
-          initialSummary={profile.summary}
-          hasLLMKey={hasLLMKey}
-        />
-      </div>
-      <ExperienceBlock exp={profile.experiences} />
     </ContentContainer>
   )
 }

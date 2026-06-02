@@ -1,8 +1,15 @@
 'use client'
 
 import { useState, type FormEvent } from "react"
-import { QualificationsType } from "../page"
+import type { FullProfile } from "@/app/types/profile"
 import { Badge } from "@/components/ui/badge"
+
+export type QualificationsType = {
+  skills: FullProfile['skills']
+  education: FullProfile['educations']
+  certifications: FullProfile['certifications']
+  tools: FullProfile['languages']
+}
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Input } from "@/components/ui/input"
