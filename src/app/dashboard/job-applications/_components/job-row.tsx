@@ -18,6 +18,7 @@ import { JobCompletenessDot } from "./job-completeness-dot"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { daysAgo, formatRelative } from "@/lib/utils"
+import { FreshnessChip } from "./freshness-chip"
 
 type JobRowProps = {
   job: Job
@@ -130,9 +131,7 @@ export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArc
 
       {/* Last updated */}
       <div className="px-3 py-2">
-        <span className="text-xs text-muted-foreground">
-          {formatRelative(daysAgo(lastUpdated) ?? 0)}
-        </span>
+        <FreshnessChip lastUpdated={lastUpdated} status={status} />
       </div>
 
       {/* Controls */}

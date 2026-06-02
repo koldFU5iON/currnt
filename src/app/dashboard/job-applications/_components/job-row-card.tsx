@@ -15,6 +15,7 @@ import { JobNotes } from "./job-notes"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { cn, daysAgo, formatRelative, formatShortDate } from "@/lib/utils"
+import { FreshnessChip } from "./freshness-chip"
 import { JobCompletenessDot } from "./job-completeness-dot"
 
 type JobRowCardProps = {
@@ -118,7 +119,7 @@ export function JobRowCard({ job, selected, busyLabel, onToggleSelect, onEdit, o
         {dateApplied && (
           <span className="text-xs text-muted-foreground">{formatShortDate(dateApplied)}</span>
         )}
-        <span className="text-xs text-muted-foreground">{formatRelative(daysAgo(lastUpdated) ?? 0)}</span>
+        <FreshnessChip lastUpdated={lastUpdated} status={status} />
         <JobNotes jobId={id} initialNotes={notes ?? null} initialIncludeInFit={notesIncludeInFit} />
       </div>
     </div>
