@@ -23,7 +23,6 @@ export default async function Page() {
   const careerYears = Math.max(currentYear - earliestYear, 1)
 
   const contact = {
-    name: profile.name,
     phone: profile.phone ?? undefined,
     email: profile.email ?? undefined,
     site: profile.website ?? undefined,
