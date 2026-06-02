@@ -9,8 +9,18 @@ import {
   ClosedStatuses,
   type ApplicationStatusType,
   type Job,
+  type JobFit,
 } from "@/app/types/job-application"
+import {
+  FilterBar,
+  DEFAULT_FILTER,
+  DEFAULT_SORT,
+  isFilterActive,
+  type FilterState,
+  type SortState,
+} from './filter-bar'
 import { Button, buttonVariants } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { Separator } from "@/components/ui/separator"
@@ -21,6 +31,8 @@ import { archiveJobApplication, bulkArchiveJobApplications } from "@/modules/job
 
 type ViewMode = 'grouped' | 'all'
 const VIEW_MODE_KEY = 'jobs-view-mode'
+const FILTER_KEY = 'jobs-filter'
+const SORT_KEY = 'jobs-sort'
 
 // Priority order for open work — interviews top (most time-pressing), then
 // active prep work, then sent-and-waiting, then untouched leads.
@@ -36,6 +48,8 @@ const CLOSED_SET: ReadonlySet<string> = new Set(ClosedStatuses)
 export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }) {
   const [query, setQuery] = useState("")
   const [viewMode, setViewMode] = useState<ViewMode>('grouped')
+  const [filter, setFilter] = useState<FilterState>(DEFAULT_FILTER)
+  const [sort, setSort] = useState<SortState>(DEFAULT_SORT)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [editing, setEditing] = useState<Job | null>(null)
   // Per-row in-flight label so the user sees "Archiving…" the instant they click,
@@ -49,6 +63,26 @@ export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }
     const saved = window.localStorage.getItem(VIEW_MODE_KEY)
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (saved === 'all' || saved === 'grouped') setViewMode(saved)
+
+    try {
+      const savedFilter = window.localStorage.getItem(FILTER_KEY)
+      if (savedFilter) {
+        const p = JSON.parse(savedFilter)
+        setFilter({
+          status: new Set(p.status ?? []),
+          source: new Set(p.source ?? []),
+          fit: new Set(p.fit ?? []),
+        })
+      }
+    } catch { /* ignore malformed filter cache */ }
+
+    try {
+      const savedSort = window.localStorage.getItem(SORT_KEY)
+      if (savedSort) {
+        const p = JSON.parse(savedSort)
+        if (p.field && p.direction) setSort(p)
+      }
+    } catch { /* ignore malformed sort cache */ }
   }, [])
 
   function changeViewMode(next: ViewMode) {
@@ -56,14 +90,83 @@ export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }
     window.localStorage.setItem(VIEW_MODE_KEY, next)
   }
 
+  function changeFilter(next: FilterState) {
+    setSelected(new Set())
+    setFilter(next)
+    window.localStorage.setItem(FILTER_KEY, JSON.stringify({
+      status: [...next.status],
+      source: [...next.source],
+      fit: [...next.fit],
+    }))
+  }
+
+  function changeSort(next: SortState) {
+    setSort(next)
+    window.localStorage.setItem(SORT_KEY, JSON.stringify(next))
+  }
+
   const filteredJobs = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return jobs
-    return jobs.filter(j =>
-      j.title.toLowerCase().includes(q) ||
-      j.company.toLowerCase().includes(q),
-    )
-  }, [jobs, query])
+
+    let result = q
+      ? jobs.filter(j =>
+          j.title.toLowerCase().includes(q) ||
+          j.company.toLowerCase().includes(q) ||
+          j.countries.join(' ').toLowerCase().includes(q) ||
+          (j.notes ?? '').toLowerCase().includes(q) ||
+          APPLICATION_STATUS_LABEL[j.status].toLowerCase().includes(q)
+        )
+      : [...jobs]
+
+    if (filter.status.size > 0) {
+      result = result.filter(j => filter.status.has(j.status))
+    }
+    if (filter.source.size > 0) {
+      result = result.filter(j => filter.source.has(j.applicationSource))
+    }
+    if (filter.fit.size > 0) {
+      result = result.filter(j => {
+        const label = j.jobFit?.label ?? 'none'
+        return filter.fit.has(label as JobFit['label'] | 'none')
+      })
+    }
+
+    result.sort((a, b) => {
+      let cmp = 0
+      switch (sort.field) {
+        case 'dateApplied': {
+          const aVal = a.dateApplied?.getTime()
+          const bVal = b.dateApplied?.getTime()
+          if (aVal == null && bVal == null) { cmp = 0; break }
+          if (aVal == null) { return 1 }   // nulls always last
+          if (bVal == null) { return -1 }
+          cmp = aVal - bVal
+          break
+        }
+        case 'datePublished': {
+          const aVal = a.datePublished?.getTime()
+          const bVal = b.datePublished?.getTime()
+          if (aVal == null && bVal == null) { cmp = 0; break }
+          if (aVal == null) { return 1 }
+          if (bVal == null) { return -1 }
+          cmp = aVal - bVal
+          break
+        }
+        case 'company':
+          cmp = a.company.localeCompare(b.company)
+          break
+        case 'fitRating':
+          cmp = (a.jobFit?.rating ?? -1) - (b.jobFit?.rating ?? -1)
+          break
+        case 'lastUpdated':
+          cmp = a.lastUpdated.getTime() - b.lastUpdated.getTime()
+          break
+      }
+      return sort.direction === 'asc' ? cmp : -cmp
+    })
+
+    return result
+  }, [jobs, query, filter, sort])
 
   // Search auto-switches to "All" so matches aren't visually split across groups.
   // User's view-mode preference is preserved — restored when the query clears.
@@ -97,6 +200,19 @@ export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }
 
   function clearSelection() {
     setSelected(new Set())
+  }
+
+  const isAllSelected = filteredJobs.length > 0 && filteredJobs.every(j => selected.has(j.id))
+  const isSomeSelected = !isAllSelected && filteredJobs.some(j => selected.has(j.id))
+
+  function toggleSelectAll() {
+    const allIds = filteredJobs.map(j => j.id)
+    const allSelected = allIds.every(id => selected.has(id))
+    if (allSelected) {
+      setSelected(new Set())
+    } else {
+      setSelected(new Set(allIds))
+    }
   }
 
   function markBusy(ids: string[], label: string | null) {
@@ -154,6 +270,10 @@ export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }
         selectedCount={selected.size}
         onClearSelection={clearSelection}
         onBulkArchive={handleBulkArchive}
+        filter={filter}
+        sort={sort}
+        onFilterChange={changeFilter}
+        onSortChange={changeSort}
       />
       <Separator className="my-3" />
 
@@ -164,6 +284,7 @@ export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }
             {groups.map(g => (
               <JobGroup
                 key={g.key}
+                groupKey={g.key}
                 label={g.label}
                 jobs={g.jobs}
                 defaultCollapsed={g.defaultCollapsed}
@@ -179,11 +300,16 @@ export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }
           </div>
 
           {/* Desktop grid — md and above */}
-          <div className="hidden md:grid grid-cols-[auto_1.5fr_auto_1fr_auto_auto_auto_auto_auto_auto]">
-            <ColHeaders />
+          <div className="hidden md:grid grid-cols-[auto_1.5fr_auto_1fr_auto_auto_auto_auto_auto_auto_auto]">
+            <ColHeaders
+              isAllSelected={isAllSelected}
+              isSomeSelected={isSomeSelected}
+              onToggleAll={toggleSelectAll}
+            />
             {groups.map(g => (
               <JobGroup
                 key={g.key}
+                groupKey={g.key}
                 label={g.label}
                 jobs={g.jobs}
                 defaultCollapsed={g.defaultCollapsed}
@@ -199,7 +325,9 @@ export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }
         </>
       ) : (
         <div className="text-sm text-muted-foreground py-6 text-center">
-          {query ? "No jobs match your search." : "No jobs yet. Create your first application."}
+          {(query || isFilterActive(filter))
+            ? "No jobs match your filters."
+            : "No jobs yet. Create your first application."}
         </div>
       )}
 
@@ -224,6 +352,10 @@ type ToolBarProps = {
   selectedCount: number
   onClearSelection: () => void
   onBulkArchive: () => void
+  filter: FilterState
+  sort: SortState
+  onFilterChange: (f: FilterState) => void
+  onSortChange: (s: SortState) => void
 }
 
 function ToolBar({
@@ -236,13 +368,24 @@ function ToolBar({
   selectedCount,
   onClearSelection,
   onBulkArchive,
+  filter,
+  sort,
+  onFilterChange,
+  onSortChange,
 }: ToolBarProps) {
   return (
     <div className="flex flex-col space-y-1">
-      <div className="flex space-x-2 items-center">
+      <div className="flex flex-wrap gap-2 items-center">
         <JobSearchBar value={query} onChange={onQueryChange} />
         <Separator orientation="vertical" className="h-8" />
         <ViewModeToggle value={viewMode} onChange={onViewModeChange} />
+        <Separator orientation="vertical" className="h-8" />
+        <FilterBar
+          filter={filter}
+          sort={sort}
+          onFilterChange={onFilterChange}
+          onSortChange={onSortChange}
+        />
 
         {selectedCount > 0 && (
           <>
@@ -335,11 +478,24 @@ function JobSearchBar({ value, onChange }: JobSearchBarProps) {
   )
 }
 
-function ColHeaders() {
+type ColHeadersProps = {
+  isAllSelected: boolean
+  isSomeSelected: boolean
+  onToggleAll: () => void
+}
+
+function ColHeaders({ isAllSelected, isSomeSelected, onToggleAll }: ColHeadersProps) {
   return (
     <div className="col-span-full grid grid-cols-subgrid border-b border-border/50">
-      <div className="px-2 py-1.5" />
-      {(["Role", "Status", "Progress", "Salary", "Fit", "Applied", "Notes", "Updated"] as const).map(label => (
+      <div className="flex items-center justify-center px-2 py-1.5">
+        <Checkbox
+          checked={isAllSelected}
+          indeterminate={isSomeSelected}
+          onCheckedChange={onToggleAll}
+          aria-label={isAllSelected ? 'Deselect all' : 'Select all'}
+        />
+      </div>
+      {(["Role", "Status", "Progress", "Salary", "Fit", "Applied", "Published", "Notes", "Updated"] as const).map(label => (
         <div key={label} className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/50">
           {label}
         </div>

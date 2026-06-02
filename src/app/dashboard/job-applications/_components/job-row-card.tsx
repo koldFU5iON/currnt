@@ -14,8 +14,9 @@ import { JobFit } from "./job-fit"
 import { JobNotes } from "./job-notes"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
-import { cn, daysAgo, formatRelative, formatShortDate } from "@/lib/utils"
+import { cn, formatShortDate } from "@/lib/utils"
 import { FreshnessChip } from "./freshness-chip"
+import { PostingAge } from "./posting-age"
 import { JobCompletenessDot } from "./job-completeness-dot"
 
 type JobRowCardProps = {
@@ -31,7 +32,7 @@ type JobRowCardProps = {
 export function JobRowCard({ job, selected, busyLabel, onToggleSelect, onEdit, onArchive, hasLLMKey }: JobRowCardProps) {
   const {
     id, jobNumber, title, company, countries, url,
-    dateApplied, lastUpdated, status, progress,
+    dateApplied, datePublished, lastUpdated, status, progress,
     jobFit, notes, notesIncludeInFit, applicationSource,
     jobDescription, salaryBand,
   } = job
@@ -119,6 +120,11 @@ export function JobRowCard({ job, selected, busyLabel, onToggleSelect, onEdit, o
         {dateApplied && (
           <span className="text-xs text-muted-foreground">{formatShortDate(dateApplied)}</span>
         )}
+        <PostingAge
+          datePublished={datePublished ?? null}
+          dateApplied={dateApplied ?? null}
+          status={status}
+        />
         <FreshnessChip lastUpdated={lastUpdated} status={status} />
         <JobNotes jobId={id} initialNotes={notes ?? null} initialIncludeInFit={notesIncludeInFit} />
       </div>

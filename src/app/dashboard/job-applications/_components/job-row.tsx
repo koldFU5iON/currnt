@@ -17,8 +17,8 @@ import { SalaryBandCell } from "./salary-band-cell"
 import { JobCompletenessDot } from "./job-completeness-dot"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
-import { daysAgo, formatRelative } from "@/lib/utils"
 import { FreshnessChip } from "./freshness-chip"
+import { PostingAge } from "./posting-age"
 
 type JobRowProps = {
   job: Job
@@ -33,7 +33,7 @@ type JobRowProps = {
 export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArchive, hasLLMKey }: JobRowProps) {
   const {
     id, jobNumber, title, company, countries, url,
-    dateApplied, lastUpdated, status, progress,
+    dateApplied, datePublished, lastUpdated, status, progress,
     jobFit, notes, notesIncludeInFit, applicationSource,
     jobDescription, salaryBand,
   } = job
@@ -122,6 +122,15 @@ export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArc
       {/* Applied date */}
       <div className="px-3 py-2">
         <ApplicationDateBlock label="Applied" date={dateApplied} jobId={id} />
+      </div>
+
+      {/* Published date */}
+      <div className="px-3 py-2">
+        <PostingAge
+          datePublished={datePublished ?? null}
+          dateApplied={dateApplied ?? null}
+          status={status}
+        />
       </div>
 
       {/* Notes */}

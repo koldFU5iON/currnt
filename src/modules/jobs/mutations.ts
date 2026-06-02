@@ -10,7 +10,9 @@ import {
   type ApplicationProgressType,
   type ApplicationStatusType,
 } from '@/app/types/job-application'
+import type { Job } from '@/app/types/job-application'
 import { requireProfile } from '@/lib/session'
+import { getArchivedJobs } from './queries'
 
 // Progress stages in funnel order. Used to compute "everything before stage X"
 // for the auto-advance logic below.
@@ -196,4 +198,17 @@ export async function bulkArchiveJobApplications(ids: string[]) {
 
   revalidatePath('/dashboard/job-applications')
   return { archived: result.count }
+}
+
+export async function restoreJobApplication(id: string): Promise<void> {
+  const { profile } = await requireProfile()
+  await prisma.jobApplication.update({
+    where: { id, profileId: profile.id },
+    data: { archivedAt: null },
+  })
+  revalidatePath('/dashboard/job-applications')
+}
+
+export async function getArchivedJobsAction(): Promise<Job[]> {
+  return getArchivedJobs()
 }
