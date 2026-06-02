@@ -29,6 +29,28 @@ const PROVIDERS: Record<string, ProviderFactory> = {
 
 export const SUPPORTED_PROVIDERS = Object.keys(PROVIDERS) as ReadonlyArray<keyof typeof PROVIDERS>
 
+function logUsage(
+  profileId: string,
+  provider: string,
+  model: string,
+  feature: string | undefined,
+  usage: LanguageModelUsage,
+  latencyMs: number,
+): void {
+  prisma.llmUsageLog.create({
+    data: {
+      profileId,
+      provider,
+      model,
+      feature: feature ?? null,
+      promptTokens: usage.inputTokens ?? 0,
+      completionTokens: usage.outputTokens ?? 0,
+      totalTokens: usage.totalTokens ?? 0,
+      latencyMs,
+    },
+  }).catch(() => {}) // fire-and-forget: log failures never block the caller
+}
+
 type ResolvedConfig = {
   provider: string
   model: string
@@ -78,6 +100,8 @@ export type CompleteOptions = {
   maxOutputTokens?: number
   /** 0–1; lower = more deterministic. */
   temperature?: number
+  /** Product feature that triggered this call (e.g. 'job-fit', 'cv-import'). Used for usage logging. */
+  feature?: string
 }
 
 type ResponseMeta = {
@@ -110,13 +134,15 @@ export async function complete(
       maxOutputTokens: opts.maxOutputTokens,
       temperature: opts.temperature,
     })
+    const latencyMs = Date.now() - startedAt
+    logUsage(profileId, cfg.provider, modelId, opts.feature, result.usage, latencyMs)
     return {
       text: result.text,
       finishReason: result.finishReason,
       provider: cfg.provider,
       model: modelId,
       usage: result.usage,
-      latencyMs: Date.now() - startedAt,
+      latencyMs,
     }
   } catch (err) {
     throw normalizeLLMError(err)
@@ -147,12 +173,14 @@ export async function completeStructured<T>(
       temperature: opts.temperature,
       output: Output.object({ schema }),
     })
+    const latencyMs = Date.now() - startedAt
+    logUsage(profileId, cfg.provider, modelId, opts.feature, result.usage, latencyMs)
     return {
       object: result.output as T,
       provider: cfg.provider,
       model: modelId,
       usage: result.usage,
-      latencyMs: Date.now() - startedAt,
+      latencyMs,
     }
   } catch (err) {
     throw normalizeLLMError(err)
