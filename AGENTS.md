@@ -8,7 +8,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 This file is the source of truth for project conventions, shared by every coding agent that touches this repo (Claude Code, CODEX, Cursor, Aider, Continue, etc.). `CLAUDE.md` imports this file via `@AGENTS.md` so Claude Code reads the same content without duplication.
 
-All commands run from the **project root** (not a subdirectory). The build spec and reference modules are in `docs/`.
+All commands run from the **project root** (not a subdirectory). API and integration specs are in `docs/`.
 
 ---
 
@@ -203,13 +203,8 @@ the `PROVIDERS` map in `client.ts`. See `docs/llm-layer.md` for usage examples.
 
 ## Reference docs
 
-Full build specification and pre-written module source is in `docs/`:
-
-- `docs/Project Guidance.md` — 11-phase build plan
 - `docs/api-jobs-capture.md` — POST /api/jobs/capture spec
 - `docs/api-integrations.md` — integration recipes for the capture endpoint (curl, Claude Code skill, bookmarklet)
+- `docs/llm-layer.md` — LLM layer usage examples
 - `src/lib/integrations/skills/claude-code.md` — canonical Claude Code skill source. Served by `GET /api/integrations/skills/claude-code`; downloaded SKILL.md goes in `~/.claude/skills/capture-job/`.
 - `src/lib/integrations/skills/hermes.md` — canonical Hermes skill source. Served by `GET /api/integrations/skills/hermes`; downloaded SKILL.md goes in `~/.hermes/skills/job-search/capture-job/`.
-- `docs/taiilrd/src/` — reference implementations for types, modules
-- `docs/taiilrd/prisma/schema.prisma` — original schema reference
-- `docs/taiilrd/vault-examples/` — example markdown vault files
