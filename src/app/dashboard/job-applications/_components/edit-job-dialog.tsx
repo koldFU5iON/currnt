@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import * as z from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm, FormProvider } from 'react-hook-form'
+import { Loader2, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   Dialog,
@@ -14,9 +15,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from '@/components/ui/input-group'
 import { FormField } from '../create/_components/form-field'
 import { updateJobSchema } from '@/modules/jobs/schema'
 import { updateJobApplication } from '@/modules/jobs/mutations'
+import { extractJobFromUrl } from '@/modules/jobs/extract'
+import { notifyUsageUpdated } from '@/lib/usage-events'
 import {
   APPLICATION_SOURCES,
   APPLICATION_SOURCE_LABEL,
@@ -54,10 +58,16 @@ export function EditJobDialog({ job, open, onOpenChange }: EditJobDialogProps) {
     defaultValues: valuesFromJob(job),
   })
 
+  const [isExtracting, startExtraction] = useTransition()
+  const [extractLabel, setExtractLabel] = useState('Re-extract')
+
   // Re-prefill whenever the dialog opens or the underlying job changes,
   // so stale form state from a previous edit doesn't bleed through.
   useEffect(() => {
-    if (open) form.reset(valuesFromJob(job))
+    if (open) {
+      form.reset(valuesFromJob(job))
+      setExtractLabel('Re-extract')
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, job.id])
 
@@ -71,10 +81,37 @@ export function EditJobDialog({ job, open, onOpenChange }: EditJobDialogProps) {
     }
   }
 
+  function handleExtract() {
+    const url = form.getValues('url')
+    if (!url) return
+    startExtraction(async () => {
+      setExtractLabel('Extracting…')
+      const result = await extractJobFromUrl(url)
+      if (!result.ok) {
+        toast.error(result.error)
+        setExtractLabel('Re-extract')
+        return
+      }
+      const d = result.data
+      if (d.title)          form.setValue('title', d.title)
+      if (d.company)        form.setValue('company', d.company)
+      if (d.location)       form.setValue('location', d.location)
+      if (d.jobDescription) form.setValue('jobDescription', d.jobDescription)
+      if (d.jobNumber)      form.setValue('jobNumber', d.jobNumber)
+      if (d.salaryBand)     form.setValue('salaryBand', d.salaryBand)
+      if (d.datePublished)  form.setValue('datePublished', d.datePublished)
+      notifyUsageUpdated()
+      toast.success('Details refreshed — review and save')
+      setExtractLabel('Re-extract')
+    })
+  }
+
+  const urlValue = form.watch('url')
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-3xl flex flex-col max-h-[90vh] overflow-hidden">
+        <DialogHeader className="shrink-0">
           <DialogTitle>Edit Job</DialogTitle>
           <DialogDescription>
             Update any field. Changes apply when you save.
@@ -84,45 +121,69 @@ export function EditJobDialog({ job, open, onOpenChange }: EditJobDialogProps) {
         <FormProvider {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4 max-h-[70vh] overflow-y-auto pr-1"
+            className="flex min-h-0 flex-1 flex-col"
           >
-            <div className="grid grid-cols-2 gap-4">
-              <FormField name="title" label="Job Title" required />
-              <FormField name="company" label="Company" required />
-            </div>
+            <div className="flex-1 overflow-y-auto overflow-x-hidden pr-1 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField name="title" label="Job Title" required />
+                <FormField name="company" label="Company" required />
+              </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField name="location" label="Location" placeholder="e.g. London, UK or Remote" />
-              <FormField name="jobNumber" label="Job Number" placeholder="e.g. JOB-123" />
-            </div>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField name="location" label="Location" placeholder="e.g. London, UK or Remote" />
+                <FormField name="jobNumber" label="Job Number" placeholder="e.g. JOB-123" />
+              </div>
 
-            <FormField name="url" label="Job URL" type="url" placeholder="https://..." />
+              {/* URL with re-extract button */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Job URL</label>
+                <InputGroup>
+                  <InputGroupInput
+                    type="url"
+                    placeholder="https://..."
+                    {...form.register('url')}
+                  />
+                  <InputGroupAddon align="inline-end">
+                    <InputGroupButton
+                      type="button"
+                      onClick={handleExtract}
+                      disabled={isExtracting || !urlValue}
+                    >
+                      {isExtracting
+                        ? <><Loader2 size={13} className="animate-spin" /> Extracting…</>
+                        : <><RefreshCw size={13} /> {extractLabel}</>
+                      }
+                    </InputGroupButton>
+                  </InputGroupAddon>
+                </InputGroup>
+              </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField name="datePublished" label="Date Published" type="date" />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField name="datePublished" label="Date Published" type="date" />
+                <FormField
+                  name="applicationSource"
+                  label="Source"
+                  type="select"
+                  options={SOURCE_OPTIONS}
+                />
+              </div>
+
               <FormField
-                name="applicationSource"
-                label="Source"
-                type="select"
-                options={SOURCE_OPTIONS}
+                name="salaryBand"
+                label="Salary Band"
+                placeholder="e.g. $120–140k"
+              />
+
+              <FormField
+                name="jobDescription"
+                label="Job Description"
+                type="textarea"
+                placeholder="Job description (markdown supported)"
+                rows={16}
               />
             </div>
 
-            <FormField
-              name="salaryBand"
-              label="Salary Band"
-              placeholder="e.g. $120–140k"
-            />
-
-            <FormField
-              name="jobDescription"
-              label="Job Description"
-              type="textarea"
-              placeholder="Job description (markdown supported)"
-              rows={16}
-            />
-
-            <DialogFooter>
+            <DialogFooter className="shrink-0 pt-4">
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
