@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ChevronRight, KeyRound, PenLine, Sparkles, UserCircle } from 'lucide-react'
+import { BarChart2, ChevronRight, KeyRound, PenLine, Sparkles, UserCircle } from 'lucide-react'
 import { ContentContainer } from '@/app/components/ContentContainer'
 import { Card } from '@/components/ui/card'
 
@@ -29,6 +29,12 @@ const SECTIONS = [
     Icon: KeyRound,
     title: 'API tokens',
     description: 'Bearer tokens for posting jobs from agents and scripts.',
+  },
+  {
+    href: '/dashboard/settings/usage',
+    Icon: BarChart2,
+    title: 'AI Usage',
+    description: 'Token consumption log across all AI features.',
   },
 ]
 
