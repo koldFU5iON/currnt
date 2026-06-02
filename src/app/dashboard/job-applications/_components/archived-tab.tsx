@@ -11,13 +11,18 @@ import { Button } from '@/components/ui/button'
 
 export function ArchivedTab() {
   const [jobs, setJobs] = useState<Job[] | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(false)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
     getArchivedJobsAction()
       .then(setJobs)
-      .catch(() => toast.error('Failed to load archived jobs'))
+      .catch(() => {
+        toast.error('Failed to load archived jobs')
+        setError(true)
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -26,6 +31,14 @@ export function ArchivedTab() {
       <div className="flex items-center justify-center py-12 text-sm text-muted-foreground gap-2">
         <Loader2 className="size-4 animate-spin" />
         Loading archived jobs…
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="py-8 text-center text-sm text-muted-foreground">
+        Failed to load archived jobs.
       </div>
     )
   }

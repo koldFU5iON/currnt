@@ -17,7 +17,6 @@ import { SalaryBandCell } from "./salary-band-cell"
 import { JobCompletenessDot } from "./job-completeness-dot"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
-import { daysAgo, formatRelative, formatShortDate } from "@/lib/utils"
 import { FreshnessChip } from "./freshness-chip"
 import { PostingAge } from "./posting-age"
 

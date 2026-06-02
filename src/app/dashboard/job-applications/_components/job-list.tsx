@@ -9,11 +9,13 @@ import {
   ClosedStatuses,
   type ApplicationStatusType,
   type Job,
+  type JobFit,
 } from "@/app/types/job-application"
 import {
   FilterBar,
   DEFAULT_FILTER,
   DEFAULT_SORT,
+  isFilterActive,
   type FilterState,
   type SortState,
 } from './filter-bar'
@@ -66,20 +68,21 @@ export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }
       const savedFilter = window.localStorage.getItem(FILTER_KEY)
       if (savedFilter) {
         const p = JSON.parse(savedFilter)
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setFilter({
           status: new Set(p.status ?? []),
           source: new Set(p.source ?? []),
           fit: new Set(p.fit ?? []),
         })
       }
+    } catch { /* ignore malformed filter cache */ }
+
+    try {
       const savedSort = window.localStorage.getItem(SORT_KEY)
       if (savedSort) {
         const p = JSON.parse(savedSort)
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (p.field && p.direction) setSort(p)
       }
-    } catch { /* ignore malformed cache */ }
+    } catch { /* ignore malformed sort cache */ }
   }, [])
 
   function changeViewMode(next: ViewMode) {
@@ -88,6 +91,7 @@ export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }
   }
 
   function changeFilter(next: FilterState) {
+    setSelected(new Set())
     setFilter(next)
     window.localStorage.setItem(FILTER_KEY, JSON.stringify({
       status: [...next.status],
@@ -123,19 +127,31 @@ export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }
     if (filter.fit.size > 0) {
       result = result.filter(j => {
         const label = j.jobFit?.label ?? 'none'
-        return filter.fit.has(label as never)
+        return filter.fit.has(label as JobFit['label'] | 'none')
       })
     }
 
     result.sort((a, b) => {
       let cmp = 0
       switch (sort.field) {
-        case 'dateApplied':
-          cmp = (a.dateApplied?.getTime() ?? 0) - (b.dateApplied?.getTime() ?? 0)
+        case 'dateApplied': {
+          const aVal = a.dateApplied?.getTime()
+          const bVal = b.dateApplied?.getTime()
+          if (aVal == null && bVal == null) { cmp = 0; break }
+          if (aVal == null) { return 1 }   // nulls always last
+          if (bVal == null) { return -1 }
+          cmp = aVal - bVal
           break
-        case 'datePublished':
-          cmp = (a.datePublished?.getTime() ?? 0) - (b.datePublished?.getTime() ?? 0)
+        }
+        case 'datePublished': {
+          const aVal = a.datePublished?.getTime()
+          const bVal = b.datePublished?.getTime()
+          if (aVal == null && bVal == null) { cmp = 0; break }
+          if (aVal == null) { return 1 }
+          if (bVal == null) { return -1 }
+          cmp = aVal - bVal
           break
+        }
         case 'company':
           cmp = a.company.localeCompare(b.company)
           break
@@ -309,7 +325,9 @@ export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }
         </>
       ) : (
         <div className="text-sm text-muted-foreground py-6 text-center">
-          {query ? "No jobs match your search." : "No jobs yet. Create your first application."}
+          {(query || isFilterActive(filter))
+            ? "No jobs match your filters."
+            : "No jobs yet. Create your first application."}
         </div>
       )}
 
