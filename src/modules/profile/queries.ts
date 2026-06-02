@@ -59,6 +59,8 @@ export async function getFullProfile(): Promise<FullProfile> {
       certifications: { orderBy: { issueDate: "desc" } },
       competencies: { orderBy: { order: "asc" } },
       languages: { orderBy: { order: "asc" } },
+      tools: { orderBy: { order: "asc" } },
+      projects: { orderBy: { startDate: "desc" } },
     },
   })
 
@@ -86,6 +88,12 @@ export async function getFullProfile(): Promise<FullProfile> {
     languages: row.languages.map((l) => ({
       ...l,
       proficiency: l.proficiency as LanguageProficiencyType,
+    })),
+    tools: row.tools,
+    projects: row.projects.map(p => ({
+      ...p,
+      highlights: parseJsonField<string[]>(p.highlights, []),
+      tags: parseJsonField<string[]>(p.tags, []),
     })),
   }
 }

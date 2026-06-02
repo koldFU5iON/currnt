@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db'
 import { requireProfile } from '@/lib/session'
 import { revalidatePath } from 'next/cache'
 
-export type ContactField = 'name' | 'email' | 'phone' | 'location' | 'website' | 'linkedIn'
+export type ContactField = 'name' | 'email' | 'phone' | 'location' | 'website' | 'linkedIn' | 'headline'
 
 export async function updateContactField(field: ContactField, value: string) {
   const { profile } = await requireProfile()
@@ -258,6 +258,108 @@ export async function updateLanguage(id: string, data: LanguageData) {
 export async function deleteLanguage(id: string) {
   const { profile } = await requireProfile()
   await prisma.language.deleteMany({ where: { id, profileId: profile.id } })
+  revalidatePath('/dashboard/profile')
+}
+
+// ── Tools ──────────────────────────────────────────────────────────────────
+
+type ToolData = { name: string; category?: string }
+
+export async function createTool(data: ToolData) {
+  const { profile } = await requireProfile()
+  const tool = await prisma.tool.create({
+    data: { ...data, profileId: profile.id },
+  })
+  revalidatePath('/dashboard/profile')
+  return tool
+}
+
+export async function updateTool(id: string, data: ToolData) {
+  const { profile } = await requireProfile()
+  const tool = await prisma.tool.update({ where: { id, profileId: profile.id }, data })
+  revalidatePath('/dashboard/profile')
+  return tool
+}
+
+export async function deleteTool(id: string) {
+  const { profile } = await requireProfile()
+  await prisma.tool.deleteMany({ where: { id, profileId: profile.id } })
+  revalidatePath('/dashboard/profile')
+}
+
+// ── Competencies ────────────────────────────────────────────────────────────
+
+type CompetencyData = { name: string }
+
+export async function createCompetency(data: CompetencyData) {
+  const { profile } = await requireProfile()
+  const competency = await prisma.competency.create({
+    data: { ...data, profileId: profile.id, origin: 'manual' },
+  })
+  revalidatePath('/dashboard/profile')
+  return competency
+}
+
+export async function updateCompetency(id: string, data: CompetencyData) {
+  const { profile } = await requireProfile()
+  const competency = await prisma.competency.update({ where: { id, profileId: profile.id }, data })
+  revalidatePath('/dashboard/profile')
+  return competency
+}
+
+export async function deleteCompetency(id: string) {
+  const { profile } = await requireProfile()
+  await prisma.competency.deleteMany({ where: { id, profileId: profile.id } })
+  revalidatePath('/dashboard/profile')
+}
+
+// ── Projects ─────────────────────────────────────────────────────────────────
+
+type ProjectData = {
+  name: string
+  description: string
+  url?: string
+  repoUrl?: string
+  startDate?: Date
+  endDate?: Date
+  status?: string
+  highlights?: string[]
+  tags?: string[]
+}
+
+export async function createProject(data: ProjectData) {
+  const { profile } = await requireProfile()
+  const { highlights, tags, ...rest } = data
+  const project = await prisma.project.create({
+    data: {
+      ...rest,
+      profileId: profile.id,
+      highlights: JSON.stringify(highlights ?? []),
+      tags: JSON.stringify(tags ?? []),
+    },
+  })
+  revalidatePath('/dashboard/profile')
+  return project
+}
+
+export async function updateProject(id: string, data: ProjectData) {
+  const { profile } = await requireProfile()
+  const { highlights, tags, ...rest } = data
+  const project = await prisma.project.update({
+    where: { id, profileId: profile.id },
+    data: {
+      ...rest,
+      ...(highlights !== undefined ? { highlights: JSON.stringify(highlights) } : {}),
+      ...(tags !== undefined ? { tags: JSON.stringify(tags) } : {}),
+    },
+  })
+  revalidatePath('/dashboard/profile')
+  return project
+}
+
+export async function deleteProject(id: string) {
+  const { profile } = await requireProfile()
+  await prisma.project.deleteMany({ where: { id, profileId: profile.id } })
   revalidatePath('/dashboard/profile')
 }
 

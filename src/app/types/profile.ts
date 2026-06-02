@@ -7,6 +7,8 @@ import type {
   Certification as CertificationRow,
   Competency as CompetencyRow,
   Language as LanguageRow,
+  Tool as ToolRow,
+  Project as ProjectRow,
 } from "@prisma/client"
 
 // --- enums: String column + const, matching the ApplicationStatus pattern ---
@@ -45,6 +47,11 @@ export type Skill = Omit<SkillRow, "tags"> & { tags: string[] }
 export type Education = Omit<EducationRow, "tags"> & { tags: string[] }
 export type Certification = Omit<CertificationRow, "tags"> & { tags: string[] }
 export type Profile = ProfileRow
+export type Tool = ToolRow
+export type Project = Omit<ProjectRow, "highlights" | "tags"> & {
+  highlights: string[]
+  tags: string[]
+}
 
 // --- composites: the loaded shapes the UI consumes ---
 
@@ -57,4 +64,6 @@ export type FullProfile = Profile & {
   certifications: Certification[]
   competencies: Competency[]
   languages: Language[]
+  tools: Tool[]
+  projects: Project[]
 }
