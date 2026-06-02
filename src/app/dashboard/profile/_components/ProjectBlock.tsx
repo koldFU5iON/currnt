@@ -191,24 +191,23 @@ function ProjectDialog({ open, onOpenChange, editing, onSave, saving, saveError,
             </Field>
 
             {/* Extract insights button */}
-            {hasLLMKey && (
-              <div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  disabled={extractState.status === 'extracting' || !descValue.trim()}
-                  onClick={handleExtract}
-                >
-                  <Sparkles size={13} />
-                  {extractState.status === 'extracting' ? 'Extracting…' : 'Extract Insights'}
-                </Button>
-                {extractState.status === 'error' && (
-                  <p className="mt-1.5 text-xs text-destructive">{extractState.message}</p>
-                )}
-              </div>
-            )}
+            <div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                disabled={extractState.status === 'extracting' || !descValue.trim() || !nameValue.trim() || !hasLLMKey}
+                onClick={handleExtract}
+                title={!hasLLMKey ? 'Configure an LLM API key in Settings to use extraction' : undefined}
+              >
+                <Sparkles size={13} />
+                {extractState.status === 'extracting' ? 'Extracting…' : 'Extract Insights'}
+              </Button>
+              {extractState.status === 'error' && (
+                <p className="mt-1.5 text-xs text-destructive">{extractState.message}</p>
+              )}
+            </div>
 
             {/* Highlights — show if any exist */}
             {highlights.length > 0 && (
@@ -315,6 +314,7 @@ export function ProjectBlock({ initial, hasLLMKey }: ProjectBlockProps) {
   const [editing, setEditing] = useState<FullProfile['projects'][number] | null>(null)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const openAdd = () => { setEditing(null); setSaveError(null); setOpen(true) }
   const openEdit = (p: FullProfile['projects'][number]) => { setEditing(p); setSaveError(null); setOpen(true) }
@@ -322,7 +322,12 @@ export function ProjectBlock({ initial, hasLLMKey }: ProjectBlockProps) {
   const handleDelete = async (id: string) => {
     const prev = projects
     setProjects(p => p.filter(item => item.id !== id))
-    try { await deleteProject(id) } catch { setProjects(prev) }
+    setDeleteError(null)
+    try { await deleteProject(id) } catch {
+      setProjects(prev)
+      setDeleteError('Failed to delete project. Please try again.')
+      setTimeout(() => setDeleteError(null), 4000)
+    }
   }
 
   const handleSave = async (data: Parameters<typeof createProject>[0]) => {
@@ -357,6 +362,8 @@ export function ProjectBlock({ initial, hasLLMKey }: ProjectBlockProps) {
           <Plus size={13} />
         </Button>
       </div>
+
+      {deleteError && <p className="mb-2 text-sm text-destructive">{deleteError}</p>}
 
       {/* Project cards grid */}
       {projects.length === 0 ? (
