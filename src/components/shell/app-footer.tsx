@@ -1,21 +1,41 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { MessageSquareWarning, Settings } from "lucide-react"
 
 import { APP_VERSION } from "@/lib/version"
 import { FeedbackDrawer } from "@/app/components/FeedbackDrawer"
 
+function formatTokens(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`
+  return String(n)
+}
+
 export function AppFooter() {
   const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const [tokens, setTokens] = useState<{ today: number; thisMonth: number } | null>(null)
+
+  useEffect(() => {
+    fetch('/api/usage/summary', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setTokens(data) })
+      .catch(() => {})
+  }, [])
 
   return (
     <footer className="flex h-9 shrink-0 items-center justify-between gap-4 border-t bg-background px-3 text-xs text-muted-foreground">
-      {/* Status / context — static for now; wire to LLM ping / search context later. */}
-      <div className="flex items-center gap-1.5">
-        <span className="size-1.5 rounded-full bg-emerald-500" aria-hidden />
-        <span>Ready</span>
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5">
+          <span className="size-1.5 rounded-full bg-emerald-500" aria-hidden />
+          <span>Ready</span>
+        </div>
+        {tokens !== null && (
+          <span className="tabular-nums text-muted-foreground/60">
+            {formatTokens(tokens.today)} today · {formatTokens(tokens.thisMonth)} mo
+          </span>
+        )}
       </div>
 
       <div className="flex items-center gap-4">
