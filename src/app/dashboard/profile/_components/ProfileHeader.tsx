@@ -1,0 +1,106 @@
+'use client'
+
+import { useState } from 'react'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Check, X } from 'lucide-react'
+import { updateContactField, type ContactField } from '@/modules/profile/actions'
+import { ImportProfileDialog } from './ImportProfileDialog'
+
+type EditableHeaderFieldProps = {
+  field: ContactField
+  value?: string
+  placeholder: string
+  className: string
+}
+
+function EditableHeaderField({ field, value, placeholder, className }: EditableHeaderFieldProps) {
+  const [editing, setEditing] = useState(false)
+  const [current, setCurrent] = useState(value)
+  const [draft, setDraft] = useState(value ?? '')
+
+  const handleSave = async () => {
+    setEditing(false)
+    const prev = current
+    setCurrent(draft.trim() || undefined)
+    try {
+      await updateContactField(field, draft)
+    } catch {
+      setCurrent(prev)
+    }
+  }
+
+  const handleCancel = () => {
+    setDraft(current ?? '')
+    setEditing(false)
+  }
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-2">
+        <Input
+          className={`h-auto py-0.5 ${className}`}
+          value={draft}
+          placeholder={placeholder}
+          autoFocus
+          onChange={e => setDraft(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') handleSave()
+            if (e.key === 'Escape') handleCancel()
+          }}
+        />
+        <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={handleSave} aria-label="Save">
+          <Check size={12} />
+        </Button>
+        <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={handleCancel} aria-label="Cancel">
+          <X size={12} />
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      className="group cursor-pointer rounded px-1 hover:bg-accent/60 transition-colors inline-flex items-center gap-1.5"
+      onClick={() => setEditing(true)}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setEditing(true) } }}
+      aria-label={`Edit ${field}`}
+    >
+      {current
+        ? <span className={className}>{current}</span>
+        : <span className={`${className} text-muted-foreground/40`}>{placeholder}</span>
+      }
+    </div>
+  )
+}
+
+type ProfileHeaderProps = {
+  name: string
+  headline?: string
+}
+
+export function ProfileHeader({ name, headline }: ProfileHeaderProps) {
+  return (
+    <div className="flex items-start justify-between gap-4 mb-6">
+      <div className="space-y-0.5">
+        <EditableHeaderField
+          field="name"
+          value={name}
+          placeholder="Your name"
+          className="text-2xl font-semibold"
+        />
+        <EditableHeaderField
+          field="headline"
+          value={headline}
+          placeholder="Add a professional headline…"
+          className="text-sm text-muted-foreground"
+        />
+      </div>
+      <div className="shrink-0 mt-1">
+        <ImportProfileDialog />
+      </div>
+    </div>
+  )
+}
