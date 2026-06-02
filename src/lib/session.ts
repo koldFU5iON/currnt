@@ -20,3 +20,11 @@ export async function requireProfile() {
   if (!profile) throw new Error("Profile not found for user")
   return { session, profile }
 }
+
+export async function isAdminUser(userId: string): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  })
+  return user?.role === 'admin'
+}
