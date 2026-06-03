@@ -74,8 +74,20 @@ export function EditJobDialog({ job, open, onOpenChange }: EditJobDialogProps) {
 
   async function onSubmit(data: z.infer<typeof updateJobSchema>) {
     try {
-      await updateJobApplication(job.id, data)
-      toast.success('Job updated')
+      const { staleFitData } = await updateJobApplication(job.id, data)
+      if (staleFitData) {
+        toast.warning('Job description changed. Your fit assessment may be outdated.', {
+          action: {
+            label: 'Reassess',
+            onClick: () => {
+              window.location.href = `/dashboard/job-applications/view/${job.id}`
+            },
+          },
+          duration: 8000,
+        })
+      } else {
+        toast.success('Job updated')
+      }
       onOpenChange(false)
     } catch {
       toast.error('Failed to update job')

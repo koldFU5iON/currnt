@@ -120,11 +120,11 @@ export async function updateJobProgress(id: string, progress: ApplicationProgres
 export async function updateJobApplication(
   id: string,
   data: z.infer<typeof updateJobSchema>,
-) {
+): Promise<{ staleFitData: boolean }> {
   const { profile } = await requireProfile()
   const validated = updateJobSchema.parse(data)
 
-  const { location, url, salaryBand, ...rest } = validated
+  const { location, url, salaryBand, jobDescription, ...rest } = validated
   const payload: Record<string, unknown> = { ...rest }
   if (url !== undefined) payload.url = url || null
   if (location !== undefined) {
@@ -133,6 +133,23 @@ export async function updateJobApplication(
       : []
   }
   if (salaryBand !== undefined) payload.salaryBand = salaryBand || null
+  if (jobDescription !== undefined) payload.jobDescription = jobDescription
+
+  // Check for stale fit/analysis data before updating
+  let staleFitData = false
+  if (jobDescription !== undefined) {
+    const current = await prisma.jobApplication.findFirst({
+      where: { id, profileId: profile.id },
+      select: { jobDescription: true, jobFit: true, jobAnalysis: true },
+    })
+    if (
+      current &&
+      current.jobDescription !== jobDescription &&
+      (current.jobFit !== null || current.jobAnalysis !== null)
+    ) {
+      staleFitData = true
+    }
+  }
 
   const result = await prisma.jobApplication.updateMany({
     where: { id, profileId: profile.id },
@@ -142,6 +159,8 @@ export async function updateJobApplication(
 
   revalidatePath('/dashboard/job-applications')
   revalidatePath(`/dashboard/job-applications/view/${id}`)
+
+  return { staleFitData }
 }
 
 export async function archiveJobApplication(id: string) {
