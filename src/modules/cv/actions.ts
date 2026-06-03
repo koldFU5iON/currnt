@@ -22,6 +22,14 @@ export async function createAndGenerateCV({
     if (existing) return { id: existing.id }
   }
 
+  // Fetch job details if applicable
+  const jobApp = jobApplicationId
+    ? await prisma.jobApplication.findFirst({
+        where: { id: jobApplicationId, profileId: profile.id },
+        select: { title: true, company: true },
+      })
+    : null
+
   const template = await prisma.cVTemplate.findFirst({
     where: { isDefault: true },
     select: { id: true },
@@ -35,15 +43,24 @@ export async function createAndGenerateCV({
       templateId: template.id,
       generatedContent: '{}',
       status: 'generating',
+      jobTitle: jobApp?.title ?? null,
+      company: jobApp?.company ?? null,
     },
   })
 
-  const content = await generateCVContent(profile.id, jobApplicationId)
-
-  await prisma.cVDocument.update({
-    where: { id: doc.id },
-    data: { generatedContent: JSON.stringify(content), status: 'draft' },
-  })
+  try {
+    const content = await generateCVContent(profile.id, jobApplicationId)
+    await prisma.cVDocument.update({
+      where: { id: doc.id },
+      data: { generatedContent: JSON.stringify(content), status: 'draft' },
+    })
+  } catch (err) {
+    await prisma.cVDocument.update({
+      where: { id: doc.id },
+      data: { status: 'failed' },
+    })
+    throw err
+  }
 
   return { id: doc.id }
 }
@@ -107,11 +124,18 @@ export async function regenerateCVContent(cvId: string): Promise<void> {
     data: { status: 'generating' },
   })
 
-  const content = await generateCVContent(profile.id, doc.jobApplicationId ?? undefined)
-
-  await prisma.cVDocument.update({
-    where: { id: cvId },
-    data: { generatedContent: JSON.stringify(content), status: 'draft' },
-  })
-  revalidatePath(`/dashboard/cv-builder/${cvId}`)
+  try {
+    const content = await generateCVContent(profile.id, doc.jobApplicationId ?? undefined)
+    await prisma.cVDocument.update({
+      where: { id: cvId },
+      data: { generatedContent: JSON.stringify(content), status: 'draft' },
+    })
+    revalidatePath(`/dashboard/cv-builder/${cvId}`)
+  } catch (err) {
+    await prisma.cVDocument.update({
+      where: { id: cvId },
+      data: { status: 'failed' },
+    })
+    throw err
+  }
 }
