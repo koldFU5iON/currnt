@@ -30,11 +30,19 @@ export async function createAndGenerateCV({
       })
     : null
 
-  const template = await prisma.cVTemplate.findFirst({
-    where: { isDefault: true },
+  // Find or bootstrap the default template — safe to run on first use in prod
+  const template = await prisma.cVTemplate.upsert({
+    where: { id: 'default' },
+    update: {},
+    create: {
+      id: 'default',
+      name: 'Default',
+      description: 'Standard CV template',
+      isDefault: true,
+      isBuiltIn: true,
+    },
     select: { id: true },
   })
-  if (!template) throw new Error('No default CV template found. Run npm run db:seed.')
 
   const doc = await prisma.cVDocument.create({
     data: {
