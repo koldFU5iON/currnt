@@ -72,14 +72,14 @@ export async function generateCVContent(
 
   const userMessage = [
     jobContext,
-    analysis ? '\n' + formatAnalysisContext(analysis) : '',
+    analysis ? formatAnalysisContext(analysis) : null,
     '',
     '== CANDIDATE PROFILE ==',
     serializeProfileForLLM(snapshot),
     '',
     '== OUTPUT SCHEMA ==',
     SCHEMA_HINT,
-  ].join('\n')
+  ].filter((p): p is string => p !== null).join('\n')
 
   const result = await complete(profileId, userMessage, {
     system: composeSystem(rules, brief, cvPrompt),

@@ -45,7 +45,7 @@ export async function analyseJob(
     // revalidatePath is not called here — plain modules cannot call it in Next.js 16.
     // The server action caller (job-fit.ts) handles revalidation for its own path.
     await prisma.jobApplication.update({
-      where: { id: jobId },
+      where: { id: jobId, profileId },
       data: { jobAnalysis: result.object, jobAnalysedAt: new Date() },
     })
 

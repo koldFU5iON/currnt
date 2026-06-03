@@ -100,7 +100,7 @@ describe('analyseJob', () => {
   it('stores the analysis result on the job application', async () => {
     await analyseJob(PROFILE_ID, JOB_ID)
     expect(mockUpdate).toHaveBeenCalledWith({
-      where: { id: JOB_ID },
+      where: { id: JOB_ID, profileId: PROFILE_ID },
       data: expect.objectContaining({
         jobAnalysis: MOCK_ANALYSIS,
         jobAnalysedAt: expect.any(Date),
