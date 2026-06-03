@@ -22,6 +22,7 @@ import { buildProfileSnapshot, serializeProfileForLLM } from '@/modules/profile/
 import { normalizeOnboardingContext } from '@/modules/onboarding/schema'
 import { loadWritingRules, composeSystem, type WritingContext } from '@/modules/llm/prompt-context'
 import { JobFitSchema, type JobFit } from './schema'
+import { analyseJob } from '@/modules/cv/analyse-job'
 
 // Type is consumed internally only. Callers that need it import from
 // '@/modules/jobs/schema' — re-exporting here breaks the 'use server'
@@ -134,6 +135,12 @@ ${job.jobDescription}`
 
   revalidatePath('/dashboard/job-applications')
   revalidatePath(`/dashboard/job-applications/view/${jobId}`)
+
+  if (['stretch', 'good', 'excellent'].includes(fit.label)) {
+    analyseJob(profile.id, jobId).catch(err =>
+      console.error('[assessJobFit] background analysis failed', err),
+    )
+  }
 
   return { ok: true, fit }
 }
