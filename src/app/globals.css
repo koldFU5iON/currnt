@@ -130,3 +130,20 @@
     @apply font-sans;
   }
 }
+
+@media print {
+  /* Hide everything except the CV document area */
+  body > * {
+    visibility: hidden;
+  }
+  .cv-print-area,
+  .cv-print-area * {
+    visibility: visible;
+  }
+  .cv-print-area {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+}
