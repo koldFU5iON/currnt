@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { redirect } from "next/navigation"
 import { getOnboardingSettings } from "@/modules/onboarding/queries"
 import { getDashboardStats } from "@/modules/jobs/queries"
@@ -27,6 +28,15 @@ export default async function Page() {
         byStatus={stats.byStatus}
         lastActivity={stats.lastActivity}
       />
+
+      <div className="-mt-2">
+        <Link
+          href="/about"
+          className="text-xs text-muted-foreground transition-colors duration-150 hover:text-foreground"
+        >
+          Why we built this &rarr;
+        </Link>
+      </div>
 
       <div className="grid gap-5 lg:grid-cols-5">
         <div className="lg:col-span-3">
