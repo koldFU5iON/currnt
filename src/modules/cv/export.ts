@@ -37,15 +37,17 @@ function sectionToMarkdown(section: CVSection): string {
       return `## Capabilities\n\n${section.data.items.map(i => `- ${i}`).join("\n")}`
     case "experience": {
       const { company, titles, location, duration, description, outcomes } = section.data
-      return [
+      const lines = [
         `### ${company}`,
         `_${titles.join(" → ")}_`,
         `${location} · ${duration}`,
         "",
         description,
-        "",
-        ...outcomes.map(o => `→ ${o}`),
-      ].join("\n")
+      ]
+      if (outcomes.length > 0) {
+        lines.push("", ...outcomes.map(o => `→ ${o}`))
+      }
+      return lines.join("\n")
     }
     case "education": {
       const { institution, qualification, field, duration, grade } = section.data

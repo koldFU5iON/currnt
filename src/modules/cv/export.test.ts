@@ -65,3 +65,61 @@ describe("sectionToPlainText", () => {
     expect(text).toContain("Risk governance")
   })
 })
+
+describe("sectionToPlainText — additional sections", () => {
+  it("renders education", () => {
+    const section: CVSection = {
+      id: "edu", type: "education", visible: true,
+      data: { institution: "Oxford", qualification: "BA", field: "History", duration: "2005–2008", grade: "First" },
+    }
+    const text = sectionToPlainText(section)
+    expect(text).toContain("Oxford")
+    expect(text).toContain("History")
+    expect(text).toContain("First")
+  })
+
+  it("renders certification", () => {
+    const section: CVSection = {
+      id: "cert", type: "certification", visible: true,
+      data: { name: "PMP", issuer: "PMI", date: "2021" },
+    }
+    const text = sectionToPlainText(section)
+    expect(text).toContain("PMP")
+    expect(text).toContain("PMI")
+    expect(text).toContain("2021")
+  })
+
+  it("renders skills as comma-separated list", () => {
+    const section: CVSection = {
+      id: "sk", type: "skills", visible: true,
+      data: { items: ["Stakeholder management", "Agile"] },
+    }
+    expect(sectionToPlainText(section)).toContain("Stakeholder management")
+  })
+
+  it("renders tools", () => {
+    const section: CVSection = {
+      id: "tools", type: "tools", visible: true,
+      data: { items: ["Jira", "Confluence"] },
+    }
+    expect(sectionToPlainText(section)).toContain("Jira")
+  })
+
+  it("renders languages with proficiency", () => {
+    const section: CVSection = {
+      id: "lang", type: "languages", visible: true,
+      data: { items: [{ name: "French", proficiency: "fluent" }] },
+    }
+    expect(sectionToPlainText(section)).toContain("French")
+    expect(sectionToPlainText(section)).toContain("fluent")
+  })
+
+  it("experience with no outcomes produces no trailing blank line", () => {
+    const section: CVSection = {
+      id: "e", type: "experience", visible: true,
+      data: { company: "Acme", titles: ["PM"], location: "London", duration: "2020–2022", description: "Ran projects.", outcomes: [] },
+    }
+    const md = sectionToPlainText(section)
+    expect(md.endsWith("Ran projects.")).toBe(true)
+  })
+})
