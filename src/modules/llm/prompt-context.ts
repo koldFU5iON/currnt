@@ -14,6 +14,13 @@ export async function loadWritingRules(): Promise<string> {
   })
 }
 
+export async function loadCVPrompt(): Promise<string> {
+  const promptPath = path.join(process.cwd(), 'src/lib/prompts/cv-generate.md')
+  return readFile(promptPath, 'utf-8').catch(() => {
+    throw new Error('cv-generate.md missing from bundle — check outputFileTracingIncludes in next.config.ts')
+  })
+}
+
 export async function loadWritingContext(profileId: string): Promise<WritingContext> {
   const [rules, settings] = await Promise.all([
     loadWritingRules().catch(() => ''),
