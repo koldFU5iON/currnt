@@ -1,0 +1,69 @@
+import type { CVDocumentContent, CVSection } from "./schema"
+
+export function toMarkdown(doc: CVDocumentContent): string {
+  return doc.sections
+    .filter(s => s.visible)
+    .map(sectionToMarkdown)
+    .filter(Boolean)
+    .join("\n\n")
+}
+
+export function toText(doc: CVDocumentContent): string {
+  return toMarkdown(doc).replace(/[*_`#]/g, "")
+}
+
+export function sectionToPlainText(section: CVSection): string {
+  return sectionToMarkdown(section).replace(/[*_`#]/g, "")
+}
+
+function sectionToMarkdown(section: CVSection): string {
+  switch (section.type) {
+    case "header": {
+      const { name, headline, subHeadline, contact } = section.data
+      const contactLine = [contact.email, contact.phone, contact.linkedin, contact.website]
+        .filter(Boolean).join(" · ")
+      return [
+        `# ${name}`,
+        headline,
+        subHeadline,
+        contactLine,
+      ].filter(Boolean).join("\n")
+    }
+    case "profile":
+      return `## Professional Profile\n\n${section.data.content}`
+    case "competencies":
+      return `## Core Competencies\n\n${section.data.items.map(i => `- ${i}`).join("\n")}`
+    case "capabilities":
+      return `## Capabilities\n\n${section.data.items.map(i => `- ${i}`).join("\n")}`
+    case "experience": {
+      const { company, titles, location, duration, description, outcomes } = section.data
+      return [
+        `### ${company}`,
+        `_${titles.join(" → ")}_`,
+        `${location} · ${duration}`,
+        "",
+        description,
+        "",
+        ...outcomes.map(o => `→ ${o}`),
+      ].join("\n")
+    }
+    case "education": {
+      const { institution, qualification, field, duration, grade } = section.data
+      return [
+        `### ${institution}`,
+        `${qualification}${field ? ` · ${field}` : ""}`,
+        `${duration}${grade ? ` · ${grade}` : ""}`,
+      ].join("\n")
+    }
+    case "certification": {
+      const { name, issuer, date } = section.data
+      return `- **${name}**${issuer ? ` — ${issuer}` : ""}${date ? ` (${date})` : ""}`
+    }
+    case "skills":
+      return `## Skills\n\n${section.data.items.join(", ")}`
+    case "tools":
+      return `## Tools\n\n${section.data.items.join(", ")}`
+    case "languages":
+      return `## Languages\n\n${section.data.items.map(l => `${l.name} (${l.proficiency})`).join(", ")}`
+  }
+}
