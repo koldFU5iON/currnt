@@ -1,8 +1,21 @@
+import { z } from 'zod'
 import { prisma } from '@/lib/db'
 import { completeStructured } from '@/modules/llm/client'
 import { loadWritingContext, loadCVPrompt, composeSystem } from '@/modules/llm/prompt-context'
 import { buildProfileSnapshot, serializeProfileForLLM } from '@/modules/profile/snapshot'
-import { CVDocumentContentSchema, type CVDocumentContent } from './schema'
+import { CVDocumentContentSchema, parseCVContent, type CVDocumentContent } from './schema'
+
+// Flat schema used for the LLM call — avoids grammar-too-large errors from
+// discriminated unions. Full validation happens after via CVDocumentContentSchema.
+const LooseCVDocumentSchema = z.object({
+  version: z.literal(1),
+  sections: z.array(z.object({
+    id: z.string(),
+    type: z.string(),
+    visible: z.boolean(),
+    data: z.record(z.string(), z.unknown()),
+  })),
+})
 
 const SCHEMA_HINT = `
 Section types and their data shapes:
@@ -51,7 +64,7 @@ export async function generateCVContent(
   const result = await completeStructured(
     profileId,
     userMessage,
-    CVDocumentContentSchema,
+    LooseCVDocumentSchema,
     {
       system: composeSystem(rules, brief, cvPrompt),
       feature: 'cv-generate',
@@ -60,5 +73,11 @@ export async function generateCVContent(
     },
   )
 
-  return result.object
+  // Validate through the strict schema now that we have the response
+  const parsed = CVDocumentContentSchema.safeParse(result.object)
+  if (parsed.success) return parsed.data
+
+  // Log validation issues and fall back to parseCVContent which handles partial data
+  console.error('[generateCVContent] strict schema validation failed', parsed.error.issues)
+  return parseCVContent(JSON.stringify(result.object))
 }
