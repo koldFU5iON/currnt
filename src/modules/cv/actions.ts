@@ -3,7 +3,7 @@
 import { prisma } from '@/lib/db'
 import { requireProfile } from '@/lib/session'
 import { revalidatePath } from 'next/cache'
-import { parseCVContent, type CVSection } from './schema'
+import { parseCVContent, type CVSection, type CVDocumentContent } from './schema'
 import { generateCVContent } from './generate'
 
 export async function createAndGenerateCV({
@@ -111,7 +111,7 @@ export async function deleteCV(cvId: string): Promise<void> {
   revalidatePath('/dashboard/cv-builder')
 }
 
-export async function regenerateCVContent(cvId: string): Promise<void> {
+export async function regenerateCVContent(cvId: string): Promise<CVDocumentContent> {
   const { profile } = await requireProfile()
   const doc = await prisma.cVDocument.findFirst({
     where: { id: cvId, profileId: profile.id },
@@ -131,6 +131,7 @@ export async function regenerateCVContent(cvId: string): Promise<void> {
       data: { generatedContent: JSON.stringify(content), status: 'draft' },
     })
     revalidatePath(`/dashboard/cv-builder/${cvId}`)
+    return content
   } catch (err) {
     await prisma.cVDocument.update({
       where: { id: cvId },

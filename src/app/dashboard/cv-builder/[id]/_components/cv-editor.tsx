@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
-import { RotateCcw, Download, MessageSquare } from 'lucide-react'
+import { RotateCcw, Download, MessageSquare, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -42,7 +41,6 @@ type CVWithMeta = {
 type Props = { cv: CVWithMeta }
 
 export function CvEditor({ cv }: Props) {
-  const router = useRouter()
   const [content, setContent] = useState<CVDocumentContent>(cv.content)
   const [isPending, startTransition] = useTransition()
   const [showConfirm, setShowConfirm] = useState(false)
@@ -102,8 +100,9 @@ export function CvEditor({ cv }: Props) {
     setShowConfirm(false)
     startTransition(async () => {
       try {
-        await regenerateCVContent(cv.id)
-        router.refresh()
+        const newContent = await regenerateCVContent(cv.id)
+        setContent(newContent)
+        toast.success('CV regenerated successfully')
       } catch (err) {
         toast.error(err instanceof Error ? err.message : 'Regeneration failed')
       }
@@ -162,8 +161,11 @@ export function CvEditor({ cv }: Props) {
               disabled={isPending}
               className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted disabled:opacity-50"
             >
-              <RotateCcw className="size-3.5" />
-              Regenerate
+              {isPending
+                ? <Loader2 className="size-3.5 animate-spin" />
+                : <RotateCcw className="size-3.5" />
+              }
+              {isPending ? 'Generating…' : 'Regenerate'}
             </button>
             <div className="relative group">
               <button className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted">
@@ -191,7 +193,14 @@ export function CvEditor({ cv }: Props) {
 
         {/* Body */}
         <div className="flex flex-1 overflow-hidden">
-          <div className="flex-1 overflow-y-auto bg-muted/30 p-6 print:bg-white print:p-0">
+          <div className="relative flex-1 overflow-y-auto bg-muted/30 p-6 print:bg-white print:p-0">
+            {isPending && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background/60 backdrop-blur-sm print:hidden">
+                <Loader2 className="size-8 animate-spin text-muted-foreground" />
+                <p className="text-sm font-medium text-muted-foreground">Generating your CV…</p>
+                <p className="text-xs text-muted-foreground">This takes about 15–30 seconds</p>
+              </div>
+            )}
             <div className="cv-print-area mx-auto max-w-2xl rounded-lg bg-background shadow-sm print:max-w-none print:shadow-none">
               {content.sections.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
