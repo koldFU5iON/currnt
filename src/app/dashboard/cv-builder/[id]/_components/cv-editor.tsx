@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { RotateCcw, Download, MessageSquare } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { createAndGenerateCV, updateSection, toggleVisibility } from '@/modules/cv/actions'
+import { updateSection, toggleVisibility, regenerateCVContent } from '@/modules/cv/actions'
 import { toMarkdown, toText, sectionToPlainText } from '@/modules/cv/export'
 import { SectionRail } from './section-rail'
 import { CvBlock } from './cv-block'
@@ -41,21 +41,35 @@ export function CvEditor({ cv }: Props) {
     : 'Master CV'
 
   function handleUpdateSection(section: CVSection) {
-    setContent(prev => ({
-      ...prev,
-      sections: prev.sections.map(s => s.id === section.id ? section : s),
+    const prev = content
+    setContent(c => ({
+      ...c,
+      sections: c.sections.map(s => s.id === section.id ? section : s),
     }))
-    startTransition(async () => { await updateSection(cv.id, section) })
+    startTransition(async () => {
+      try {
+        await updateSection(cv.id, section)
+      } catch {
+        setContent(prev)
+      }
+    })
   }
 
   function handleToggleVisibility(sectionId: string) {
-    setContent(prev => ({
-      ...prev,
-      sections: prev.sections.map(s =>
+    const prev = content
+    setContent(c => ({
+      ...c,
+      sections: c.sections.map(s =>
         s.id === sectionId ? { ...s, visible: !s.visible } : s
       ),
     }))
-    startTransition(async () => { await toggleVisibility(cv.id, sectionId) })
+    startTransition(async () => {
+      try {
+        await toggleVisibility(cv.id, sectionId)
+      } catch {
+        setContent(prev)
+      }
+    })
   }
 
   function handleCopySection(section: CVSection) {
@@ -65,8 +79,12 @@ export function CvEditor({ cv }: Props) {
   function handleRegenerate() {
     if (!confirm('This will overwrite your current edits. Continue?')) return
     startTransition(async () => {
-      await createAndGenerateCV({ jobApplicationId: cv.jobApplicationId ?? undefined })
-      router.refresh()
+      try {
+        await regenerateCVContent(cv.id)
+        router.refresh()
+      } catch (err) {
+        alert(err instanceof Error ? err.message : 'Regeneration failed')
+      }
     })
   }
 
@@ -77,7 +95,7 @@ export function CvEditor({ cv }: Props) {
     a.href = url
     a.download = filename
     a.click()
-    URL.revokeObjectURL(url)
+    setTimeout(() => URL.revokeObjectURL(url), 100)
   }
 
   const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-')

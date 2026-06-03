@@ -93,3 +93,25 @@ export async function deleteCV(cvId: string): Promise<void> {
   await prisma.cVDocument.deleteMany({ where: { id: cvId, profileId: profile.id } })
   revalidatePath('/dashboard/cv-builder')
 }
+
+export async function regenerateCVContent(cvId: string): Promise<void> {
+  const { profile } = await requireProfile()
+  const doc = await prisma.cVDocument.findFirst({
+    where: { id: cvId, profileId: profile.id },
+    select: { id: true, jobApplicationId: true },
+  })
+  if (!doc) throw new Error('CV not found')
+
+  await prisma.cVDocument.update({
+    where: { id: cvId },
+    data: { status: 'generating' },
+  })
+
+  const content = await generateCVContent(profile.id, doc.jobApplicationId ?? undefined)
+
+  await prisma.cVDocument.update({
+    where: { id: cvId },
+    data: { generatedContent: JSON.stringify(content), status: 'draft' },
+  })
+  revalidatePath(`/dashboard/cv-builder/${cvId}`)
+}
