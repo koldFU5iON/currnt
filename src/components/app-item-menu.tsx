@@ -1,6 +1,7 @@
 import Link from "next/link"
 import {
   Archive,
+  FileText,
   FilePlus,
   Inspect,
   LucideIcon,
@@ -21,11 +22,12 @@ import {
 
 type AppControlsProps = {
   id: string
+  cvDocumentId?: string | null
   onEdit?: () => void
   onArchive?: () => void
 }
 
-export function AppControls({ id, onEdit, onArchive }: AppControlsProps) {
+export function AppControls({ id, cvDocumentId, onEdit, onArchive }: AppControlsProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -49,6 +51,21 @@ export function AppControls({ id, onEdit, onArchive }: AppControlsProps) {
 
         <DropdownMenuGroup>
           <DropdownMenuLabel className="text-xs text-muted-foreground">File Management</DropdownMenuLabel>
+          {cvDocumentId ? (
+            <AppControlsItem
+              Icon={FileText}
+              label="View CV"
+              action={`/dashboard/cv-builder/${cvDocumentId}`}
+              shortcut="⌘D"
+            />
+          ) : (
+            <AppControlsItem
+              Icon={FileText}
+              label="Generate CV"
+              action={`/dashboard/cv-builder/new?jobId=${id}`}
+              shortcut="⌘D"
+            />
+          )}
           <AppControlsItem
             Icon={FilePlus}
             label="Add File"
