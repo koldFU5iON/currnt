@@ -11,5 +11,5 @@ export default async function CVEditorPage({ params }: Props) {
   const cv = await getCV(id, profile.id)
   if (!cv) notFound()
 
-  return <CvEditor cv={cv} />
+  return <CvEditor cv={{ ...cv, profileName: cv.profile.name }} />
 }

@@ -1,21 +1,8 @@
-import { z } from 'zod'
 import { prisma } from '@/lib/db'
-import { completeStructured } from '@/modules/llm/client'
+import { complete } from '@/modules/llm/client'
 import { loadWritingContext, loadCVPrompt, composeSystem } from '@/modules/llm/prompt-context'
 import { buildProfileSnapshot, serializeProfileForLLM } from '@/modules/profile/snapshot'
 import { CVDocumentContentSchema, parseCVContent, type CVDocumentContent } from './schema'
-
-// Flat schema used for the LLM call — avoids grammar-too-large errors from
-// discriminated unions. Full validation happens after via CVDocumentContentSchema.
-const LooseCVDocumentSchema = z.object({
-  version: z.literal(1),
-  sections: z.array(z.object({
-    id: z.string(),
-    type: z.string(),
-    visible: z.boolean(),
-    data: z.record(z.string(), z.unknown()),
-  })),
-})
 
 const SCHEMA_HINT = `
 Section types and their data shapes:
@@ -61,23 +48,20 @@ export async function generateCVContent(
     SCHEMA_HINT,
   ].join('\n')
 
-  const result = await completeStructured(
-    profileId,
-    userMessage,
-    LooseCVDocumentSchema,
-    {
-      system: composeSystem(rules, brief, cvPrompt),
-      feature: 'cv-generate',
-      maxOutputTokens: 4000,
-      temperature: 0.3,
-    },
-  )
+  const result = await complete(profileId, userMessage, {
+    system: composeSystem(rules, brief, cvPrompt),
+    feature: 'cv-generate',
+    maxOutputTokens: 4000,
+    temperature: 0.3,
+  })
 
-  // Validate through the strict schema now that we have the response
-  const parsed = CVDocumentContentSchema.safeParse(result.object)
+  // Extract JSON from the response — LLM may wrap it in ```json fences
+  const jsonMatch = result.text.match(/```(?:json)?\s*([\s\S]*?)```/)
+  const raw = jsonMatch ? jsonMatch[1].trim() : result.text.trim()
+
+  const parsed = CVDocumentContentSchema.safeParse(JSON.parse(raw))
   if (parsed.success) return parsed.data
 
-  // Log validation issues and fall back to parseCVContent which handles partial data
-  console.error('[generateCVContent] strict schema validation failed', parsed.error.issues)
-  return parseCVContent(JSON.stringify(result.object))
+  console.error('[generateCVContent] schema validation failed', parsed.error.issues)
+  return parseCVContent(raw)
 }

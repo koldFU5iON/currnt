@@ -5,6 +5,7 @@ export async function getCV(id: string, profileId: string) {
   const doc = await prisma.cVDocument.findFirst({
     where: { id, profileId },
     include: {
+      profile: { select: { name: true } },
       jobApplication: {
         select: { id: true, title: true, company: true, jobDescription: true },
       },
