@@ -85,6 +85,7 @@ export type Job = Omit<JobApplication, "status" | "progress" | "jobFit" | "appli
   progress: ApplicationProgressType
   jobFit?: JobFit | null
   applicationSource: ApplicationSourceType
+  cvDocumentId?: string | null
 }
 
 export type ProfileType = {

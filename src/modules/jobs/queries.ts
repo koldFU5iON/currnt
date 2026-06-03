@@ -76,8 +76,18 @@ export async function getActiveJobs(): Promise<Job[]> {
   const jobs = await prisma.jobApplication.findMany({
     where: { profileId: profile.id, archivedAt: null },
     orderBy: [{ dateApplied: { sort: 'desc', nulls: 'last' } }, { lastUpdated: 'desc' }],
+    include: {
+      cvDocuments: {
+        select: { id: true },
+        take: 1,
+        orderBy: { createdAt: 'desc' },
+      },
+    },
   })
-  return jobs as Job[]
+  return jobs.map(j => ({
+    ...j,
+    cvDocumentId: j.cvDocuments[0]?.id ?? null,
+  })) as Job[]
 }
 
 export async function getJobApplicationById(id: string): Promise<Job | null> {
@@ -93,6 +103,16 @@ export async function getArchivedJobs(): Promise<Job[]> {
   const jobs = await prisma.jobApplication.findMany({
     where: { profileId: profile.id, archivedAt: { not: null } },
     orderBy: [{ archivedAt: 'desc' }],
+    include: {
+      cvDocuments: {
+        select: { id: true },
+        take: 1,
+        orderBy: { createdAt: 'desc' },
+      },
+    },
   })
-  return jobs as Job[]
+  return jobs.map(j => ({
+    ...j,
+    cvDocumentId: j.cvDocuments[0]?.id ?? null,
+  })) as Job[]
 }
