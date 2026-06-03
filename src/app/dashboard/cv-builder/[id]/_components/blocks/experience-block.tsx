@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
-import { Pencil, Check, X, Plus, Trash2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Check, X, Plus, Trash2 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
+import { useBlockEditTrigger } from '../cv-block'
 import type { CVSection, ExperienceData } from '@/modules/cv/schema'
 
 type Props = {
@@ -14,6 +15,11 @@ export function ExperienceBlock({ section, onUpdate }: Props) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(section.data)
   const { company, titles, location, duration, description, outcomes } = section.data
+  const editTrigger = useBlockEditTrigger()
+
+  useEffect(() => {
+    if (editTrigger > 0) setEditing(true)
+  }, [editTrigger])
 
   function save() {
     onUpdate({
@@ -30,29 +36,21 @@ export function ExperienceBlock({ section, onUpdate }: Props) {
   if (!editing) {
     return (
       <div>
-        <div className="mb-2 flex items-center justify-between border-b border-border pb-1">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-foreground">
-            Professional Experience
-          </h2>
-          <button
-            onClick={() => setEditing(true)}
-            className="rounded p-1 text-muted-foreground opacity-0 hover:bg-muted group-hover:opacity-100 print:hidden"
-          >
-            <Pencil className="size-3.5" />
-          </button>
+        <div className="mb-2 border-b border-border pb-1">
+          <h2 className="cv-section-heading">Professional Experience</h2>
         </div>
         <div className="flex items-baseline justify-between">
-          <p className="text-sm font-semibold text-foreground">{company}</p>
-          <p className="text-xs text-muted-foreground">{duration}</p>
+          <p className="cv-item-title">{company}</p>
+          <p className="cv-meta">{duration}</p>
         </div>
-        <p className="text-xs italic text-muted-foreground">{titles.join(' → ')}</p>
-        <p className="mb-2 text-xs text-muted-foreground">{location}</p>
-        <div className="prose prose-sm max-w-none text-muted-foreground">
+        <p className="cv-meta italic">{titles.join(' → ')}</p>
+        <p className="cv-meta mb-1">{location}</p>
+        <div className="prose prose-sm max-w-none">
           <ReactMarkdown>{description}</ReactMarkdown>
         </div>
-        <ul className="mt-2 space-y-1">
+        <ul className="mt-1.5 space-y-1">
           {outcomes.map((o, i) => (
-            <li key={i} className="flex gap-2 text-sm text-muted-foreground">
+            <li key={i} className="cv-bullet flex gap-2">
               <span className="shrink-0">→</span>
               <ReactMarkdown components={{ p: ({ children }) => <span>{children}</span> }}>
                 {o}
@@ -67,9 +65,7 @@ export function ExperienceBlock({ section, onUpdate }: Props) {
   return (
     <div className="space-y-3">
       <div className="mb-2 border-b border-border pb-1">
-        <h2 className="text-xs font-bold uppercase tracking-widest text-foreground">
-          Professional Experience
-        </h2>
+        <h2 className="cv-section-heading">Professional Experience</h2>
       </div>
       <div className="grid grid-cols-2 gap-3">
         {(

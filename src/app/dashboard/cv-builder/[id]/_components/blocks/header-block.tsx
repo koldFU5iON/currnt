@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { Pencil, Check, X } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Check, X } from 'lucide-react'
+import { useBlockEditTrigger } from '../cv-block'
 import type { CVSection, HeaderData } from '@/modules/cv/schema'
 
 type Props = {
@@ -12,6 +13,11 @@ type Props = {
 export function HeaderBlock({ section, onUpdate }: Props) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(section.data)
+  const editTrigger = useBlockEditTrigger()
+
+  useEffect(() => {
+    if (editTrigger > 0) setEditing(true)
+  }, [editTrigger])
 
   function save() {
     onUpdate({ ...section, data: draft })
@@ -25,28 +31,26 @@ export function HeaderBlock({ section, onUpdate }: Props) {
 
   const { name, headline, subHeadline, contact } = section.data
 
+  const contactItems = [
+    contact.email,
+    contact.phone,
+    contact.linkedin,
+    contact.website,
+  ].filter(Boolean)
+
   if (!editing) {
     return (
-      <div>
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">{name}</h1>
-            <p className="text-base text-muted-foreground">{headline}</p>
-            {subHeadline && (
-              <p className="text-sm font-medium text-muted-foreground">{subHeadline}</p>
-            )}
-            <p className="mt-1 text-xs text-muted-foreground">
-              {[contact.email, contact.phone, contact.linkedin, contact.website]
-                .filter(Boolean).join(' · ')}
-            </p>
-          </div>
-          <button
-            onClick={() => setEditing(true)}
-            className="ml-4 shrink-0 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-muted group-hover:opacity-100 print:hidden"
-          >
-            <Pencil className="size-3.5" />
-          </button>
-        </div>
+      <div className="space-y-0.5">
+        <h1 className="cv-name">{name}</h1>
+        <p className="cv-headline">{headline}</p>
+        {subHeadline && (
+          <p className="cv-headline font-medium">{subHeadline}</p>
+        )}
+        {contactItems.length > 0 && (
+          <p className="cv-contact pt-1">
+            {contactItems.join(' · ')}
+          </p>
+        )}
       </div>
     )
   }

@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
-import { Pencil, Check, X } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Check, X } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
+import { useBlockEditTrigger } from '../cv-block'
 import type { CVSection } from '@/modules/cv/schema'
 
 type Props = {
@@ -13,6 +14,11 @@ type Props = {
 export function ProfileBlock({ section, onUpdate }: Props) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(section.data.content)
+  const editTrigger = useBlockEditTrigger()
+
+  useEffect(() => {
+    if (editTrigger > 0) setEditing(true)
+  }, [editTrigger])
 
   function save() {
     onUpdate({ ...section, data: { content: draft } })
@@ -21,18 +27,8 @@ export function ProfileBlock({ section, onUpdate }: Props) {
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between border-b border-border pb-1">
-        <h2 className="text-xs font-bold uppercase tracking-widest text-foreground">
-          Professional Profile
-        </h2>
-        {!editing && (
-          <button
-            onClick={() => setEditing(true)}
-            className="rounded p-1 text-muted-foreground opacity-0 hover:bg-muted group-hover:opacity-100 print:hidden"
-          >
-            <Pencil className="size-3.5" />
-          </button>
-        )}
+      <div className="mb-2 border-b border-border pb-1">
+        <h2 className="cv-section-heading">Professional Profile</h2>
       </div>
       {editing ? (
         <div className="space-y-2">
@@ -56,7 +52,7 @@ export function ProfileBlock({ section, onUpdate }: Props) {
           </div>
         </div>
       ) : (
-        <div className="prose prose-sm max-w-none text-muted-foreground">
+        <div className="prose prose-sm max-w-none">
           <ReactMarkdown>{section.data.content}</ReactMarkdown>
         </div>
       )}

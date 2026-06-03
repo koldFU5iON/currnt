@@ -10,14 +10,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [chatOpen, setChatOpen] = useState(false)
 
   return (
-    <div className="flex h-svh w-full overflow-hidden">
+    <div className="flex h-svh w-full overflow-hidden print:h-auto print:overflow-visible print:block">
       {/* Center column: command bar / main content / footer */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <CommandBar
           chatOpen={chatOpen}
           onToggleChat={() => setChatOpen((open) => !open)}
         />
-        <div className="flex min-h-0 flex-1 flex-col overflow-auto">{children}</div>
+        <div className="flex min-h-0 flex-1 flex-col overflow-auto print:overflow-visible print:h-auto">{children}</div>
         <AppFooter />
       </div>
 

@@ -1,7 +1,16 @@
 'use client'
 
-import { Eye, EyeOff, Copy } from 'lucide-react'
+import { createContext, useContext, useState } from 'react'
+import { Eye, EyeOff, Copy, Pencil } from 'lucide-react'
 import type { CVSection } from '@/modules/cv/schema'
+
+// Blocks consume this to respond when the Edit button in the control bar is clicked.
+// Each CvBlock provides its own value, so only the hovered block's child enters edit mode.
+export const BlockEditTrigger = createContext<number>(0)
+
+export function useBlockEditTrigger() {
+  return useContext(BlockEditTrigger)
+}
 
 type Props = {
   section: CVSection
@@ -11,9 +20,11 @@ type Props = {
 }
 
 export function CvBlock({ section, onToggleVisibility, onCopy, children }: Props) {
+  const [editTrigger, setEditTrigger] = useState(0)
+
   if (!section.visible) {
     return (
-      <div className="group flex items-center justify-between border-b border-border/30 px-6 py-2.5 opacity-40 last:border-b-0 print:hidden">
+      <div className="group flex items-center justify-between border-b border-border/30 px-[30px] py-2.5 opacity-40 last:border-b-0 print:hidden">
         <span className="text-xs italic text-muted-foreground capitalize">
           {section.type} — hidden
         </span>
@@ -29,26 +40,35 @@ export function CvBlock({ section, onToggleVisibility, onCopy, children }: Props
   }
 
   return (
-    <div className="group relative border-b border-border/30 px-6 py-4 last:border-b-0 hover:bg-muted/20 print:hover:bg-transparent">
-      {/* Controls */}
-      <div className="absolute right-4 top-3 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 print:hidden">
-        <button
-          onClick={onCopy}
-          className="flex items-center gap-1 rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
-          title="Copy section"
-        >
-          <Copy className="size-3" />
-        </button>
-        <button
-          onClick={onToggleVisibility}
-          className="flex items-center gap-1 rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
-          title="Hide section"
-        >
-          <EyeOff className="size-3" />
-        </button>
-      </div>
+    <BlockEditTrigger.Provider value={editTrigger}>
+      <div className="cv-document-block group relative border-b border-border/30 px-[30px] py-3 last:border-b-0 hover:bg-muted/20 print:hover:bg-transparent">
+        {/* Controls — Edit / Copy / Hide, shown together on hover */}
+        <div className="absolute right-3 top-2.5 flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 print:hidden">
+          <button
+            onClick={() => setEditTrigger(t => t + 1)}
+            className="flex items-center rounded p-1.5 text-muted-foreground hover:bg-muted"
+            title="Edit section"
+          >
+            <Pencil className="size-3" />
+          </button>
+          <button
+            onClick={onCopy}
+            className="flex items-center rounded p-1.5 text-muted-foreground hover:bg-muted"
+            title="Copy section"
+          >
+            <Copy className="size-3" />
+          </button>
+          <button
+            onClick={onToggleVisibility}
+            className="flex items-center rounded p-1.5 text-muted-foreground hover:bg-muted"
+            title="Hide section"
+          >
+            <EyeOff className="size-3" />
+          </button>
+        </div>
 
-      {children}
-    </div>
+        {children}
+      </div>
+    </BlockEditTrigger.Provider>
   )
 }

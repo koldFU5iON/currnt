@@ -1,0 +1,125 @@
+/*
+ * CV Document Style Guide
+ *
+ * All CV-specific typography, spacing, and print rules live here.
+ * Scoped to .cv-document — changes here only affect CV output,
+ * never the rest of the app.
+ *
+ * Tweak the custom properties on .cv-document to retheme without
+ * touching individual block components.
+ */
+
+.cv-document {
+  /* ---- Type scale ---- */
+  --cv-size-name:     1.25rem;    /* 20px  ≈ 15pt  — candidate name      */
+  --cv-size-headline: 0.8125rem;  /* 13px  ≈ 10pt  — headline / role     */
+  --cv-size-section:  0.6875rem;  /* 11px  ≈ 8pt   — section labels      */
+  --cv-size-body:     0.75rem;    /* 12px  = 9pt   — body text minimum   */
+  --cv-size-meta:     0.6875rem;  /* 11px  ≈ 8pt   — dates, location     */
+
+  /* ---- Spacing ---- */
+  --cv-block-px: 1.875rem; /* horizontal block padding on screen  */
+}
+
+/* Candidate name */
+.cv-name {
+  font-size: var(--cv-size-name);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--foreground);
+}
+
+/* Role headline and sub-headline */
+.cv-headline {
+  font-size: var(--cv-size-headline);
+  line-height: 1.4;
+  color: var(--muted-foreground);
+}
+
+/* Contact bar (email · phone · LinkedIn · website) */
+.cv-contact {
+  font-size: var(--cv-size-meta);
+  line-height: 1.6;
+  color: var(--muted-foreground);
+}
+
+/* Section label — "Professional Experience", "Education", etc. */
+.cv-section-heading {
+  font-size: var(--cv-size-section);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--foreground);
+}
+
+/* Primary item name (company, institution) */
+.cv-item-title {
+  font-size: var(--cv-size-headline);
+  font-weight: 600;
+  color: var(--foreground);
+  line-height: 1.3;
+}
+
+/* Body copy — descriptions, profile prose. Minimum 9pt. */
+.cv-body {
+  font-size: var(--cv-size-body);
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+
+/* Bullet / outcome lines */
+.cv-bullet {
+  font-size: var(--cv-size-body);
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+
+/* Secondary info — dates, location, job titles */
+.cv-meta {
+  font-size: var(--cv-size-meta);
+  line-height: 1.4;
+  color: var(--muted-foreground);
+}
+
+/* ---- Prose override ---- */
+/* Tailwind Typography (prose-sm) defaults to text-sm (14px). Within a CV
+   document we want body-copy sizing instead. */
+.cv-document .prose {
+  font-size: var(--cv-size-body);
+  max-width: none;
+  color: var(--muted-foreground);
+}
+
+.cv-document .prose p,
+.cv-document .prose li {
+  font-size: var(--cv-size-body);
+  line-height: 1.5;
+  margin-top: 0;
+  margin-bottom: 0.3em;
+}
+
+.cv-document .prose strong {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+/* ---- Print ---- */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 20mm;
+  }
+
+  .cv-document {
+    width: 100%;
+    max-width: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* Remove on-screen horizontal padding — @page margin handles it */
+  .cv-document-block {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}

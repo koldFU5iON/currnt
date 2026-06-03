@@ -192,8 +192,8 @@ export function CvEditor({ cv }: Props) {
         </div>
 
         {/* Body */}
-        <div className="flex flex-1 overflow-hidden">
-          <div className="relative flex-1 overflow-y-auto bg-muted/30 p-6 print:bg-white print:p-0">
+        <div className="flex flex-1 overflow-hidden print:overflow-visible print:h-auto print:block">
+          <div className="relative flex-1 overflow-y-auto bg-muted/30 p-6 print:overflow-visible print:h-auto print:bg-white print:p-0">
             {isPending && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background/60 backdrop-blur-sm print:hidden">
                 <Loader2 className="size-8 animate-spin text-muted-foreground" />
@@ -201,7 +201,7 @@ export function CvEditor({ cv }: Props) {
                 <p className="text-xs text-muted-foreground">This takes about 15–30 seconds</p>
               </div>
             )}
-            <div className="cv-print-area mx-auto max-w-2xl rounded-lg bg-background shadow-sm print:max-w-none print:shadow-none">
+            <div className="cv-document cv-print-area mx-auto w-full max-w-[794px] rounded-lg bg-background shadow-sm print:max-w-none print:shadow-none">
               {content.sections.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
                   <p className="text-sm font-medium text-muted-foreground">No content yet</p>

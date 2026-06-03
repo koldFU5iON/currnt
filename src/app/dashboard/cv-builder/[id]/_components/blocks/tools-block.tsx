@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { Pencil, Check, X, Plus, Trash2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Check, X, Plus, Trash2 } from 'lucide-react'
+import { useBlockEditTrigger } from '../cv-block'
 import type { CVSection } from '@/modules/cv/schema'
 
 type Props = {
@@ -12,6 +13,11 @@ type Props = {
 export function ToolsBlock({ section, onUpdate }: Props) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(section.data.items)
+  const editTrigger = useBlockEditTrigger()
+
+  useEffect(() => {
+    if (editTrigger > 0) setEditing(true)
+  }, [editTrigger])
 
   function save() {
     onUpdate({ ...section, data: { items: draft.filter(Boolean) } })
@@ -20,13 +26,8 @@ export function ToolsBlock({ section, onUpdate }: Props) {
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between border-b border-border pb-1">
-        <h2 className="text-xs font-bold uppercase tracking-widest text-foreground">Tools</h2>
-        {!editing && (
-          <button onClick={() => setEditing(true)} className="rounded p-1 text-muted-foreground opacity-0 hover:bg-muted group-hover:opacity-100 print:hidden">
-            <Pencil className="size-3.5" />
-          </button>
-        )}
+      <div className="mb-2 border-b border-border pb-1">
+        <h2 className="cv-section-heading">Tools</h2>
       </div>
       {editing ? (
         <div className="space-y-2">
@@ -55,7 +56,7 @@ export function ToolsBlock({ section, onUpdate }: Props) {
           </div>
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">{section.data.items.join(' · ')}</p>
+        <p className="cv-body">{section.data.items.join(' · ')}</p>
       )}
     </div>
   )

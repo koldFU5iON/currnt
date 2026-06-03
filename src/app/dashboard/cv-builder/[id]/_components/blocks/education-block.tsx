@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { Pencil, Check, X } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Check, X } from 'lucide-react'
+import { useBlockEditTrigger } from '../cv-block'
 import type { CVSection, EducationData } from '@/modules/cv/schema'
 
 type Props = {
@@ -13,6 +14,11 @@ export function EducationBlock({ section, onUpdate }: Props) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(section.data)
   const { institution, qualification, field, duration, grade } = section.data
+  const editTrigger = useBlockEditTrigger()
+
+  useEffect(() => {
+    if (editTrigger > 0) setEditing(true)
+  }, [editTrigger])
 
   function save() {
     onUpdate({ ...section, data: draft })
@@ -21,16 +27,8 @@ export function EducationBlock({ section, onUpdate }: Props) {
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between border-b border-border pb-1">
-        <h2 className="text-xs font-bold uppercase tracking-widest text-foreground">Education</h2>
-        {!editing && (
-          <button
-            onClick={() => setEditing(true)}
-            className="rounded p-1 text-muted-foreground opacity-0 hover:bg-muted group-hover:opacity-100 print:hidden"
-          >
-            <Pencil className="size-3.5" />
-          </button>
-        )}
+      <div className="mb-2 border-b border-border pb-1">
+        <h2 className="cv-section-heading">Education</h2>
       </div>
       {editing ? (
         <div className="space-y-2">
@@ -83,12 +81,12 @@ export function EducationBlock({ section, onUpdate }: Props) {
         </div>
       ) : (
         <div>
-          <p className="text-sm font-semibold text-foreground">{institution}</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="cv-item-title">{institution}</p>
+          <p className="cv-body">
             {qualification}
             {field ? ` · ${field}` : ''}
           </p>
-          <p className="text-xs text-muted-foreground">
+          <p className="cv-meta">
             {duration}
             {grade ? ` · ${grade}` : ''}
           </p>
