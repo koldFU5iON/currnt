@@ -26,6 +26,12 @@ export function PublicNav({ isAuthenticated }: { isAuthenticated: boolean }) {
         >
           About
         </Link>
+        <Link
+          href="/support"
+          className="text-sm text-muted-foreground transition-colors duration-150 hover:text-foreground"
+        >
+          Support
+        </Link>
         {isAuthenticated ? (
           <Link href="/dashboard" className={buttonVariants({ size: 'sm' })}>
             Go to dashboard &rarr;

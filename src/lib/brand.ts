@@ -1,11 +1,13 @@
 const name = "currnt"
 const tagline = "Stay current."
 const githubUrl = "https://github.com/koldFU5iON/resume"
+const kofiUrl = "https://ko-fi.com/devonstanton"
 
 export const brand = {
   name,
   tagline,
   githubUrl,
+  kofiUrl,
   metaDescription: `${name} keeps a structured record of your career and shapes it to fit each role you go after. Open source, bring your own AI key.`,
   hero: {
     eyebrow: tagline,
