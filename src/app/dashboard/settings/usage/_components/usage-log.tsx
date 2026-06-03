@@ -8,6 +8,7 @@ const FEATURE_LABELS: Record<string, string> = {
   'cv-import': 'CV import',
   'profile-summary': 'Profile summary',
   'profile-extract': 'Profile extract',
+  'cv-generate': 'CV generation',
 }
 
 export function UsageLog({ stats }: { stats: UserUsageSummary }) {

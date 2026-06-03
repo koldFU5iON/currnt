@@ -1,6 +1,7 @@
 import {
   ClipboardList,
   Compass,
+  FileText,
   HomeIcon,
   UserRound,
   type LucideIcon
@@ -13,8 +14,9 @@ export type NavItem = {
 }
 
 export const mainNav: NavItem[] = [
-  { destination: "/dashboard", label: "Home", Icon: HomeIcon },
-  { destination: "/dashboard/job-applications", label: "Job Applications", Icon: ClipboardList },
-  { destination: "/dashboard/profile", label: "Professional Profile", Icon: UserRound },
-  { destination: "/dashboard/onboarding", label: "Search Context", Icon: Compass },
+  { destination: "/dashboard",                  label: "Home",                 Icon: HomeIcon },
+  { destination: "/dashboard/job-applications", label: "Job Applications",     Icon: ClipboardList },
+  { destination: "/dashboard/profile",          label: "Professional Profile", Icon: UserRound },
+  { destination: "/dashboard/cv-builder",       label: "CV Builder",           Icon: FileText },
+  { destination: "/dashboard/onboarding",       label: "Search Context",       Icon: Compass },
 ]
