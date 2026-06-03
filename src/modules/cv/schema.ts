@@ -70,12 +70,15 @@ export type HeaderData = z.infer<typeof HeaderDataSchema>
 export type ExperienceData = z.infer<typeof ExperienceDataSchema>
 export type EducationData = z.infer<typeof EducationDataSchema>
 export type CertificationData = z.infer<typeof CertificationDataSchema>
+export type LanguagesData = z.infer<typeof LanguagesDataSchema>
 
 export function parseCVContent(raw: string): CVDocumentContent {
   try {
     const parsed = JSON.parse(raw)
-    if (!parsed.version) return { version: 1, sections: [] }
-    return CVDocumentContentSchema.parse(parsed)
+    const result = CVDocumentContentSchema.safeParse(parsed)
+    if (result.success) return result.data
+    console.error('[parseCVContent] schema validation failed', result.error.issues)
+    return { version: 1, sections: [] }
   } catch {
     return { version: 1, sections: [] }
   }

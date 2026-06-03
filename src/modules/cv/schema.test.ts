@@ -19,9 +19,13 @@ describe("CVDocumentContentSchema", () => {
     expect(CVDocumentContentSchema.parse(doc).sections).toHaveLength(1)
   })
 
-  it("header subHeadline is optional", () => {
-    const doc = { version: 1, sections: [headerSection] }
-    expect(() => CVDocumentContentSchema.parse(doc)).not.toThrow()
+  it("header accepts subHeadline when present", () => {
+    const withSub = { ...headerSection, data: { ...headerSection.data, subHeadline: "AI & Product" } }
+    expect(() => CVDocumentContentSchema.parse({ version: 1, sections: [withSub] })).not.toThrow()
+  })
+
+  it("rejects version 2", () => {
+    expect(() => CVDocumentContentSchema.parse({ version: 2, sections: [] })).toThrow()
   })
 
   it("rejects an unknown section type", () => {
