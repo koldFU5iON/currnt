@@ -28,6 +28,20 @@ export async function loadCVJobAnalysisPrompt(): Promise<string> {
   })
 }
 
+export async function loadEvidenceScoringPrompt(): Promise<string> {
+  const promptPath = path.join(process.cwd(), 'src/lib/prompts/cv-evidence-score.md')
+  return readFile(promptPath, 'utf-8').catch(() => {
+    throw new Error('cv-evidence-score.md missing from bundle — check outputFileTracingIncludes in next.config.ts')
+  })
+}
+
+export async function loadCVScanPrompt(): Promise<string> {
+  const promptPath = path.join(process.cwd(), 'src/lib/prompts/cv-recruiter-scan.md')
+  return readFile(promptPath, 'utf-8').catch(() => {
+    throw new Error('cv-recruiter-scan.md missing from bundle — check outputFileTracingIncludes in next.config.ts')
+  })
+}
+
 export async function loadWritingContext(profileId: string): Promise<WritingContext> {
   const [rules, settings] = await Promise.all([
     loadWritingRules().catch(() => ''),
