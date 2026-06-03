@@ -3,6 +3,8 @@ import { complete } from '@/modules/llm/client'
 import { loadWritingContext, loadCVPrompt, composeSystem } from '@/modules/llm/prompt-context'
 import { buildProfileSnapshot, serializeProfileForLLM } from '@/modules/profile/snapshot'
 import { CVDocumentContentSchema, parseCVContent, type CVDocumentContent } from './schema'
+import { analyseJob } from './analyse-job'
+import { JobAnalysisSchema, type JobAnalysis } from '@/modules/jobs/schema'
 
 const SCHEMA_HINT = `
 Section types and their data shapes:
@@ -18,6 +20,20 @@ Section types and their data shapes:
 - languages:     { items: [{ name, proficiency }] }
 `
 
+function formatAnalysisContext(analysis: JobAnalysis): string {
+  const risks = analysis.risks
+    .map(r => `  - [${r.severity.toUpperCase()}] ${r.risk} → ${r.recommendation}`)
+    .join('\n')
+
+  return [
+    '== JOB INTELLIGENCE ==',
+    `Must-have: ${analysis.mustHave.join(', ')}`,
+    `Nice-to-have: ${analysis.niceToHave.join(', ')}`,
+    `Hiring risks:\n${risks}`,
+    `Positioning: ${analysis.positioningStrategy}`,
+  ].join('\n')
+}
+
 export async function generateCVContent(
   profileId: string,
   jobApplicationId?: string,
@@ -29,24 +45,41 @@ export async function generateCVContent(
     jobApplicationId
       ? prisma.jobApplication.findFirst({
           where: { id: jobApplicationId, profileId },
-          select: { jobDescription: true, title: true, company: true },
+          select: { jobDescription: true, title: true, company: true, jobAnalysis: true },
         })
       : Promise.resolve(null),
   ])
 
-  const jobContext = jobApp?.jobDescription
-    ? `== JOB TARGET ==\nRole: ${jobApp.title} at ${jobApp.company}\n\n${jobApp.jobDescription}`
-    : `== MODE: GENERIC CV ==\nNo specific job target. Include all significant experience.`
+  let jobContext: string
+  let analysis: JobAnalysis | null = null
+
+  if (jobApp?.jobDescription) {
+    // Use pre-computed analysis or run it now as a fallback
+    const parsed = jobApp.jobAnalysis
+      ? JobAnalysisSchema.safeParse(jobApp.jobAnalysis)
+      : null
+    analysis = parsed?.success ? parsed.data : await analyseJob(profileId, jobApplicationId!)
+
+    jobContext = [
+      `== JOB TARGET ==`,
+      `Role: ${jobApp.title} at ${jobApp.company}`,
+      '',
+      jobApp.jobDescription,
+    ].join('\n')
+  } else {
+    jobContext = `== MODE: GENERIC CV ==\nNo specific job target. Include all significant experience.`
+  }
 
   const userMessage = [
     jobContext,
+    analysis ? formatAnalysisContext(analysis) : null,
     '',
     '== CANDIDATE PROFILE ==',
     serializeProfileForLLM(snapshot),
     '',
     '== OUTPUT SCHEMA ==',
     SCHEMA_HINT,
-  ].join('\n')
+  ].filter((p): p is string => p !== null).join('\n')
 
   const result = await complete(profileId, userMessage, {
     system: composeSystem(rules, brief, cvPrompt),

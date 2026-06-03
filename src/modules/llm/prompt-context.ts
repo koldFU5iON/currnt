@@ -21,6 +21,13 @@ export async function loadCVPrompt(): Promise<string> {
   })
 }
 
+export async function loadCVJobAnalysisPrompt(): Promise<string> {
+  const promptPath = path.join(process.cwd(), 'src/lib/prompts/cv-job-analysis.md')
+  return readFile(promptPath, 'utf-8').catch(() => {
+    throw new Error('cv-job-analysis.md missing from bundle — check outputFileTracingIncludes in next.config.ts')
+  })
+}
+
 export async function loadWritingContext(profileId: string): Promise<WritingContext> {
   const [rules, settings] = await Promise.all([
     loadWritingRules().catch(() => ''),

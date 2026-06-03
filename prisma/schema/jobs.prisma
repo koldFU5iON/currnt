@@ -16,6 +16,8 @@ model JobApplication {
   applicationSource String    @default("cold")
   jobFit              Json?
   jobFitAssessedAt    DateTime?
+  jobAnalysis         Json?
+  jobAnalysedAt       DateTime?
   jobDescription      String?
   notes             String?
   notesIncludeInFit Boolean   @default(false)

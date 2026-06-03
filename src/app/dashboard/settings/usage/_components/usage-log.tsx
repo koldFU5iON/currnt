@@ -8,6 +8,7 @@ const FEATURE_LABELS: Record<string, string> = {
   'cv-import': 'CV import',
   'profile-summary': 'Profile summary',
   'profile-extract': 'Profile extract',
+  'cv-job-analysis': 'Job analysis',
   'cv-generate': 'CV generation',
 }
 

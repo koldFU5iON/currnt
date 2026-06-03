@@ -39,3 +39,19 @@ export const JobFitSchema = z.object({
 })
 
 export type JobFit = z.infer<typeof JobFitSchema>
+
+export const JobAnalysisRiskSchema = z.object({
+  risk: z.string().describe('A specific concern this role presents for the candidate.'),
+  severity: z.enum(['high', 'medium', 'low']).describe('How likely this risk is to block the application. high = likely screened out; medium = needs addressing; low = minor.'),
+  recommendation: z.string().describe('Concrete mitigation — what to emphasise or reframe in the CV.'),
+})
+
+export const JobAnalysisSchema = z.object({
+  mustHave: z.array(z.string()).describe('Non-negotiable requirements per the job description.'),
+  niceToHave: z.array(z.string()).describe('Preferred but not required skills or experience.'),
+  risks: z.array(JobAnalysisRiskSchema),
+  positioningStrategy: z.string().describe('1–2 sentences on how the candidate should frame their application — what to lead with, what to de-emphasise.'),
+})
+
+export type JobAnalysis = z.infer<typeof JobAnalysisSchema>
+export type JobAnalysisRisk = z.infer<typeof JobAnalysisRiskSchema>
