@@ -4,7 +4,7 @@ import { buttonVariants } from '@/components/ui/button'
 import { getSession } from '@/lib/session'
 import { CloneSnippet } from './_components/CloneSnippet'
 import { brand } from '@/lib/brand'
-import { Wordmark } from '@/components/brand/wordmark'
+import { Logo } from '@/components/brand/logo'
 import { FeatureSection } from './_components/feature-section'
 
 function GitHubIcon({ size = 15 }: { size?: number }) {
@@ -44,7 +44,7 @@ export default async function Home() {
     <div className="min-h-screen bg-background text-foreground">
       {/* Nav */}
       <nav className="flex items-center justify-between border-b border-border px-8 py-4">
-        <Wordmark size="md" />
+        <Logo variant="line" size="md" />
         {isAuthenticated ? (
           <Link href="/dashboard" className={buttonVariants({ size: 'sm' })}>
             Go to dashboard &rarr;

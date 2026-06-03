@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import {
   ChevronsUpDown,
-  FileText,
   LogOut,
   MessageSquareWarning,
   Settings,
@@ -39,6 +38,7 @@ import { mainNav, type NavItem } from "@/lib/nav-menu"
 import { brand } from "@/lib/brand"
 import { FeedbackDrawer } from "@/app/components/FeedbackDrawer"
 import { Wordmark } from "@/components/brand/wordmark"
+import { CurrntIcon } from "@/components/brand/icon"
 
 export function AppSidebar() {
   return (
@@ -49,8 +49,8 @@ export function AppSidebar() {
             <Link href="/dashboard">
               {/* tooltip={brand.name} is the accessible label when the sidebar is collapsed — keep it */}
               <SidebarMenuButton size="lg" tooltip={brand.name}>
-                <div className="flex aspect-square size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                  <FileText className="size-4" />
+                <div className="flex aspect-square size-8 items-center justify-center">
+                  <CurrntIcon size={22} />
                 </div>
                 <div className="flex flex-col text-left">
                   <Wordmark size="sm" />
