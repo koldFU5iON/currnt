@@ -100,6 +100,12 @@ function applyScores(
         .sort((a, b) => b.score - a.score)
         .slice(0, budget)
 
+      // If LLM scored everything as 'cut', fall back to the budget slice rather
+      // than returning an empty activities array.
+      if (ranked.length === 0 && exp.activities.length > 0) {
+        return { ...exp, activities: exp.activities.slice(0, budget) }
+      }
+
       return { ...exp, activities: ranked.map(s => exp.activities[s.index]) }
     }),
   }

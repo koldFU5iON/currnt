@@ -239,6 +239,31 @@ describe('scoreEvidence', () => {
     expect(result.experiences[1].activities).toHaveLength(4)
   })
 
+  it('falls back to budget slice when LLM marks all activities as cut', async () => {
+    mockCompleteStructured.mockResolvedValue({
+      object: {
+        scores: [
+          { experienceIndex: 0, activityIndex: 0, score: 1, tier: 'cut' },
+          { experienceIndex: 0, activityIndex: 1, score: 1, tier: 'cut' },
+          { experienceIndex: 0, activityIndex: 2, score: 1, tier: 'cut' },
+          { experienceIndex: 0, activityIndex: 3, score: 1, tier: 'cut' },
+          { experienceIndex: 1, activityIndex: 0, score: 8, tier: 'must-include' },
+          { experienceIndex: 1, activityIndex: 1, score: 7, tier: 'must-include' },
+          { experienceIndex: 1, activityIndex: 2, score: 1, tier: 'cut' },
+          { experienceIndex: 1, activityIndex: 3, score: 1, tier: 'cut' },
+          { experienceIndex: 1, activityIndex: 4, score: 1, tier: 'cut' },
+        ],
+      },
+    } as never)
+
+    const result = await scoreEvidence(PROFILE_ID, MOCK_SNAPSHOT, MOCK_ANALYSIS)
+
+    // Role 0: all cut → falls back to budget slice (4 activities, all within budget of 5)
+    expect(result.experiences[0].activities).toHaveLength(4)
+    // Role 1: 2 survivors — normal scoring path
+    expect(result.experiences[1].activities).toHaveLength(2)
+  })
+
   it('calls completeStructured with feature cv-evidence-score', async () => {
     mockCompleteStructured.mockResolvedValue({
       object: { scores: [] },
