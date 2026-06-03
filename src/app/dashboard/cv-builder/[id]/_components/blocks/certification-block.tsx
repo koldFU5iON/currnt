@@ -86,7 +86,7 @@ export function CertificationBlock({ section, onUpdate }: Props) {
           <p className="text-xs text-muted-foreground">
             {[issuer, date].filter(Boolean).join(' · ')}
           </p>
-          {url && (
+          {/^https?:\/\//i.test(url ?? '') && (
             <a
               href={url}
               target="_blank"
