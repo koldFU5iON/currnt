@@ -4,7 +4,7 @@ import { buttonVariants } from '@/components/ui/button'
 import { getSession } from '@/lib/session'
 import { CloneSnippet } from './_components/CloneSnippet'
 import { brand } from '@/lib/brand'
-import { Logo } from '@/components/brand/logo'
+import { PublicNav } from '@/components/public-nav'
 import { FeatureSection } from './_components/feature-section'
 
 function GitHubIcon({ size = 15 }: { size?: number }) {
@@ -21,15 +21,11 @@ function GitHubIcon({ size = 15 }: { size?: number }) {
   )
 }
 
-const GITHUB_URL = 'https://github.com/koldFU5iON/resume'
-const CLONE_URL = 'https://github.com/koldFU5iON/resume.git'
-
 const TRUST_PILLS = [
   { icon: GitHubIcon, label: 'Open source' },
   { icon: Key, label: 'Bring your own AI key' },
   { icon: Check, label: 'No job board' },
 ] as const
-
 
 export default async function Home() {
   let isAuthenticated = false
@@ -42,36 +38,7 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Nav */}
-      <nav className="flex items-center justify-between border-b border-border px-8 py-4">
-        <Logo variant="line" size="md" />
-        {isAuthenticated ? (
-          <Link href="/dashboard" className={buttonVariants({ size: 'sm' })}>
-            Go to dashboard &rarr;
-          </Link>
-        ) : (
-          <div className="flex items-center gap-3">
-            <a
-              href={GITHUB_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:text-foreground"
-            >
-              <GitHubIcon size={15} />
-              Open source
-            </a>
-            <Link
-              href="/sign-in"
-              className="text-sm text-muted-foreground transition-colors duration-150 hover:text-foreground"
-            >
-              Sign in
-            </Link>
-            <Link href="/sign-up" className={buttonVariants({ size: 'sm' })}>
-              Get started
-            </Link>
-          </div>
-        )}
-      </nav>
+      <PublicNav />
 
       {/* Hero */}
       <div className="mx-auto max-w-2xl px-8 pb-10 pt-20 text-center">
@@ -125,10 +92,10 @@ export default async function Home() {
             </div>
 
             <div className="w-full max-w-sm">
-              <CloneSnippet repo={CLONE_URL} />
+              <CloneSnippet repo={`${brand.githubUrl}.git`} />
             </div>
             <a
-              href={GITHUB_URL}
+              href={brand.githubUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-muted-foreground transition-colors duration-150 hover:text-foreground"
@@ -149,10 +116,8 @@ export default async function Home() {
         </div>
       )}
 
-      {/* Feature section */}
       <FeatureSection />
 
-      {/* Footer */}
       <footer className="flex items-center justify-between border-t border-border px-8 py-5">
         <p className="text-xs text-muted-foreground">Built to help people find work.</p>
         {isAuthenticated ? (
