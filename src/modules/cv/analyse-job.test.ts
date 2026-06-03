@@ -81,6 +81,12 @@ describe('analyseJob', () => {
     expect(result).toBeNull()
   })
 
+  it('returns null when job description is whitespace only', async () => {
+    mockFindFirst.mockResolvedValue({ ...MOCK_JOB, jobDescription: '   ' } as never)
+    const result = await analyseJob(PROFILE_ID, JOB_ID)
+    expect(result).toBeNull()
+  })
+
   it('calls completeStructured with feature cv-job-analysis', async () => {
     await analyseJob(PROFILE_ID, JOB_ID)
     expect(mockCompleteStructured).toHaveBeenCalledWith(

@@ -1,3 +1,5 @@
+// Plain module — not a server action. Called from generate.ts (plain module) and
+// job-fit.ts ('use server'). Adding 'use server' would break the generate.ts call path.
 import { prisma } from '@/lib/db'
 import { completeStructured } from '@/modules/llm/client'
 import { loadCVJobAnalysisPrompt, composeSystem } from '@/modules/llm/prompt-context'
@@ -32,12 +34,16 @@ export async function analyseJob(
     ].join('\n')
 
     const result = await completeStructured(profileId, userMessage, JobAnalysisSchema, {
+      // Analysis-only pass: user writing brief and style rules are intentionally excluded.
+      // Tone/voice constraints belong in the CV draft step, not the analysis step.
       system: composeSystem(systemPrompt),
       feature: 'cv-job-analysis',
       maxOutputTokens: 800,
       temperature: 0.2,
     })
 
+    // revalidatePath is not called here — plain modules cannot call it in Next.js 16.
+    // The server action caller (job-fit.ts) handles revalidation for its own path.
     await prisma.jobApplication.update({
       where: { id: jobId },
       data: { jobAnalysis: result.object, jobAnalysedAt: new Date() },
