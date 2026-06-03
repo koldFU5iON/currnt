@@ -29,6 +29,7 @@ export async function GET() {
 
   try {
     const result = await complete(profileId, 'Reply with exactly the word: pong', {
+      feature: 'ping',
       maxOutputTokens: 16,
       temperature: 0,
     })

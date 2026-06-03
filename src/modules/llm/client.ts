@@ -103,8 +103,10 @@ export type CompleteOptions = {
   maxOutputTokens?: number
   /** 0–1; lower = more deterministic. */
   temperature?: number
-  /** Product feature that triggered this call (e.g. 'job-fit', 'cv-import'). Used for usage logging. */
-  feature?: string
+  /** Product feature that triggered this call. Required — every LLM call must be attributed.
+   *  Use a short kebab-case string matching an entry in FEATURE_LABELS in usage-log.tsx.
+   *  Example: 'job-fit', 'cv-import', 'profile-summary'. */
+  feature: string
 }
 
 type ResponseMeta = {
@@ -122,7 +124,7 @@ export type CompleteResult = ResponseMeta & {
 export async function complete(
   profileId: string,
   prompt: string,
-  opts: CompleteOptions = {},
+  opts: CompleteOptions,
 ): Promise<CompleteResult> {
   const cfg = await resolveConfig(profileId)
   const modelId = opts.model ?? cfg.model
@@ -160,7 +162,7 @@ export async function completeStructured<T>(
   profileId: string,
   prompt: string,
   schema: z.ZodType<T>,
-  opts: CompleteOptions = {},
+  opts: CompleteOptions,
 ): Promise<CompleteStructuredResult<T>> {
   const cfg = await resolveConfig(profileId)
   const modelId = opts.model ?? cfg.model

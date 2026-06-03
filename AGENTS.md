@@ -204,18 +204,36 @@ Update the Vercel `DATABASE_URL` env var (Production scope) via dashboard or `ve
 Bring-your-own-key — each user supplies their own provider API key. Server-side
 abstraction in `src/modules/llm/`:
 
-- `complete(profileId, prompt, opts?)` — plain text generation
-- `completeStructured(profileId, prompt, zodSchema, opts?)` — typed JSON output via `Output.object`
+- `complete(profileId, prompt, opts)` — plain text generation
+- `completeStructured(profileId, prompt, zodSchema, opts)` — typed JSON output via `Output.object`
 - All errors normalize to `LLMError` with a `kind` field; product code branches on `kind` instead of provider-specific SDK errors
 - `getLLMConfigStatus(profileId)` — cheap read-only check for "is this user set up?"
 
 Providers wired in: Anthropic, OpenAI, Google. Adding more is a single entry in
 the `PROVIDERS` map in `client.ts`. See `docs/llm-layer.md` for usage examples.
 
+### Rule: every LLM call must declare a `feature`
+
+`feature` is a **required** field in `CompleteOptions` — TypeScript will refuse to compile any call that omits it. Use a short kebab-case string that describes the product operation:
+
+```ts
+// correct
+await complete(profileId, prompt, { feature: 'job-fit' })
+await completeStructured(profileId, prompt, schema, { feature: 'cv-import' })
+
+// will not compile — feature is missing
+await complete(profileId, prompt, {})
+```
+
+**Why:** every call is logged to `LlmUsageLog` with the feature tag. Users see this on their usage page; it also drives cost analysis by operation. A call without a feature tag is invisible in reporting.
+
+When adding a new LLM-powered feature, also add its label to `FEATURE_LABELS` in `src/app/dashboard/settings/usage/_components/usage-log.tsx` so it displays cleanly in the UI. See `docs/llm-usage-tracking.md` for the full picture.
+
 ## Reference docs
 
 - `docs/api-jobs-capture.md` — POST /api/jobs/capture spec
 - `docs/api-integrations.md` — integration recipes for the capture endpoint (curl, Claude Code skill, bookmarklet)
 - `docs/llm-layer.md` — LLM layer usage examples
+- `docs/llm-usage-tracking.md` — usage logging system, feature registry, cost estimates
 - `src/lib/integrations/skills/claude-code.md` — canonical Claude Code skill source. Served by `GET /api/integrations/skills/claude-code`; downloaded SKILL.md goes in `~/.claude/skills/capture-job/`.
 - `src/lib/integrations/skills/hermes.md` — canonical Hermes skill source. Served by `GET /api/integrations/skills/hermes`; downloaded SKILL.md goes in `~/.hermes/skills/job-search/capture-job/`.

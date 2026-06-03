@@ -52,7 +52,7 @@ describe('LLM client logging', () => {
   })
 
   it('calls llmUsageLog.create after a successful complete()', async () => {
-    await complete('profile-1', 'hello')
+    await complete('profile-1', 'hello', { feature: 'test' })
     await vi.waitFor(() => expect(mockLogCreate).toHaveBeenCalled())
     expect(mockLogCreate).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -62,7 +62,7 @@ describe('LLM client logging', () => {
           promptTokens: 10,
           completionTokens: 20,
           totalTokens: 30,
-          feature: null,
+          feature: 'test',
         }),
       }),
     )
@@ -91,6 +91,6 @@ describe('LLM client logging', () => {
 
   it('does not throw if log write fails', async () => {
     mockLogCreate.mockRejectedValueOnce(new Error('DB down'))
-    await expect(complete('profile-1', 'hello')).resolves.not.toThrow()
+    await expect(complete('profile-1', 'hello', { feature: 'test' })).resolves.not.toThrow()
   })
 })
