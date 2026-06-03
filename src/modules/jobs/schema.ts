@@ -39,3 +39,19 @@ export const JobFitSchema = z.object({
 })
 
 export type JobFit = z.infer<typeof JobFitSchema>
+
+export const JobAnalysisRiskSchema = z.object({
+  risk: z.string(),
+  severity: z.enum(['high', 'medium', 'low']),
+  recommendation: z.string(),
+})
+
+export const JobAnalysisSchema = z.object({
+  must_have: z.array(z.string()),
+  nice_to_have: z.array(z.string()),
+  risks: z.array(JobAnalysisRiskSchema),
+  positioning_strategy: z.string(),
+})
+
+export type JobAnalysis = z.infer<typeof JobAnalysisSchema>
+export type JobAnalysisRisk = z.infer<typeof JobAnalysisRiskSchema>
