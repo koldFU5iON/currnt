@@ -4,6 +4,8 @@ import { loadWritingContext, loadCVPrompt, composeSystem } from '@/modules/llm/p
 import { buildProfileSnapshot, serializeProfileForLLM } from '@/modules/profile/snapshot'
 import { CVDocumentContentSchema, parseCVContent, type CVDocumentContent } from './schema'
 import { analyseJob } from './analyse-job'
+import { scoreEvidence, applyRoleBudgets } from './score-evidence'
+import { scanCV } from './scan-cv'
 import { JobAnalysisSchema, type JobAnalysis } from '@/modules/jobs/schema'
 
 const SCHEMA_HINT = `
@@ -54,7 +56,6 @@ export async function generateCVContent(
   let analysis: JobAnalysis | null = null
 
   if (jobApp?.jobDescription) {
-    // Use pre-computed analysis or run it now as a fallback
     const parsed = jobApp.jobAnalysis
       ? JobAnalysisSchema.safeParse(jobApp.jobAnalysis)
       : null
@@ -70,12 +71,19 @@ export async function generateCVContent(
     jobContext = `== MODE: GENERIC CV ==\nNo specific job target. Include all significant experience.`
   }
 
+  // Pre-filter the snapshot before it reaches the generation prompt.
+  // Job-targeted: LLM scores and ranks activities by relevance, then applies role budgets.
+  // Generic: role budgets applied deterministically (no LLM call).
+  const filteredSnapshot = analysis
+    ? await scoreEvidence(profileId, snapshot, analysis)
+    : applyRoleBudgets(snapshot)
+
   const userMessage = [
     jobContext,
     analysis ? formatAnalysisContext(analysis) : null,
     '',
     '== CANDIDATE PROFILE ==',
-    serializeProfileForLLM(snapshot),
+    serializeProfileForLLM(filteredSnapshot),
     '',
     '== OUTPUT SCHEMA ==',
     SCHEMA_HINT,
@@ -88,13 +96,23 @@ export async function generateCVContent(
     temperature: 0.3,
   })
 
-  // Extract JSON from the response — LLM may wrap it in ```json fences
   const jsonMatch = result.text.match(/```(?:json)?\s*([\s\S]*?)```/)
   const raw = jsonMatch ? jsonMatch[1].trim() : result.text.trim()
 
   const parsed = CVDocumentContentSchema.safeParse(JSON.parse(raw))
-  if (parsed.success) return parsed.data
+  const cvContent = parsed.success ? parsed.data : parseCVContent(raw)
 
-  console.error('[generateCVContent] schema validation failed', parsed.error.issues)
-  return parseCVContent(raw)
+  // Fire-and-forget: log recruiter scan results for generation quality monitoring.
+  // Errors are swallowed — the scan never blocks the CV being returned.
+  scanCV(profileId, cvContent, analysis?.positioningStrategy ?? undefined).then(scan => {
+    if (scan) {
+      console.info('[generateCVContent] recruiter scan', {
+        positioningMatch: scan.positioningMatch,
+        takeaways: scan.takeaways,
+        gaps: scan.gaps,
+      })
+    }
+  }).catch(err => console.error('[generateCVContent] scan failed', err))
+
+  return cvContent
 }
