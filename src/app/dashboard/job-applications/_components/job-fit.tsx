@@ -22,18 +22,18 @@ type JobFitProps = {
 }
 
 const FLAME_STYLES: Record<JobFitType['label'], string> = {
-  unlikely:  'fill-blue-400 text-blue-400',
-  weak:      'fill-amber-200 text-amber-300',
-  stretch:   'fill-amber-400 text-amber-500',
-  good:      'fill-orange-500 text-orange-600',
+  unlikely: 'fill-blue-400 text-blue-400',
+  weak: 'fill-amber-200 text-amber-300',
+  stretch: 'fill-amber-400 text-amber-500',
+  good: 'fill-orange-500 text-orange-600',
   excellent: 'fill-red-500 text-red-600',
 }
 
 const PILL_TEXT_STYLES: Record<JobFitType['label'], string> = {
-  unlikely:  'text-blue-400',
-  weak:      'text-amber-300',
-  stretch:   'text-amber-500',
-  good:      'text-orange-600',
+  unlikely: 'text-blue-400',
+  weak: 'text-amber-300',
+  stretch: 'text-amber-500',
+  good: 'text-orange-600',
   excellent: 'text-red-600',
 }
 
@@ -94,13 +94,13 @@ export function JobFit({ jobId, jobFit, canAssess = true, hasLLMKey = true }: Jo
         title={title}
         aria-label={title}
         className={cn(
-          "inline-flex h-6 items-center gap-1.5 rounded-md px-2 text-xs text-muted-foreground/60 transition-colors",
+          "inline-flex h-6 items-center gap-1.5 rounded-md px-2 text-xs text-primary/60 transition-colors",
           disabled
             ? "cursor-not-allowed opacity-40"
             : "hover:bg-muted hover:text-foreground cursor-pointer",
         )}
       >
-        <Puzzle size={12} className={disabled ? undefined : "text-accent"} />
+        <Puzzle size={12} className={disabled ? undefined : "text-primary"} />
         assess
       </button>
     )
