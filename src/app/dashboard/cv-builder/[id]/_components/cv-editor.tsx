@@ -150,7 +150,7 @@ export function CvEditor({ cv }: Props) {
 
       <div className="flex h-full flex-col print:block print:h-auto">
         {/* Toolbar */}
-        <div className="flex items-center justify-between border-b border-border bg-background px-4 py-2 print:hidden">
+        <div className="flex flex-col sm:flex-row items-center justify-between border-b border-border bg-background px-4 py-2 print:hidden">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold">{displayTitle}</span>
             <Badge variant="outline" className="text-xs capitalize">{cv.status}</Badge>
@@ -232,15 +232,15 @@ export function CvEditor({ cv }: Props) {
 
 function renderBlock(section: CVSection, onUpdate: (s: CVSection) => void) {
   switch (section.type) {
-    case 'header':        return <HeaderBlock section={section} onUpdate={onUpdate} />
-    case 'profile':       return <ProfileBlock section={section} onUpdate={onUpdate} />
-    case 'competencies':  return <CompetenciesBlock section={section} onUpdate={onUpdate} />
-    case 'capabilities':  return <CapabilitiesBlock section={section} onUpdate={onUpdate} />
-    case 'experience':    return <ExperienceBlock section={section} onUpdate={onUpdate} />
-    case 'education':     return <EducationBlock section={section} onUpdate={onUpdate} />
+    case 'header': return <HeaderBlock section={section} onUpdate={onUpdate} />
+    case 'profile': return <ProfileBlock section={section} onUpdate={onUpdate} />
+    case 'competencies': return <CompetenciesBlock section={section} onUpdate={onUpdate} />
+    case 'capabilities': return <CapabilitiesBlock section={section} onUpdate={onUpdate} />
+    case 'experience': return <ExperienceBlock section={section} onUpdate={onUpdate} />
+    case 'education': return <EducationBlock section={section} onUpdate={onUpdate} />
     case 'certification': return <CertificationBlock section={section} onUpdate={onUpdate} />
-    case 'skills':        return <SkillsBlock section={section} onUpdate={onUpdate} />
-    case 'tools':         return <ToolsBlock section={section} onUpdate={onUpdate} />
-    case 'languages':     return <LanguagesBlock section={section} onUpdate={onUpdate} />
+    case 'skills': return <SkillsBlock section={section} onUpdate={onUpdate} />
+    case 'tools': return <ToolsBlock section={section} onUpdate={onUpdate} />
+    case 'languages': return <LanguagesBlock section={section} onUpdate={onUpdate} />
   }
 }
