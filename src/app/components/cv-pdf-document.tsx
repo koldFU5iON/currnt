@@ -17,50 +17,50 @@ const SECTION_LABELS: Record<string, string> = {
 const s = StyleSheet.create({
   page: {
     fontFamily: 'Helvetica',
-    fontSize: 10.5,
+    fontSize: 10,
     color: '#000000',
     paddingTop: '14mm',
     paddingBottom: '14mm',
     paddingLeft: '14mm',
     paddingRight: '14mm',
-    lineHeight: 1.4,
+    lineHeight: 1.35,
   },
   header: {
     borderBottomWidth: 1.5,
     borderBottomColor: '#000000',
-    paddingBottom: 8,
-    marginBottom: 14,
+    paddingBottom: 7,
+    marginBottom: 12,
   },
   name: {
-    fontSize: 22,
+    fontSize: 20,
     fontFamily: 'Helvetica-Bold',
     lineHeight: 1.1,
   },
   headline: {
-    fontSize: 11,
+    fontSize: 10.5,
     marginTop: 2,
   },
   subheadline: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontFamily: 'Helvetica-Bold',
     marginTop: 1,
   },
   contact: {
-    fontSize: 9,
+    fontSize: 8.5,
     color: '#444444',
-    marginTop: 5,
+    marginTop: 4,
   },
   section: {
-    marginBottom: 12,
+    marginBottom: 10,
   },
   sectionHeadingWrap: {
     borderBottomWidth: 1,
     borderBottomColor: '#000000',
     paddingBottom: 2,
-    marginBottom: 6,
+    marginBottom: 5,
   },
   sectionHeadingText: {
-    fontSize: 9,
+    fontSize: 8.5,
     fontFamily: 'Helvetica-Bold',
     letterSpacing: 0.6,
   },
@@ -71,20 +71,39 @@ const s = StyleSheet.create({
   },
   bold: { fontFamily: 'Helvetica-Bold' },
   italic: { fontFamily: 'Helvetica-Oblique' },
-  meta: { fontSize: 9.5, color: '#111111' },
-  metaRight: { fontSize: 9.5, color: '#111111', flexShrink: 0, textAlign: 'right' },
-  job: { marginBottom: 10 },
-  bullet: { flexDirection: 'row', marginBottom: 2 },
-  bulletArrow: { width: 12, fontSize: 9.5, color: '#111111' },
-  bulletText: { flex: 1, fontSize: 9.5 },
-  twoCol: { flexDirection: 'row', flexWrap: 'wrap' },
-  twoColItem: { width: '50%', marginBottom: 2, paddingRight: 6 },
+  meta: { fontSize: 9, color: '#111111' },
+  metaRight: { fontSize: 9, color: '#111111', flexShrink: 0, textAlign: 'right' },
+  job: { marginBottom: 8 },
+  bullet: { flexDirection: 'row', marginBottom: 1.5 },
+  // Fixed width for dash prefix so text aligns cleanly
+  bulletDash: { width: 10, fontSize: 9, color: '#111111' },
+  bulletText: { flex: 1, fontSize: 9 },
+  // Two explicit columns side by side (flexWrap unreliable in react-pdf)
+  twoColWrap: { flexDirection: 'row' },
+  col: { flex: 1 },
+  colItem: { marginBottom: 2 },
 })
 
 function SectionHeading({ label }: { label: string }) {
   return (
     <View style={s.sectionHeadingWrap}>
       <Text style={s.sectionHeadingText}>{label.toUpperCase()}</Text>
+    </View>
+  )
+}
+
+function TwoColList({ items }: { items: string[] }) {
+  const mid = Math.ceil(items.length / 2)
+  const left = items.slice(0, mid)
+  const right = items.slice(mid)
+  return (
+    <View style={s.twoColWrap}>
+      <View style={s.col}>
+        {left.map((item, i) => <Text key={i} style={s.colItem}>- {item}</Text>)}
+      </View>
+      <View style={s.col}>
+        {right.map((item, i) => <Text key={i} style={s.colItem}>- {item}</Text>)}
+      </View>
     </View>
   )
 }
@@ -96,29 +115,24 @@ function SectionBody({ section }: { section: CVSection }) {
 
     case 'competencies':
     case 'capabilities':
-      return (
-        <View style={s.twoCol}>
-          {section.data.items.map((item, i) => (
-            <View key={i} style={s.twoColItem}>
-              <Text>• {item}</Text>
-            </View>
-          ))}
-        </View>
-      )
+      return <TwoColList items={section.data.items} />
 
     case 'experience': {
       const d = section.data as ExperienceData
       return (
-        <View style={s.job} wrap={false}>
-          <View style={s.row}>
-            <Text style={s.bold}>{d.company}</Text>
-            <Text style={s.metaRight}>{d.duration} · {d.location}</Text>
+        <View style={s.job}>
+          {/* Keep the header + first bullet together; let long jobs break naturally */}
+          <View wrap={false}>
+            <View style={s.row}>
+              <Text style={s.bold}>{d.company}</Text>
+              <Text style={s.metaRight}>{d.duration} · {d.location}</Text>
+            </View>
+            <Text style={[s.meta, s.italic]}>{d.titles.join(' / ')}</Text>
+            {d.description ? <Text style={[s.meta, { marginTop: 2 }]}>{d.description}</Text> : null}
           </View>
-          <Text style={[s.meta, s.italic]}>{d.titles.join(' → ')}</Text>
-          {d.description ? <Text style={s.meta}>{d.description}</Text> : null}
           {d.outcomes.map((o, i) => (
             <View key={i} style={s.bullet}>
-              <Text style={s.bulletArrow}>→</Text>
+              <Text style={s.bulletDash}>-</Text>
               <Text style={s.bulletText}>{o}</Text>
             </View>
           ))}
@@ -132,7 +146,7 @@ function SectionBody({ section }: { section: CVSection }) {
         <View style={s.row} wrap={false}>
           <View>
             <Text style={s.bold}>{d.institution}</Text>
-            <Text style={s.meta}>{d.qualification}{d.field ? `, ${d.field}` : ''}{d.grade ? ` — ${d.grade}` : ''}</Text>
+            <Text style={s.meta}>{d.qualification}{d.field ? `, ${d.field}` : ''}{d.grade ? ` - ${d.grade}` : ''}</Text>
           </View>
           <Text style={s.metaRight}>{d.duration}</Text>
         </View>
@@ -143,7 +157,7 @@ function SectionBody({ section }: { section: CVSection }) {
       const d = section.data as CertificationData
       return (
         <View style={s.row} wrap={false}>
-          <Text>{d.name}{d.issuer ? ` · ${d.issuer}` : ''}</Text>
+          <Text>{d.name}{d.issuer ? ` - ${d.issuer}` : ''}</Text>
           {d.date ? <Text style={s.metaRight}>{d.date}</Text> : null}
         </View>
       )
@@ -151,11 +165,11 @@ function SectionBody({ section }: { section: CVSection }) {
 
     case 'skills':
     case 'tools':
-      return <Text>{section.data.items.join(' · ')}</Text>
+      return <Text>{section.data.items.join(' / ')}</Text>
 
     case 'languages': {
       const d = section.data as LanguagesData
-      return <Text>{d.items.map(l => `${l.name} (${l.proficiency})`).join(' · ')}</Text>
+      return <Text>{d.items.map(l => `${l.name} (${l.proficiency})`).join(' / ')}</Text>
     }
 
     default:
