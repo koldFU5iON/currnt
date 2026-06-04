@@ -5,135 +5,211 @@ import { cn } from "@/lib/utils"
 
 export function Support({ className }: { className?: string }) {
   return (
-    <article className={cn("mx-auto max-w-2xl space-y-12", className ?? "px-8 py-16")}>
+    <article
+      className={cn(
+        "mx-auto max-w-4xl space-y-10 px-6 py-12 sm:px-8 sm:py-16",
+        className
+      )}
+    >
+      <SupportHero />
 
-      {/* Opening */}
-      <header className="space-y-3">
-        <h1 className="text-4xl font-bold leading-tight tracking-tight">
-          How currnt stays alive.
-        </h1>
-        <p className="text-base leading-relaxed text-muted-foreground">
-          The honest version of what this project is, how it runs, and what you can expect from it.
-        </p>
-      </header>
+      <SupportPromiseGrid />
 
-      <hr className="border-border/60" />
+      <SupportFuture />
 
-      {/* Open source */}
-      <section className="space-y-3">
-        <p className="font-mono text-xs font-semibold uppercase tracking-widest text-primary">
-          Open source, always
-        </p>
-        <p className="text-base leading-relaxed text-muted-foreground">
-          currnt is open source and always will be. The full codebase is on GitHub — free to clone,
-          self-host, modify, and run on your own infrastructure with your own API keys. If the hosted
-          version ever stopped existing, you could run your own tomorrow. That is the commitment.
-        </p>
-        <p className="text-base leading-relaxed text-muted-foreground">
-          The hosted version exists for convenience, not exclusivity.
-        </p>
-      </section>
+      <SupportKoFi />
 
-      <hr className="border-border/60" />
-
-      {/* Founder Access */}
-      <section className="space-y-3">
-        <p className="font-mono text-xs font-semibold uppercase tracking-widest text-primary">
-          Founder access
-        </p>
-        <p className="text-base leading-relaxed text-muted-foreground">
-          Right now, the hosted version is free. People using currnt during this early phase are
-          Founder members — you are helping shape what this becomes, giving real feedback on real
-          workflows, and building something together.
-        </p>
-        <p className="text-base leading-relaxed text-muted-foreground">
-          If a paid tier ever launches, Founder members will be the first to know, the last to be
-          surprised, and the first in line for whatever recognition makes sense. No rug pulls.
-          No sudden paywalls. That is not what this is.
-        </p>
-      </section>
-
-      <hr className="border-border/60" />
-
-      {/* Future */}
-      <section className="space-y-3">
-        <p className="font-mono text-xs font-semibold uppercase tracking-widest text-primary">
-          What comes next
-        </p>
-        <p className="text-base leading-relaxed text-muted-foreground">
-          At some point, hosting costs and ongoing development may require a premium tier. If that
-          happens, it will be additive — new capabilities on top of what already exists, not a gate
-          on what you have today. The self-hosted path stays free. The core stays open.
-        </p>
-        <p className="text-base leading-relaxed text-muted-foreground">
-          The most likely shape: a managed hosted tier that bundles the AI so you do not need your
-          own API key. Everything else stays as it is.
-        </p>
-      </section>
-
-      <hr className="border-border/60" />
-
-      {/* Ko-fi — playful */}
-      <section className="space-y-6">
-        <p className="font-mono text-xs font-semibold uppercase tracking-widest text-primary">
-          Feed the tokens
-        </p>
-        <div className="rounded-xl border border-border bg-muted/30 px-8 py-10 text-center space-y-4">
-          <p className="text-2xl">☕</p>
-          <p className="text-base font-medium leading-snug">
-            currnt runs on Claude tokens.
-          </p>
-          <p className="text-sm leading-relaxed text-muted-foreground max-w-sm mx-auto">
-            Job fits, profile summaries, CV parsing — it adds up. If currnt has helped you land an
-            interview, write a sharper application, or just feel less like your career is a pile of
-            scattered notes somewhere — consider buying one. Or ten. The tokens are hungry and the
-            development never really stops.
-          </p>
-          <p className="text-xs text-muted-foreground italic">
-            (No pressure. Seriously. But also: the tokens.)
-          </p>
-          <a
-            href={brand.kofiUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={buttonVariants({ size: 'lg' })}
-          >
-            Support on Ko-fi
-          </a>
-        </div>
-      </section>
-
-      <hr className="border-border/60" />
-
-      {/* GitHub */}
-      <section className="space-y-3">
-        <p className="font-mono text-xs font-semibold uppercase tracking-widest text-primary">
-          Other ways to help
-        </p>
-        <p className="text-base leading-relaxed text-muted-foreground">
-          Star the repo, share it with someone who is job hunting, open an issue when something
-          breaks, or submit a pull request if you have an idea. All of it matters and all of it
-          is appreciated.
-        </p>
-        <div className="flex flex-wrap gap-3 pt-1">
-          <a
-            href={brand.githubUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={buttonVariants({ variant: 'outline', size: 'sm' })}
-          >
-            View on GitHub
-          </a>
-          <Link
-            href="/about"
-            className={buttonVariants({ variant: 'ghost', size: 'sm' })}
-          >
-            Read our story
-          </Link>
-        </div>
-      </section>
-
+      <SupportGitHub />
     </article>
+  )
+}
 
+interface SupportingBlockProps {
+  className?: string
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="font-mono text-xs font-semibold uppercase tracking-widest text-primary">
+      {children}
+    </p>
+  )
+}
+
+function SupportHero({ className }: SupportingBlockProps) {
+  return (
+    <header className={cn("space-y-4 border-b border-border/60 pb-8", className)}>
+      <SectionLabel>Support currnt</SectionLabel>
+
+      <h1 className="max-w-2xl text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
+        Open source. Bring your own key. No weird surprises.
+      </h1>
+
+      <p className="max-w-2xl text-base leading-relaxed text-muted-foreground">
+        currnt is built to help people understand their experience, shape stronger
+        applications, and move through the job search with a little more clarity.
+        The code is open. The hosted version is free. That is intentional.
+      </p>
+    </header>
+  )
+}
+
+function SupportPromiseGrid({ className }: SupportingBlockProps) {
+  return (
+    <section className={cn("grid gap-4 sm:grid-cols-2", className)}>
+      <SupportPromiseCard
+        title="Open source, always"
+        body="The full codebase is on GitHub. Clone it, self-host it, fork it, break it, improve it. The hosted version exists for convenience, not lock-in."
+      />
+
+      <SupportPromiseCard
+        title="You bring the key"
+        body="currnt uses AI, but it does not hide that cost inside the product. You bring your own API key, which means you stay in control of usage and spend."
+      />
+    </section>
+  )
+}
+
+function SupportPromiseCard({
+  title,
+  body,
+}: {
+  title: string
+  body: string
+}) {
+  return (
+    <section className="rounded-xl border border-border bg-muted/20 p-5 space-y-2">
+      <SectionLabel>{title}</SectionLabel>
+      <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
+    </section>
+  )
+}
+
+function SupportFuture({ className }: SupportingBlockProps) {
+  return (
+    <section
+      className={cn(
+        "rounded-xl border border-border/70 bg-background/40 p-6 space-y-3",
+        className
+      )}
+    >
+      <SectionLabel>Founder access</SectionLabel>
+
+      <h2 className="text-xl font-semibold tracking-tight">
+        Early users help shape what currnt becomes.
+      </h2>
+
+      <p className="text-sm leading-relaxed text-muted-foreground">
+        If a paid tier ever exists, it will not suddenly lock away what you already
+        have. No rug pulls. No surprise paywalls. The most likely future paid version
+        would be additive: a hosted tier with AI bundled in, for people who do not
+        want to manage their own API key.
+      </p>
+    </section>
+  )
+}
+
+export function SupportKoFi({ className }: SupportingBlockProps) {
+  return (
+    <section
+      className={cn(
+        "rounded-2xl border border-primary/30 bg-muted/30 p-6 sm:p-8 space-y-6",
+        className
+      )}
+    >
+      <div className="space-y-3">
+        <p className="text-3xl">☕</p>
+
+        <SectionLabel>Feed the abyss</SectionLabel>
+
+        <h2 className="max-w-2xl text-2xl font-semibold tracking-tight">
+          currnt runs on caffeine, stubborn optimism, and Claude tokens.
+        </h2>
+
+        <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+          Donations do not pay for your AI usage. You already bring your own API key
+          for that. They help support the messy, useful, very human work behind the
+          project: testing ideas, fixing bugs, writing docs, improving the experience,
+          and building what comes next.
+        </p>
+      </div>
+
+      <div className="rounded-xl border border-border bg-background/50 p-5 space-y-4">
+        <p className="text-sm font-medium">
+          Mostly, donations fund the endless stream of questions I ask AI while building:
+        </p>
+
+        <ul className="space-y-2 text-sm italic leading-relaxed text-muted-foreground">
+          <li>“Why is this broken?”</li>
+          <li>“Why is this <span className="text-primary italic">still</span> broken?”</li>
+          <li>“Why did fixing it create three new problems?”</li>
+          <li>“Can we build something ridiculous and useful?”</li>
+        </ul>
+
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          If currnt has helped you move forward, feel free to throw a few tokens into
+          the abyss.
+        </p>
+
+        <p className="text-sm font-medium">
+          The abyss is surprisingly productive.{" "}
+          <span className="italic text-muted-foreground">Most of the time.</span>
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <a
+          href={brand.kofiUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={buttonVariants({ size: "lg" })}
+        >
+          Support on Ko-fi
+        </a>
+
+        <p className="text-xs italic text-muted-foreground">
+          No pressure. Seriously. But also: the tokens.
+        </p>
+      </div>
+    </section>
+  )
+}
+
+function SupportGitHub({ className }: SupportingBlockProps) {
+  return (
+    <section
+      className={cn(
+        "rounded-xl border border-border/70 bg-background/30 p-6 space-y-4",
+        className
+      )}
+    >
+      <div className="space-y-2">
+        <SectionLabel>Other ways to help</SectionLabel>
+
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          You do not have to donate to support currnt. Star the repo, share it with
+          someone looking for work, open an issue, suggest an improvement, or submit
+          a PR. All of it helps keep the current moving.
+        </p>
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        <a
+          href={brand.githubUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={buttonVariants({ variant: "outline", size: "sm" })}
+        >
+          View on GitHub
+        </a>
+
+        <Link
+          href="/about"
+          className={buttonVariants({ variant: "ghost", size: "sm" })}
+        >
+          Read our story
+        </Link>
+      </div>
+    </section>
   )
 }

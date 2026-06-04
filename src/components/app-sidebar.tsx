@@ -108,7 +108,7 @@ function FeedbackButton() {
               </SidebarMenuButton>
             }
           />
-          <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-4xl max-h-[85vh] overflow-y-auto">
             <Support className="px-2 py-4" />
           </DialogContent>
         </Dialog>
