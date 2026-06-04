@@ -20,7 +20,7 @@ const INTEGRATIONS: Integration[] = [
     installPath: "~/.claude/skills/capture-job/SKILL.md",
     icon: Sparkles,
     docsHref:
-      "https://github.com/koldFU5iON/resume/blob/main/docs/api-integrations.md#claude-code-skill",
+      "https://github.com/koldFU5iON/currnt/blob/main/docs/api-integrations.md#claude-code-skill",
   },
   {
     id: "hermes",
@@ -30,7 +30,7 @@ const INTEGRATIONS: Integration[] = [
     installPath: "~/.hermes/skills/job-search/capture-job/SKILL.md",
     icon: Terminal,
     docsHref:
-      "https://github.com/koldFU5iON/resume/blob/main/docs/api-integrations.md#hermes-agent-skill",
+      "https://github.com/koldFU5iON/currnt/blob/main/docs/api-integrations.md#hermes-agent-skill",
   },
 ]
 

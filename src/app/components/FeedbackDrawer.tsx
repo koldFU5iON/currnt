@@ -41,7 +41,7 @@ const DESCRIPTION_PLACEHOLDERS: Record<FeedbackType, string> = {
   other: 'Any extra context…',
 }
 
-const FALLBACK_URL = 'https://github.com/koldFU5iON/resume/issues/new'
+const FALLBACK_URL = 'https://github.com/koldFU5iON/currnt/issues/new'
 
 type Props = {
   open: boolean

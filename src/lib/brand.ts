@@ -1,6 +1,6 @@
 const name = "currnt"
 const tagline = "Stay current."
-const githubUrl = "https://github.com/koldFU5iON/resume"
+const githubUrl = "https://github.com/koldFU5iON/currnt"
 const kofiUrl = "https://ko-fi.com/devonstanton"
 
 export const brand = {
