@@ -7,6 +7,7 @@
 // shape; only the formatter changes for different prompt styles.
 
 import { prisma } from '@/lib/db'
+import { parseJsonField } from '@/lib/utils'
 
 export type ProfileSnapshot = {
   name: string
@@ -59,6 +60,16 @@ export type ProfileSnapshot = {
     name: string
     proficiency: string
   }>
+
+  projects: Array<{
+    name: string
+    description: string
+    highlights: string[]
+    status: string
+    startDate: Date | null
+    endDate: Date | null
+    url: string | null
+  }>
 }
 
 export async function buildProfileSnapshot(profileId: string): Promise<ProfileSnapshot> {
@@ -74,6 +85,7 @@ export async function buildProfileSnapshot(profileId: string): Promise<ProfileSn
       certifications: { orderBy: { issueDate: 'desc' } },
       competencies: { orderBy: { order: 'asc' } },
       languages: { orderBy: { order: 'asc' } },
+      projects: { orderBy: { startDate: 'desc' } },
     },
   })
 
@@ -119,6 +131,15 @@ export async function buildProfileSnapshot(profileId: string): Promise<ProfileSn
     })),
     competencies: row.competencies.map(c => ({ name: c.name })),
     languages: row.languages.map(l => ({ name: l.name, proficiency: l.proficiency })),
+    projects: row.projects.map(p => ({
+      name: p.name,
+      description: p.description,
+      highlights: parseJsonField<string[]>(p.highlights, []),
+      status: p.status,
+      startDate: p.startDate,
+      endDate: p.endDate,
+      url: p.url,
+    })),
   }
 }
 
@@ -210,6 +231,26 @@ export function serializeProfileForLLM(snapshot: ProfileSnapshot): string {
     lines.push('## Languages')
     lines.push(snapshot.languages.map(l => `${l.name} (${l.proficiency})`).join(', '))
     lines.push('')
+  }
+
+  // Projects — highlights are the primary signal; fall back to description if none
+  const activeProjects = snapshot.projects.filter(p => p.status !== 'archived')
+  if (activeProjects.length > 0) {
+    lines.push('## Projects\n')
+    for (const proj of activeProjects) {
+      const dates =
+        proj.startDate
+          ? `${formatMonth(proj.startDate)} – ${proj.endDate ? formatMonth(proj.endDate) : 'present'}`
+          : null
+      const meta = [dates, proj.url].filter(Boolean).join(' · ')
+      lines.push(`### ${proj.name}${meta ? ` *(${meta})*` : ''}`)
+      if (proj.highlights.length > 0) {
+        for (const h of proj.highlights) lines.push(`- ${h}`)
+      } else {
+        lines.push(proj.description)
+      }
+      lines.push('')
+    }
   }
 
   return lines.join('\n').trim()

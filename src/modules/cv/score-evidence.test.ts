@@ -67,6 +67,7 @@ const MOCK_SNAPSHOT: ProfileSnapshot = {
   certifications: [],
   competencies: [],
   languages: [],
+  projects: [],
 }
 
 const MOCK_ANALYSIS: JobAnalysis = {
