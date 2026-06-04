@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Check, X } from 'lucide-react'
 import { useBlockEditTrigger } from '../cv-block'
 import type { CVSection, HeaderData } from '@/modules/cv/schema'
@@ -15,9 +15,11 @@ export function HeaderBlock({ section, onUpdate }: Props) {
   const [draft, setDraft] = useState(section.data)
   const editTrigger = useBlockEditTrigger()
 
-  useEffect(() => {
+  const [seenTrigger, setSeenTrigger] = useState(editTrigger)
+  if (seenTrigger !== editTrigger) {
+    setSeenTrigger(editTrigger)
     if (editTrigger > 0) setEditing(true)
-  }, [editTrigger])
+  }
 
   function save() {
     onUpdate({ ...section, data: draft })

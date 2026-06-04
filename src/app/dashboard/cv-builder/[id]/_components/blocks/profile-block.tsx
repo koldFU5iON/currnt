@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Check, X } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { useBlockEditTrigger } from '../cv-block'
@@ -16,9 +16,11 @@ export function ProfileBlock({ section, onUpdate }: Props) {
   const [draft, setDraft] = useState(section.data.content)
   const editTrigger = useBlockEditTrigger()
 
-  useEffect(() => {
+  const [seenTrigger, setSeenTrigger] = useState(editTrigger)
+  if (seenTrigger !== editTrigger) {
+    setSeenTrigger(editTrigger)
     if (editTrigger > 0) setEditing(true)
-  }, [editTrigger])
+  }
 
   function save() {
     onUpdate({ ...section, data: { content: draft } })

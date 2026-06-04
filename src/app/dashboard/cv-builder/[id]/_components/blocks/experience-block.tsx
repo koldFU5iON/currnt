@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Check, X, Plus, Trash2 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { useBlockEditTrigger } from '../cv-block'
@@ -17,9 +17,11 @@ export function ExperienceBlock({ section, onUpdate }: Props) {
   const { company, titles, location, duration, description, outcomes } = section.data
   const editTrigger = useBlockEditTrigger()
 
-  useEffect(() => {
+  const [seenTrigger, setSeenTrigger] = useState(editTrigger)
+  if (seenTrigger !== editTrigger) {
+    setSeenTrigger(editTrigger)
     if (editTrigger > 0) setEditing(true)
-  }, [editTrigger])
+  }
 
   function save() {
     onUpdate({
