@@ -121,15 +121,12 @@ function SectionBody({ section }: { section: CVSection }) {
       const d = section.data as ExperienceData
       return (
         <View style={s.job}>
-          {/* Keep the header + first bullet together; let long jobs break naturally */}
-          <View wrap={false}>
-            <View style={s.row}>
-              <Text style={s.bold}>{d.company}</Text>
-              <Text style={s.metaRight}>{d.duration} · {d.location}</Text>
-            </View>
-            <Text style={[s.meta, s.italic]}>{d.titles.join(' / ')}</Text>
-            {d.description ? <Text style={[s.meta, { marginTop: 2 }]}>{d.description}</Text> : null}
+          <View style={s.row}>
+            <Text style={s.bold}>{d.company}</Text>
+            <Text style={s.metaRight}>{d.duration} · {d.location}</Text>
           </View>
+          <Text style={[s.meta, s.italic]}>{d.titles.join(' / ')}</Text>
+          {d.description ? <Text style={[s.meta, { marginTop: 2 }]}>{d.description}</Text> : null}
           {d.outcomes.map((o, i) => (
             <View key={i} style={s.bullet}>
               <Text style={s.bulletDash}>-</Text>
@@ -143,7 +140,7 @@ function SectionBody({ section }: { section: CVSection }) {
     case 'education': {
       const d = section.data as EducationData
       return (
-        <View style={s.row} wrap={false}>
+        <View style={s.row}>
           <View>
             <Text style={s.bold}>{d.institution}</Text>
             <Text style={s.meta}>{d.qualification}{d.field ? `, ${d.field}` : ''}{d.grade ? ` - ${d.grade}` : ''}</Text>
@@ -156,7 +153,7 @@ function SectionBody({ section }: { section: CVSection }) {
     case 'certification': {
       const d = section.data as CertificationData
       return (
-        <View style={s.row} wrap={false}>
+        <View style={s.row}>
           <Text>{d.name}{d.issuer ? ` - ${d.issuer}` : ''}</Text>
           {d.date ? <Text style={s.metaRight}>{d.date}</Text> : null}
         </View>
