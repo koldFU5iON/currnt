@@ -23,7 +23,7 @@ type Props = {
 
 export function SectionRail({ sections, onToggleVisibility }: Props) {
   return (
-    <div className="w-48 shrink-0 overflow-y-auto border-l border-border bg-muted/20 p-4 print:hidden">
+    <div className="hidden md:block w-48 shrink-0 overflow-y-auto border-l border-border bg-muted/20 p-4 print:hidden">
       <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
         Sections
       </p>
