@@ -282,4 +282,33 @@ describe('scoreEvidence', () => {
       expect.objectContaining({ feature: 'cv-evidence-score' }),
     )
   })
+
+  it('includes a JOB INTELLIGENCE block with risks and positioning', async () => {
+    mockCompleteStructured.mockResolvedValue({ object: { scores: [] } } as never)
+
+    const analysisWithRisks: JobAnalysis = {
+      ...MOCK_ANALYSIS,
+      risks: [
+        { risk: 'No enterprise sales experience', severity: 'high', recommendation: 'Lead with large-account wins.' },
+      ],
+    }
+
+    await scoreEvidence(PROFILE_ID, MOCK_SNAPSHOT, analysisWithRisks)
+
+    const [, userMessage] = mockCompleteStructured.mock.calls[0]
+    expect(userMessage).toContain('== JOB INTELLIGENCE ==')
+    expect(userMessage).toContain('Lead with multi-territory scope and budget ownership.')
+    expect(userMessage).toContain('[HIGH] No enterprise sales experience')
+    expect(userMessage).toContain('Lead with large-account wins.')
+  })
+
+  it('omits the risks section when analysis has no risks', async () => {
+    mockCompleteStructured.mockResolvedValue({ object: { scores: [] } } as never)
+
+    await scoreEvidence(PROFILE_ID, MOCK_SNAPSHOT, MOCK_ANALYSIS)
+
+    const [, userMessage] = mockCompleteStructured.mock.calls[0]
+    expect(userMessage).toContain('== JOB INTELLIGENCE ==')
+    expect(userMessage).not.toContain('Risks:')
+  })
 })

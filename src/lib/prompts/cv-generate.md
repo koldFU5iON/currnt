@@ -38,8 +38,10 @@ Before finalising each bullet, ask: why does the hiring manager for this specifi
 - Profile summary: maximum 80 words. State what the candidate can deliver for this role. Not career history, not narrative. Evidence and scope only.
 - Role description: maximum 40 words. One sentence covering scope — team size, geography, or budget — not career story.
 - Achievement bullets: maximum 5 per role, maximum 25 words per bullet.
-- If content cannot fit these limits, cut the weakest bullets first.
+- If content cannot fit these limits, cut the weakest bullets first. Cut `useful-context` items before compressing. Cut `cut`-tier items first of all.
 - Favour compression over completeness. A tight 2-page CV outperforms a sprawling 3-page one.
+
+**`must-include` items are non-negotiable.** Activities scored `must-include` from the evidence scoring pass must appear in the CV regardless of page budget. Never remove a `must-include` activity to meet page limits — compress it instead. If compression is needed, reduce its word count to the minimum that preserves the metric and the outcome, then cut `useful-context` items around it to create space.
 
 ## AI writing pattern blacklist — never use these phrases
 - "Operating at the intersection of…"

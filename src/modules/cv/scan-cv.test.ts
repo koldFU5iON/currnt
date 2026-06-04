@@ -144,4 +144,24 @@ describe('scanCV', () => {
       expect.objectContaining({ feature: 'cv-recruiter-scan' }),
     )
   })
+
+  it('includes must-have requirements in the user message when provided', async () => {
+    mockCompleteStructured.mockResolvedValue({ object: MOCK_SCAN } as never)
+
+    await scanCV(PROFILE_ID, MOCK_CV, undefined, ['Multi-territory experience', 'Budget ownership'])
+
+    const [, userMessage] = mockCompleteStructured.mock.calls[0]
+    expect(userMessage).toContain('== MUST-HAVE REQUIREMENTS ==')
+    expect(userMessage).toContain('- Multi-territory experience')
+    expect(userMessage).toContain('- Budget ownership')
+  })
+
+  it('omits the must-have block when mustHave is empty', async () => {
+    mockCompleteStructured.mockResolvedValue({ object: MOCK_SCAN } as never)
+
+    await scanCV(PROFILE_ID, MOCK_CV, undefined, [])
+
+    const [, userMessage] = mockCompleteStructured.mock.calls[0]
+    expect(userMessage).not.toContain('== MUST-HAVE REQUIREMENTS ==')
+  })
 })

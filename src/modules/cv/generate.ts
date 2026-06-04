@@ -104,7 +104,7 @@ export async function generateCVContent(
 
   // Fire-and-forget: log recruiter scan results for generation quality monitoring.
   // Errors are swallowed — the scan never blocks the CV being returned.
-  scanCV(profileId, cvContent, analysis?.positioningStrategy ?? undefined).then(scan => {
+  scanCV(profileId, cvContent, analysis?.positioningStrategy, analysis?.mustHave).then(scan => {
     if (scan) {
       console.info('[generateCVContent] recruiter scan', {
         positioningMatch: scan.positioningMatch,
