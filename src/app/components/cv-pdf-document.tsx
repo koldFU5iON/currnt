@@ -1,0 +1,203 @@
+import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer'
+import type { CVWithMeta } from '../dashboard/cv-builder/[id]/_components/cv-editor'
+import type { CVSection, HeaderData, ExperienceData, EducationData, CertificationData, LanguagesData } from '@/modules/cv/schema'
+
+const SECTION_LABELS: Record<string, string> = {
+  profile: 'Profile',
+  competencies: 'Core Competencies',
+  capabilities: 'Key Capabilities',
+  experience: 'Professional Experience',
+  education: 'Education',
+  certification: 'Certifications',
+  skills: 'Skills',
+  tools: 'Tools & Technologies',
+  languages: 'Languages',
+}
+
+const s = StyleSheet.create({
+  page: {
+    fontFamily: 'Helvetica',
+    fontSize: 10.5,
+    color: '#000000',
+    paddingTop: '14mm',
+    paddingBottom: '14mm',
+    paddingLeft: '14mm',
+    paddingRight: '14mm',
+    lineHeight: 1.4,
+  },
+  header: {
+    borderBottomWidth: 1.5,
+    borderBottomColor: '#000000',
+    paddingBottom: 8,
+    marginBottom: 14,
+  },
+  name: {
+    fontSize: 22,
+    fontFamily: 'Helvetica-Bold',
+    lineHeight: 1.1,
+  },
+  headline: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  subheadline: {
+    fontSize: 10,
+    fontFamily: 'Helvetica-Bold',
+    marginTop: 1,
+  },
+  contact: {
+    fontSize: 9,
+    color: '#444444',
+    marginTop: 5,
+  },
+  section: {
+    marginBottom: 12,
+  },
+  sectionHeadingWrap: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#000000',
+    paddingBottom: 2,
+    marginBottom: 6,
+  },
+  sectionHeadingText: {
+    fontSize: 9,
+    fontFamily: 'Helvetica-Bold',
+    letterSpacing: 0.6,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  bold: { fontFamily: 'Helvetica-Bold' },
+  italic: { fontFamily: 'Helvetica-Oblique' },
+  meta: { fontSize: 9.5, color: '#111111' },
+  metaRight: { fontSize: 9.5, color: '#111111', flexShrink: 0, textAlign: 'right' },
+  job: { marginBottom: 10 },
+  bullet: { flexDirection: 'row', marginBottom: 2 },
+  bulletArrow: { width: 12, fontSize: 9.5, color: '#111111' },
+  bulletText: { flex: 1, fontSize: 9.5 },
+  twoCol: { flexDirection: 'row', flexWrap: 'wrap' },
+  twoColItem: { width: '50%', marginBottom: 2, paddingRight: 6 },
+})
+
+function SectionHeading({ label }: { label: string }) {
+  return (
+    <View style={s.sectionHeadingWrap}>
+      <Text style={s.sectionHeadingText}>{label.toUpperCase()}</Text>
+    </View>
+  )
+}
+
+function SectionBody({ section }: { section: CVSection }) {
+  switch (section.type) {
+    case 'profile':
+      return <Text>{section.data.content}</Text>
+
+    case 'competencies':
+    case 'capabilities':
+      return (
+        <View style={s.twoCol}>
+          {section.data.items.map((item, i) => (
+            <View key={i} style={s.twoColItem}>
+              <Text>• {item}</Text>
+            </View>
+          ))}
+        </View>
+      )
+
+    case 'experience': {
+      const d = section.data as ExperienceData
+      return (
+        <View style={s.job} wrap={false}>
+          <View style={s.row}>
+            <Text style={s.bold}>{d.company}</Text>
+            <Text style={s.metaRight}>{d.duration} · {d.location}</Text>
+          </View>
+          <Text style={[s.meta, s.italic]}>{d.titles.join(' → ')}</Text>
+          {d.description ? <Text style={s.meta}>{d.description}</Text> : null}
+          {d.outcomes.map((o, i) => (
+            <View key={i} style={s.bullet}>
+              <Text style={s.bulletArrow}>→</Text>
+              <Text style={s.bulletText}>{o}</Text>
+            </View>
+          ))}
+        </View>
+      )
+    }
+
+    case 'education': {
+      const d = section.data as EducationData
+      return (
+        <View style={s.row} wrap={false}>
+          <View>
+            <Text style={s.bold}>{d.institution}</Text>
+            <Text style={s.meta}>{d.qualification}{d.field ? `, ${d.field}` : ''}{d.grade ? ` — ${d.grade}` : ''}</Text>
+          </View>
+          <Text style={s.metaRight}>{d.duration}</Text>
+        </View>
+      )
+    }
+
+    case 'certification': {
+      const d = section.data as CertificationData
+      return (
+        <View style={s.row} wrap={false}>
+          <Text>{d.name}{d.issuer ? ` · ${d.issuer}` : ''}</Text>
+          {d.date ? <Text style={s.metaRight}>{d.date}</Text> : null}
+        </View>
+      )
+    }
+
+    case 'skills':
+    case 'tools':
+      return <Text>{section.data.items.join(' · ')}</Text>
+
+    case 'languages': {
+      const d = section.data as LanguagesData
+      return <Text>{d.items.map(l => `${l.name} (${l.proficiency})`).join(' · ')}</Text>
+    }
+
+    default:
+      return null
+  }
+}
+
+export function CVPDFDocument({ cv }: { cv: CVWithMeta }) {
+  const visibleSections = cv.content.sections.filter(sec => sec.visible)
+  const header = visibleSections.find(sec => sec.type === 'header')
+  const body = visibleSections.filter(sec => sec.type !== 'header')
+  const seenTypes = new Set<string>()
+
+  return (
+    <Document>
+      <Page size="A4" style={s.page}>
+        {header && (() => {
+          const d = header.data as HeaderData
+          const contactItems = [d.contact.email, d.contact.phone, d.contact.linkedin, d.contact.website]
+            .filter((v): v is string => !!v)
+          return (
+            <View style={s.header}>
+              <Text style={s.name}>{d.name}</Text>
+              <Text style={s.headline}>{d.headline}</Text>
+              {d.subHeadline ? <Text style={s.subheadline}>{d.subHeadline}</Text> : null}
+              {contactItems.length > 0 ? <Text style={s.contact}>{contactItems.join(' · ')}</Text> : null}
+            </View>
+          )
+        })()}
+
+        {body.map((section, i) => {
+          const label = SECTION_LABELS[section.type]
+          const isFirst = !seenTypes.has(section.type)
+          seenTypes.add(section.type)
+          return (
+            <View key={i} style={s.section}>
+              {isFirst && label ? <SectionHeading label={label} /> : null}
+              <SectionBody section={section} />
+            </View>
+          )
+        })}
+      </Page>
+    </Document>
+  )
+}

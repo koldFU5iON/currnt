@@ -2,6 +2,7 @@ import path from "node:path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ['@react-pdf/renderer'],
   // Pin the workspace root so Turbopack doesn't pick up the stray lockfile
   // at /home/devons/ as the project root.
   turbopack: {
