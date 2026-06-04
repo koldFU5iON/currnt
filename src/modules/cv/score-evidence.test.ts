@@ -27,6 +27,9 @@ function makeActivity(kind: string, description: string, highlighted = false) {
 const MOCK_SNAPSHOT: ProfileSnapshot = {
   name: 'Test User',
   email: null,
+  phone: null,
+  website: null,
+  linkedin: null,
   location: null,
   headline: null,
   experiences: [

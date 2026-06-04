@@ -9,9 +9,10 @@ import type { CVSection } from '@/modules/cv/schema'
 type Props = {
   section: CVSection & { type: 'profile' }
   onUpdate: (section: CVSection) => void
+  showHeading?: boolean
 }
 
-export function ProfileBlock({ section, onUpdate }: Props) {
+export function ProfileBlock({ section, onUpdate, showHeading = true }: Props) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(section.data.content)
   const editTrigger = useBlockEditTrigger()
@@ -29,9 +30,11 @@ export function ProfileBlock({ section, onUpdate }: Props) {
 
   return (
     <div>
-      <div className="mb-2 border-b border-border pb-1">
-        <h2 className="cv-section-heading">Professional Profile</h2>
-      </div>
+      {showHeading && (
+        <div className="mb-2 border-b border-border pb-1">
+          <h2 className="cv-section-heading">Professional Profile</h2>
+        </div>
+      )}
       {editing ? (
         <div className="space-y-2">
           <textarea

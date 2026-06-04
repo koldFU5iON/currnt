@@ -8,9 +8,10 @@ import type { CVSection } from '@/modules/cv/schema'
 type Props = {
   section: CVSection & { type: 'capabilities' }
   onUpdate: (section: CVSection) => void
+  showHeading?: boolean
 }
 
-export function CapabilitiesBlock({ section, onUpdate }: Props) {
+export function CapabilitiesBlock({ section, onUpdate, showHeading = true }: Props) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(section.data.items)
   const editTrigger = useBlockEditTrigger()
@@ -28,9 +29,11 @@ export function CapabilitiesBlock({ section, onUpdate }: Props) {
 
   return (
     <div>
-      <div className="mb-2 border-b border-border pb-1">
-        <h2 className="cv-section-heading">Capabilities</h2>
-      </div>
+      {showHeading && (
+        <div className="mb-2 border-b border-border pb-1">
+          <h2 className="cv-section-heading">Capabilities</h2>
+        </div>
+      )}
       {editing ? (
         <div className="space-y-2">
           {draft.map((item, i) => (

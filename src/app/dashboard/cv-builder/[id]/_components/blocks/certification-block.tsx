@@ -8,9 +8,10 @@ import type { CVSection, CertificationData } from '@/modules/cv/schema'
 type Props = {
   section: CVSection & { type: 'certification'; data: CertificationData }
   onUpdate: (section: CVSection) => void
+  showHeading?: boolean
 }
 
-export function CertificationBlock({ section, onUpdate }: Props) {
+export function CertificationBlock({ section, onUpdate, showHeading = true }: Props) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(section.data)
   const { name, issuer, date, url } = section.data
@@ -29,9 +30,11 @@ export function CertificationBlock({ section, onUpdate }: Props) {
 
   return (
     <div>
-      <div className="mb-2 border-b border-border pb-1">
-        <h2 className="cv-section-heading">Certification</h2>
-      </div>
+      {showHeading && (
+        <div className="mb-2 border-b border-border pb-1">
+          <h2 className="cv-section-heading">Certifications</h2>
+        </div>
+      )}
       {editing ? (
         <div className="space-y-2">
           <div className="grid grid-cols-2 gap-2">
