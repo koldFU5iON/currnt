@@ -2,7 +2,7 @@
 
 A structured system for tracking job applications, assessing fit, and presenting yourself clearly. Open source, bring your own AI key.
 
-→ **GitHub:** https://github.com/koldFU5iON/resume
+→ **GitHub:** https://github.com/koldFU5iON/currnt
 
 ---
 
@@ -16,8 +16,8 @@ A structured system for tracking job applications, assessing fit, and presenting
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/koldFU5iON/resume.git
-cd resume
+git clone https://github.com/koldFU5iON/currnt.git
+cd currnt
 npm install
 ```
 
@@ -93,4 +93,4 @@ This app has no built-in AI billing. Each user adds their own API key at `/dashb
 
 ## Contributing
 
-Issues and PRs welcome. See open issues for what's being worked on.
+Issues and PRs welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to get started and open issues for what's being worked on.
