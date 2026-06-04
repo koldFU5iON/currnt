@@ -28,7 +28,7 @@ import { ToolsBlock } from './blocks/tools-block'
 import { LanguagesBlock } from './blocks/languages-block'
 import type { CVDocumentContent, CVSection } from '@/modules/cv/schema'
 
-type CVWithMeta = {
+export type CVWithMeta = {
   id: string
   status: string
   jobTitle: string | null
@@ -180,7 +180,10 @@ export function CvEditor({ cv }: Props) {
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setShowExport(false)} />
                   <div className="absolute right-0 top-full z-20 w-40 rounded-md border border-border bg-background py-1 shadow-md">
-                    <button onClick={() => { window.print(); setShowExport(false) }} className="block w-full px-3 py-1.5 text-left text-sm hover:bg-muted">
+                    <button
+                      onClick={() => { window.open(`/api/cv/${cv.id}/pdf`, '_blank'); setShowExport(false) }}
+                      className="block w-full px-3 py-1.5 text-left text-sm hover:bg-muted"
+                    >
                       Download PDF
                     </button>
                     <button onClick={() => { downloadFile(toMarkdown(content), `${fileSlug}.md`, 'text/markdown'); setShowExport(false) }} className="block w-full px-3 py-1.5 text-left text-sm hover:bg-muted">
