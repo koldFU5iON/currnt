@@ -89,7 +89,7 @@ export function CertificationBlock({ section, onUpdate, showHeading = true }: Pr
           </p>
           {/^https?:\/\//i.test(url ?? '') && (
             <a
-              href={url}
+              href={url ?? undefined}
               target="_blank"
               rel="noopener noreferrer"
               className="cv-meta text-primary hover:underline"
