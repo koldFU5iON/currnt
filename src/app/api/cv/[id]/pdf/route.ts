@@ -2,7 +2,31 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireProfile } from '@/lib/session'
 import { getCV } from '@/modules/cv/queries'
 import { buildCVHtml } from '@/app/components/pdf-extract'
-import puppeteer from 'puppeteer'
+import puppeteerCore from 'puppeteer-core'
+import chromium from '@sparticuz/chromium-min'
+
+export const maxDuration = 60
+
+// Hosted chromium build sized for Lambda — fetched + cached at runtime on Vercel
+const CHROMIUM_REMOTE_URL =
+  'https://github.com/Sparticuz/chromium/releases/download/v149.0.0/chromium-v149.0.0-pack.tar'
+
+async function launchBrowser() {
+  if (process.env.VERCEL) {
+    return puppeteerCore.launch({
+      args: chromium.args,
+      executablePath: await chromium.executablePath(CHROMIUM_REMOTE_URL),
+      headless: true,
+    })
+  }
+
+  // Local dev: use the Chromium that the full `puppeteer` package manages
+  const { default: puppeteer } = await import('puppeteer')
+  return puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  })
+}
 
 export async function GET(
   _req: NextRequest,
@@ -15,11 +39,7 @@ export async function GET(
   if (!cv) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const html = buildCVHtml({ ...cv, profileName: cv.profile.name })
-
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  })
+  const browser = await launchBrowser()
 
   try {
     const page = await browser.newPage()
