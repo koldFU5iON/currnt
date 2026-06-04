@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import {
   ChevronsUpDown,
+  Coins,
   LogOut,
   MessageSquareWarning,
   Settings,
@@ -39,6 +40,8 @@ import { brand } from "@/lib/brand"
 import { FeedbackDrawer } from "@/app/components/FeedbackDrawer"
 import { Wordmark } from "@/components/brand/wordmark"
 import { CurrntIcon } from "@/components/brand/icon"
+import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog"
+import { Support } from "./support"
 
 export function AppSidebar() {
   return (
@@ -91,16 +94,34 @@ export function AppSidebar() {
 }
 
 function FeedbackButton() {
-  const [open, setOpen] = useState(false)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
+
   return (
     <>
       <SidebarMenuItem>
-        <SidebarMenuButton onClick={() => setOpen(true)} tooltip="Report an issue">
+        <Dialog>
+          <DialogTrigger
+            render={
+              <SidebarMenuButton tooltip="Support currnt development">
+                <Coins />
+                <span>Support currnt</span>
+              </SidebarMenuButton>
+            }
+          />
+          <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+            <Support className="px-2 py-4" />
+          </DialogContent>
+        </Dialog>
+      </SidebarMenuItem>
+
+      <SidebarMenuItem>
+        <SidebarMenuButton onClick={() => setFeedbackOpen(true)} tooltip="Report an issue">
           <MessageSquareWarning />
           <span>Report an issue</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
-      <FeedbackDrawer open={open} onOpenChange={setOpen} />
+
+      <FeedbackDrawer open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </>
   )
 }
