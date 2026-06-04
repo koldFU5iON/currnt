@@ -44,6 +44,18 @@ export function serializeCVForScan(content: CVDocumentContent): string {
         )
         break
       }
+      case 'skills':
+        lines.push('SKILLS: ' + section.data.items.join(', '))
+        break
+      case 'tools':
+        lines.push('TOOLS: ' + section.data.items.join(', '))
+        break
+      case 'certification':
+        lines.push(`${section.data.name}${section.data.issuer ? ' — ' + section.data.issuer : ''}`)
+        break
+      case 'languages':
+        lines.push('LANGUAGES: ' + section.data.items.map((l) => `${l.name} (${l.proficiency})`).join(', '))
+        break
       default:
         break
     }
@@ -53,6 +65,7 @@ export function serializeCVForScan(content: CVDocumentContent): string {
   return lines.join('\n').trim()
 }
 
+// Returns null on failure — the scan is informational only and must never block CV generation.
 export async function scanCV(
   profileId: string,
   content: CVDocumentContent,
