@@ -48,15 +48,22 @@ export async function scoreEvidence(
     })
     .join('\n\n')
 
+  const risksText = analysis.risks
+    .map(r => `  - [${r.severity.toUpperCase()}] ${r.risk} → ${r.recommendation}`)
+    .join('\n')
+
   const userMessage = [
     '== JOB REQUIREMENTS ==',
     `Must-have: ${analysis.mustHave.join(', ')}`,
     `Nice-to-have: ${analysis.niceToHave.join(', ')}`,
+    '',
+    '== JOB INTELLIGENCE ==',
     `Positioning: ${analysis.positioningStrategy}`,
+    analysis.risks.length > 0 ? `Risks:\n${risksText}` : null,
     '',
     '== CANDIDATE ACTIVITIES ==',
     activitiesText,
-  ].join('\n')
+  ].filter((p): p is string => p !== null).join('\n')
 
   try {
     const systemPrompt = await loadEvidenceScoringPrompt()

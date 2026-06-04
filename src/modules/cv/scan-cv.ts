@@ -3,10 +3,16 @@ import { completeStructured } from '@/modules/llm/client'
 import { loadCVScanPrompt, composeSystem } from '@/modules/llm/prompt-context'
 import type { CVDocumentContent } from './schema'
 
+const MustHaveCoverageItemSchema = z.object({
+  requirement: z.string(),
+  present: z.boolean(),
+})
+
 const RecruiterScanSchema = z.object({
   takeaways: z.array(z.string()),
   positioningMatch: z.boolean(),
   gaps: z.array(z.string()),
+  mustHaveCoverage: z.array(MustHaveCoverageItemSchema).optional(),
 })
 
 export type RecruiterScan = z.infer<typeof RecruiterScanSchema>
@@ -70,11 +76,15 @@ export async function scanCV(
   profileId: string,
   content: CVDocumentContent,
   positioningStrategy?: string,
+  mustHave?: string[],
 ): Promise<RecruiterScan | null> {
   const cvText = serializeCVForScan(content)
 
   const userMessage = [
     positioningStrategy ? `== POSITIONING STRATEGY ==\n${positioningStrategy}` : null,
+    mustHave && mustHave.length > 0
+      ? `== MUST-HAVE REQUIREMENTS ==\n${mustHave.map(r => `- ${r}`).join('\n')}`
+      : null,
     '== CV ==',
     cvText,
   ]
