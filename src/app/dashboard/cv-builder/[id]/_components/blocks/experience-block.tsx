@@ -9,9 +9,10 @@ import type { CVSection, ExperienceData } from '@/modules/cv/schema'
 type Props = {
   section: CVSection & { type: 'experience'; data: ExperienceData }
   onUpdate: (section: CVSection) => void
+  showHeading?: boolean
 }
 
-export function ExperienceBlock({ section, onUpdate }: Props) {
+export function ExperienceBlock({ section, onUpdate, showHeading = true }: Props) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(section.data)
   const { company, titles, location, duration, description, outcomes } = section.data
@@ -38,9 +39,11 @@ export function ExperienceBlock({ section, onUpdate }: Props) {
   if (!editing) {
     return (
       <div>
-        <div className="mb-2 border-b border-border pb-1">
-          <h2 className="cv-section-heading">Professional Experience</h2>
-        </div>
+        {showHeading && (
+          <div className="mb-2 border-b border-border pb-1">
+            <h2 className="cv-section-heading">Professional Experience</h2>
+          </div>
+        )}
         <div className="flex items-baseline justify-between">
           <p className="cv-item-title">{company}</p>
           <p className="cv-meta">{duration}</p>

@@ -44,6 +44,7 @@ export function CvEditor({ cv }: Props) {
   const [content, setContent] = useState<CVDocumentContent>(cv.content)
   const [isPending, startTransition] = useTransition()
   const [showConfirm, setShowConfirm] = useState(false)
+  const [showExport, setShowExport] = useState(false)
 
   const displayTitle = cv.jobTitle && cv.company
     ? `${cv.jobTitle} · ${cv.company}`
@@ -167,22 +168,30 @@ export function CvEditor({ cv }: Props) {
               }
               {isPending ? 'Generating…' : 'Regenerate'}
             </button>
-            <div className="relative group">
-              <button className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted">
+            <div className="relative">
+              <button
+                onClick={() => setShowExport(v => !v)}
+                className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted"
+              >
                 <Download className="size-3.5" />
                 Export
               </button>
-              <div className="absolute right-0 top-full z-10 hidden w-40 rounded-md border border-border bg-background py-1 shadow-md group-hover:block">
-                <button onClick={() => window.print()} className="block w-full px-3 py-1.5 text-left text-sm hover:bg-muted">
-                  Download PDF
-                </button>
-                <button onClick={() => downloadFile(toMarkdown(content), `${fileSlug}.md`, 'text/markdown')} className="block w-full px-3 py-1.5 text-left text-sm hover:bg-muted">
-                  Download Markdown
-                </button>
-                <button onClick={() => downloadFile(toText(content), `${fileSlug}.txt`, 'text/plain')} className="block w-full px-3 py-1.5 text-left text-sm hover:bg-muted">
-                  Download Text
-                </button>
-              </div>
+              {showExport && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setShowExport(false)} />
+                  <div className="absolute right-0 top-full z-20 w-40 rounded-md border border-border bg-background py-1 shadow-md">
+                    <button onClick={() => { window.print(); setShowExport(false) }} className="block w-full px-3 py-1.5 text-left text-sm hover:bg-muted">
+                      Download PDF
+                    </button>
+                    <button onClick={() => { downloadFile(toMarkdown(content), `${fileSlug}.md`, 'text/markdown'); setShowExport(false) }} className="block w-full px-3 py-1.5 text-left text-sm hover:bg-muted">
+                      Download Markdown
+                    </button>
+                    <button onClick={() => { downloadFile(toText(content), `${fileSlug}.txt`, 'text/plain'); setShowExport(false) }} className="block w-full px-3 py-1.5 text-left text-sm hover:bg-muted">
+                      Download Text
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
             <button disabled title="Coming soon" className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground opacity-50">
               <MessageSquare className="size-3.5" />
@@ -210,16 +219,20 @@ export function CvEditor({ cv }: Props) {
                   </p>
                 </div>
               ) : (
-                content.sections.map(section => (
-                  <CvBlock
-                    key={section.id}
-                    section={section}
-                    onToggleVisibility={() => handleToggleVisibility(section.id)}
-                    onCopy={() => handleCopySection(section)}
-                  >
-                    {renderBlock(section, handleUpdateSection)}
-                  </CvBlock>
-                ))
+                content.sections.map((section, index) => {
+                  const prevVisible = content.sections.slice(0, index).filter(s => s.visible).at(-1)
+                  const showHeading = prevVisible?.type !== section.type
+                  return (
+                    <CvBlock
+                      key={section.id}
+                      section={section}
+                      onToggleVisibility={() => handleToggleVisibility(section.id)}
+                      onCopy={() => handleCopySection(section)}
+                    >
+                      {renderBlock(section, handleUpdateSection, showHeading)}
+                    </CvBlock>
+                  )
+                })
               )}
             </div>
           </div>
@@ -230,17 +243,17 @@ export function CvEditor({ cv }: Props) {
   )
 }
 
-function renderBlock(section: CVSection, onUpdate: (s: CVSection) => void) {
+function renderBlock(section: CVSection, onUpdate: (s: CVSection) => void, showHeading = true) {
   switch (section.type) {
     case 'header': return <HeaderBlock section={section} onUpdate={onUpdate} />
-    case 'profile': return <ProfileBlock section={section} onUpdate={onUpdate} />
-    case 'competencies': return <CompetenciesBlock section={section} onUpdate={onUpdate} />
-    case 'capabilities': return <CapabilitiesBlock section={section} onUpdate={onUpdate} />
-    case 'experience': return <ExperienceBlock section={section} onUpdate={onUpdate} />
-    case 'education': return <EducationBlock section={section} onUpdate={onUpdate} />
-    case 'certification': return <CertificationBlock section={section} onUpdate={onUpdate} />
-    case 'skills': return <SkillsBlock section={section} onUpdate={onUpdate} />
-    case 'tools': return <ToolsBlock section={section} onUpdate={onUpdate} />
-    case 'languages': return <LanguagesBlock section={section} onUpdate={onUpdate} />
+    case 'profile': return <ProfileBlock section={section} onUpdate={onUpdate} showHeading={showHeading} />
+    case 'competencies': return <CompetenciesBlock section={section} onUpdate={onUpdate} showHeading={showHeading} />
+    case 'capabilities': return <CapabilitiesBlock section={section} onUpdate={onUpdate} showHeading={showHeading} />
+    case 'experience': return <ExperienceBlock section={section} onUpdate={onUpdate} showHeading={showHeading} />
+    case 'education': return <EducationBlock section={section} onUpdate={onUpdate} showHeading={showHeading} />
+    case 'certification': return <CertificationBlock section={section} onUpdate={onUpdate} showHeading={showHeading} />
+    case 'skills': return <SkillsBlock section={section} onUpdate={onUpdate} showHeading={showHeading} />
+    case 'tools': return <ToolsBlock section={section} onUpdate={onUpdate} showHeading={showHeading} />
+    case 'languages': return <LanguagesBlock section={section} onUpdate={onUpdate} showHeading={showHeading} />
   }
 }

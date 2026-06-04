@@ -12,6 +12,9 @@ import { parseJsonField } from '@/lib/utils'
 export type ProfileSnapshot = {
   name: string
   email: string | null
+  phone: string | null
+  website: string | null
+  linkedin: string | null
   location: string | null
   headline: string | null
 
@@ -92,6 +95,9 @@ export async function buildProfileSnapshot(profileId: string): Promise<ProfileSn
   return {
     name: row.name,
     email: row.email,
+    phone: row.phone,
+    website: row.website,
+    linkedin: row.linkedIn,
     location: row.location,
     headline: row.headline,
     experiences: row.experiences.map(e => ({
@@ -153,6 +159,8 @@ export function serializeProfileForLLM(snapshot: ProfileSnapshot): string {
   // Header
   lines.push(`# ${snapshot.name}`)
   if (snapshot.headline) lines.push(snapshot.headline)
+  const contactParts = [snapshot.email, snapshot.phone, snapshot.linkedin, snapshot.website].filter(Boolean)
+  if (contactParts.length > 0) lines.push(contactParts.join(' · '))
   if (snapshot.location) lines.push(`\n**Location:** ${snapshot.location}`)
 
   // Experience
