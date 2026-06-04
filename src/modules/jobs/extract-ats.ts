@@ -1,4 +1,4 @@
-import { td, decode, decodeEntities, CURRENCY_SYMBOLS, abbrevAmount, type ExtractedJob, type ExtractionResult } from './extract-utils'
+import { td, decode, decodeEntities, CURRENCY_SYMBOLS, abbrevAmount, type ExtractionResult } from './extract-utils'
 
 // ── Site-specific Greenhouse overrides ──────────────────────────────────────
 // Corporate SPAs that use Greenhouse but render client-side — we can't detect
