@@ -30,9 +30,10 @@ export async function GET(
       margin: { top: '14mm', right: '14mm', bottom: '14mm', left: '14mm' },
     })
 
-    const nameSlug = cv.profile.name.replace(/\s+/g, '-')
-    const roleSlug = cv.jobTitle ? `-${cv.jobTitle.replace(/\s+/g, '-')}` : ''
-    const companySlug = cv.company ? `_${cv.company.replace(/\s+/g, '-')}` : ''
+    const safe = (s: string) => s.replace(/[^A-Za-z0-9._-]+/g, '-')
+    const nameSlug = safe(cv.profile.name)
+    const roleSlug = cv.jobTitle ? `-${safe(cv.jobTitle)}` : ''
+    const companySlug = cv.company ? `_${safe(cv.company)}` : ''
     const filename = `${nameSlug}-CV${roleSlug}${companySlug}.pdf`
 
     return new NextResponse(Buffer.from(pdfBuffer), {
