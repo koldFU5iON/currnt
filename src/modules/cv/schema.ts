@@ -3,12 +3,12 @@ import { z } from "zod"
 export const HeaderDataSchema = z.object({
   name: z.string(),
   headline: z.string(),
-  subHeadline: z.string().optional(),
+  subHeadline: z.string().nullish(),
   contact: z.object({
-    email: z.string().optional(),
-    phone: z.string().optional(),
-    linkedin: z.string().optional(),
-    website: z.string().optional(),
+    email: z.string().nullish(),
+    phone: z.string().nullish(),
+    linkedin: z.string().nullish(),
+    website: z.string().nullish(),
   }),
 })
 
@@ -28,16 +28,16 @@ export const ExperienceDataSchema = z.object({
 export const EducationDataSchema = z.object({
   institution: z.string(),
   qualification: z.string(),
-  field: z.string().optional(),
+  field: z.string().nullish(),
   duration: z.string(),
-  grade: z.string().optional(),
+  grade: z.string().nullish(),
 })
 
 export const CertificationDataSchema = z.object({
   name: z.string(),
-  issuer: z.string().optional(),
-  date: z.string().optional(),
-  url: z.string().optional(),
+  issuer: z.string().nullish(),
+  date: z.string().nullish(),
+  url: z.string().nullish(),
 })
 
 export const SkillsDataSchema = z.object({ items: z.array(z.string()) })
