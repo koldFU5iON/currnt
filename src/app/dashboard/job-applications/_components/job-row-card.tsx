@@ -26,10 +26,11 @@ type JobRowCardProps = {
   onToggleSelect: (id: string) => void
   onEdit: (job: Job) => void
   onArchive: (id: string) => void
+  onGenerateCV: (id: string) => void
   hasLLMKey: boolean
 }
 
-export function JobRowCard({ job, selected, busyLabel, onToggleSelect, onEdit, onArchive, hasLLMKey }: JobRowCardProps) {
+export function JobRowCard({ job, selected, busyLabel, onToggleSelect, onEdit, onArchive, onGenerateCV, hasLLMKey }: JobRowCardProps) {
   const {
     id, jobNumber, title, company, countries, url,
     dateApplied, datePublished, lastUpdated, status, progress,
@@ -59,7 +60,7 @@ export function JobRowCard({ job, selected, busyLabel, onToggleSelect, onEdit, o
       )}
 
       {/* Row 1: checkbox + title + controls */}
-      <div className="flex items-start gap-2">
+      <div className="flex items-start gap-2 ">
         <Checkbox
           checked={selected}
           onCheckedChange={() => onToggleSelect(id)}
@@ -98,7 +99,7 @@ export function JobRowCard({ job, selected, busyLabel, onToggleSelect, onEdit, o
             {jobNumber && <span className="font-mono"> · {jobNumber}</span>}
           </p>
         </div>
-        <AppControls id={id} onEdit={() => onEdit(job)} onArchive={() => onArchive(id)} />
+        <AppControls id={id} onEdit={() => onEdit(job)} onArchive={() => onArchive(id)} onGenerateCV={() => onGenerateCV(id)} />
       </div>
 
       {/* Row 2: status + progress */}

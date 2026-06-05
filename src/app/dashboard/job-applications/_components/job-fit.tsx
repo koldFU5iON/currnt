@@ -94,13 +94,13 @@ export function JobFit({ jobId, jobFit, canAssess = true, hasLLMKey = true }: Jo
         title={title}
         aria-label={title}
         className={cn(
-          "inline-flex h-6 items-center gap-1.5 rounded-md px-2 text-xs text-primary/60 transition-colors",
+          "group/assess inline-flex h-6 items-center gap-1.5 rounded-md px-2 text-xs bg-primary text-primary-foreground transition-colors",
           disabled
             ? "cursor-not-allowed opacity-40"
             : "hover:bg-muted hover:text-foreground cursor-pointer",
         )}
       >
-        <Puzzle size={12} className={disabled ? undefined : "text-primary"} />
+        <Puzzle size={12} className={disabled ? undefined : "text-primary-foreground group-hover/assess:text-primary"} />
         assess
       </button>
     )

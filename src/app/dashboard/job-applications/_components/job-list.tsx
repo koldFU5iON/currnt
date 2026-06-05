@@ -1,6 +1,7 @@
 'use client'
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { Archive, Plus, SearchIcon, X } from "lucide-react"
 import {
@@ -46,6 +47,7 @@ const OPEN_PRIORITY: ApplicationStatusType[] = [
 const CLOSED_SET: ReadonlySet<string> = new Set(ClosedStatuses)
 
 export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }) {
+  const router = useRouter()
   const [query, setQuery] = useState("")
   const [viewMode, setViewMode] = useState<ViewMode>('grouped')
   const [filter, setFilter] = useState<FilterState>(DEFAULT_FILTER)
@@ -226,6 +228,11 @@ export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }
     })
   }
 
+  function handleGenerateCV(id: string) {
+    markBusy([id], 'Generating CV…')
+    router.push(`/dashboard/cv-builder/new?jobId=${id}`)
+  }
+
   async function handleSingleArchive(id: string) {
     markBusy([id], 'Archiving…')
     try {
@@ -293,6 +300,7 @@ export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }
                 onToggleSelect={toggleSelect}
                 onEdit={setEditing}
                 onArchive={handleSingleArchive}
+                onGenerateCV={handleGenerateCV}
                 hasLLMKey={hasLLMKey}
                 isMobile
               />
@@ -318,6 +326,7 @@ export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }
                 onToggleSelect={toggleSelect}
                 onEdit={setEditing}
                 onArchive={handleSingleArchive}
+                onGenerateCV={handleGenerateCV}
                 hasLLMKey={hasLLMKey}
               />
             ))}

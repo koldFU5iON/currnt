@@ -19,6 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { FreshnessChip } from "./freshness-chip"
 import { PostingAge } from "./posting-age"
+import clsx from "clsx"
 
 type JobRowProps = {
   job: Job
@@ -27,10 +28,11 @@ type JobRowProps = {
   onToggleSelect: (id: string) => void
   onEdit: (job: Job) => void
   onArchive: (id: string) => void
+  onGenerateCV: (id: string) => void
   hasLLMKey: boolean
 }
 
-export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArchive, hasLLMKey }: JobRowProps) {
+export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArchive, onGenerateCV, hasLLMKey }: JobRowProps) {
   const {
     id, jobNumber, title, company, countries, url,
     dateApplied, datePublished, lastUpdated, status, progress,
@@ -40,9 +42,29 @@ export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArc
   const showSourceBadge = applicationSource !== ApplicationSource.Cold
   const busy = Boolean(busyLabel)
 
+  const statusTheme = {
+    applied: "var(--status-applied)",
+    interviewing: "var(--status-interviewing)",
+    "not started": "var(--status-not-started)",
+    "in-progress": "var(--status-in-progress)",
+    accepted: "var(--status-accepted)",
+    rejected: "var(--status-rejected)",
+  }[status] ?? "var(--status-not-started)"
+
   return (
     <div
-      className="group relative col-span-full grid grid-cols-subgrid items-center border-b border-border/30 last:border-b-0 transition-colors duration-150 hover:bg-muted/50 data-[selected=true]:bg-muted/40 data-[busy=true]:hover:bg-transparent"
+      style={{
+        "--status-color": statusTheme,
+      } as React.CSSProperties}
+      className={
+        clsx(
+          "group relative col-span-full grid grid-cols-subgrid items-center",
+          "rounded-l-md border-b border-border/30 last:border-b-0",
+          "transition-colors duration-150",
+          "hover:bg-linear-30 hover:from-(--status-color) hover:to-5% hover:to-muted/50 data-[selected=true]:bg-muted/40 data-[busy=true]:hover:bg-transparent",
+          "border-l-2",
+          "border-l-(--status-color)"
+        )}
       data-selected={selected}
       data-busy={busy}
       aria-busy={busy || undefined}
@@ -57,14 +79,14 @@ export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArc
       )}
 
       {/* Checkbox */}
-      <div className="flex items-center justify-center px-2 py-2">
+      <div className="flex items-center justify-center pl-3 pr-2 py-2">
         <Checkbox
           checked={selected}
           onCheckedChange={() => onToggleSelect(id)}
           aria-label={`Select ${title}`}
+          className="border-primary"
         />
       </div>
-
       {/* Title / company */}
       <div className="min-w-0 px-3 py-2">
         <div className="flex min-w-0 items-center gap-1.5">
@@ -159,6 +181,7 @@ export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArc
           cvDocumentId={cvDocumentId}
           onEdit={() => onEdit(job)}
           onArchive={() => onArchive(id)}
+          onGenerateCV={() => onGenerateCV(id)}
         />
       </div>
     </div>

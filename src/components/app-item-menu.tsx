@@ -25,9 +25,10 @@ type AppControlsProps = {
   cvDocumentId?: string | null
   onEdit?: () => void
   onArchive?: () => void
+  onGenerateCV?: () => void
 }
 
-export function AppControls({ id, cvDocumentId, onEdit, onArchive }: AppControlsProps) {
+export function AppControls({ id, cvDocumentId, onEdit, onArchive, onGenerateCV }: AppControlsProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -62,7 +63,8 @@ export function AppControls({ id, cvDocumentId, onEdit, onArchive }: AppControls
             <AppControlsItem
               Icon={FileText}
               label="Generate CV"
-              action={`/dashboard/cv-builder/new?jobId=${id}`}
+              onSelect={onGenerateCV}
+              action={onGenerateCV ? undefined : `/dashboard/cv-builder/new?jobId=${id}`}
               shortcut="⌘D"
             />
           )}
