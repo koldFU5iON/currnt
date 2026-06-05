@@ -83,6 +83,13 @@
   --sidebar-accent-foreground: #17181B;
   --sidebar-border: #E6E6E3;
   --sidebar-ring: #207580;
+  /* status colors */
+  --status-not-started: #64748b;
+  --status-in-progress: #8b5cf6;
+  --status-applied: #3b82f6;
+  --status-interviewing: #f59e0b;
+  --status-accepted: #22c55e;
+  --status-rejected: #ef4444;
 }
 
 .dark {
@@ -118,6 +125,13 @@
   --sidebar-accent-foreground: #ECEDEE;
   --sidebar-border: #26282C;
   --sidebar-ring: #4FB3BF;
+  /* status colors */
+  --status-not-started: #64748b;
+  --status-in-progress: #8b5cf6;
+  --status-applied: #3b82f6;
+  --status-interviewing: #f59e0b;
+  --status-accepted: #22c55e;
+  --status-rejected: #ef4444;
 }
 
 @layer base {
