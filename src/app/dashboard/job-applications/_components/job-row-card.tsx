@@ -40,11 +40,23 @@ export function JobRowCard({ job, selected, busyLabel, onToggleSelect, onEdit, o
   const showSourceBadge = applicationSource !== ApplicationSource.Cold
   const busy = Boolean(busyLabel)
 
+  const statusTheme = {
+    applied: "var(--status-applied)",
+    interviewing: "var(--status-interviewing)",
+    "not started": "var(--status-not-started)",
+    "in-progress": "var(--status-in-progress)",
+    accepted: "var(--status-accepted)",
+    rejected: "var(--status-rejected)",
+  }[status] ?? "var(--status-not-started)"
+
   return (
     <div
+      style={{ "--status-color": statusTheme } as React.CSSProperties}
       className={cn(
         "relative border-b border-border/30 px-3 py-3 last:border-b-0 transition-colors",
-        selected ? "bg-muted/40" : "hover:bg-muted/30",
+        "rounded-l-sm border-l-2 border-l-(--status-color)",
+        "hover:bg-linear-30 hover:from-(--status-color) hover:to-5% hover:to-muted/50",
+        selected ? "bg-muted/40" : "",
         busy && "hover:bg-transparent",
       )}
       data-busy={busy}
