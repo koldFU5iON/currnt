@@ -1,4 +1,4 @@
-import { CreateJobForm } from "./_components/create-job-form"
+import { redirect } from 'next/navigation'
 
 export default async function Page({
   searchParams,
@@ -6,12 +6,7 @@ export default async function Page({
   searchParams: Promise<{ url?: string }>
 }) {
   const { url } = await searchParams
-  return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Create New Job Application</h1>
-      <div className="rounded-2xl bg-muted border p-6 max-w-2xl">
-        <CreateJobForm initialUrl={url} />
-      </div>
-    </div>
-  )
+  const params = new URLSearchParams({ create: '1' })
+  if (url) params.set('url', url)
+  redirect(`/dashboard/job-applications?${params.toString()}`)
 }
