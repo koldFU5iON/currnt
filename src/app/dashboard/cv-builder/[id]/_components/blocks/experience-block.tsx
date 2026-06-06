@@ -48,7 +48,7 @@ export function ExperienceBlock({ section, onUpdate, showHeading = true }: Props
           <p className="cv-item-title">{company}</p>
           <p className="cv-meta">{duration}</p>
         </div>
-        <p className="cv-meta italic">{titles.join(' → ')}</p>
+        <p className="cv-meta italic">{[...titles].reverse().join(' → ')}</p>
         <p className="cv-meta mb-1">{location}</p>
         <div className="prose prose-sm max-w-none">
           <ReactMarkdown>{description}</ReactMarkdown>
