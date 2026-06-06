@@ -62,6 +62,13 @@ export async function createAndGenerateCV({
       where: { id: doc.id },
       data: { generatedContent: JSON.stringify(content), status: 'draft' },
     })
+    if (jobApplicationId) {
+      await prisma.jobApplication.updateMany({
+        where: { id: jobApplicationId, profileId: profile.id, status: 'not started' },
+        data: { status: 'in-progress' },
+      })
+      revalidatePath('/dashboard/job-applications')
+    }
   } catch (err) {
     await prisma.cVDocument.update({
       where: { id: doc.id },

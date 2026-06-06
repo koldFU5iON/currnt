@@ -179,13 +179,23 @@ export function CreateJobForm({ initialUrl }: { initialUrl?: string }) {
         {/* Sticky on mobile so the submit button stays reachable while scrolling the long textarea */}
         <div className="sticky bottom-0 -mx-6 -mb-6 px-6 pb-6 pt-3 bg-muted/95 backdrop-blur-sm border-t border-border/40 rounded-b-2xl md:static md:mx-0 md:mb-0 md:px-0 md:pt-0 md:pb-0 md:bg-transparent md:backdrop-blur-none md:border-0 md:rounded-none">
           <DuplicateWarning matches={duplicates} />
-          <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">
-            {form.formState.isSubmitting
-              ? 'Creating…'
-              : duplicates.length > 0 && acknowledgedDupes
-                ? 'Create anyway'
-                : 'Create Job Application'}
-          </Button>
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={() => router.push('/dashboard/job-applications')}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={form.formState.isSubmitting} className="flex-1">
+              {form.formState.isSubmitting
+                ? 'Creating…'
+                : duplicates.length > 0 && acknowledgedDupes
+                  ? 'Create anyway'
+                  : 'Create Job Application'}
+            </Button>
+          </div>
         </div>
 
       </form>
