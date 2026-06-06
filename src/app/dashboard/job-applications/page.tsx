@@ -6,10 +6,15 @@ import { ContentContainer } from "@/app/components/ContentContainer"
 import { requireProfile } from "@/lib/session"
 import { getLLMConfigStatus } from "@/modules/llm/client"
 
-export default async function Page() {
-  const [jobs, { profile }] = await Promise.all([
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ create?: string; url?: string }>
+}) {
+  const [jobs, { profile }, { create, url }] = await Promise.all([
     getActiveJobs(),
     requireProfile(),
+    searchParams,
   ])
   const { configured: hasLLMKey } = await getLLMConfigStatus(profile.id)
 
@@ -21,7 +26,12 @@ export default async function Page() {
           <TabsTrigger value="archived">Archived</TabsTrigger>
         </TabsList>
         <TabsContent value="active">
-          <JobList jobs={jobs} hasLLMKey={hasLLMKey} />
+          <JobList
+            jobs={jobs}
+            hasLLMKey={hasLLMKey}
+            openCreate={create === '1'}
+            initialCreateUrl={url}
+          />
         </TabsContent>
         <TabsContent value="archived">
           <ArchivedTab />

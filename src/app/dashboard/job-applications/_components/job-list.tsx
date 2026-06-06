@@ -1,6 +1,5 @@
 'use client'
 
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { Archive, Plus, SearchIcon, X } from "lucide-react"
@@ -20,7 +19,7 @@ import {
   type FilterState,
   type SortState,
 } from './filter-bar'
-import { Button, buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
@@ -28,6 +27,7 @@ import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
 import { JobGroup } from "./job-group"
 import { EditJobDialog } from "./edit-job-dialog"
+import { CreateJobSheet } from "./create-job-sheet"
 import { archiveJobApplication, bulkArchiveJobApplications } from "@/modules/jobs/mutations"
 
 type ViewMode = 'grouped' | 'all'
@@ -46,7 +46,12 @@ const OPEN_PRIORITY: ApplicationStatusType[] = [
 
 const CLOSED_SET: ReadonlySet<string> = new Set(ClosedStatuses)
 
-export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }) {
+export function JobList({ jobs, hasLLMKey, openCreate, initialCreateUrl }: {
+  jobs: Job[]
+  hasLLMKey: boolean
+  openCreate?: boolean
+  initialCreateUrl?: string
+}) {
   const router = useRouter()
   const [query, setQuery] = useState("")
   const [viewMode, setViewMode] = useState<ViewMode>('grouped')
@@ -54,9 +59,22 @@ export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }
   const [sort, setSort] = useState<SortState>(DEFAULT_SORT)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [editing, setEditing] = useState<Job | null>(null)
+  const [creating, setCreating] = useState(openCreate ?? false)
   // Per-row in-flight label so the user sees "Archiving…" the instant they click,
   // not after the server roundtrip + revalidate finishes.
   const [busyRows, setBusyRows] = useState<Map<string, string>>(new Map())
+
+  // ⌘J / Ctrl+J opens the create sheet from anywhere on the page.
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key.toLowerCase() === 'j' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        setCreating(true)
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [])
 
   // Hydrate view-mode preference once on mount. Doing this in an effect (rather
   // than as a lazy initial state) avoids an SSR/CSR hydration mismatch — server
@@ -281,6 +299,7 @@ export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }
         sort={sort}
         onFilterChange={changeFilter}
         onSortChange={changeSort}
+        onCreateOpen={() => setCreating(true)}
       />
       <Separator className="my-3" />
 
@@ -347,6 +366,12 @@ export function JobList({ jobs, hasLLMKey }: { jobs: Job[]; hasLLMKey: boolean }
           onOpenChange={(o) => { if (!o) setEditing(null) }}
         />
       )}
+
+      <CreateJobSheet
+        open={creating}
+        onOpenChange={setCreating}
+        initialUrl={initialCreateUrl}
+      />
     </div>
   )
 }
@@ -365,6 +390,7 @@ type ToolBarProps = {
   sort: SortState
   onFilterChange: (f: FilterState) => void
   onSortChange: (s: SortState) => void
+  onCreateOpen: () => void
 }
 
 function ToolBar({
@@ -381,6 +407,7 @@ function ToolBar({
   sort,
   onFilterChange,
   onSortChange,
+  onCreateOpen,
 }: ToolBarProps) {
   return (
     <div className="flex flex-col space-y-1">
@@ -412,13 +439,13 @@ function ToolBar({
 
         <div className="flex-1" />
 
-        <Link
-          href="/dashboard/job-applications/create"
-          className={cn(buttonVariants(), "gap-1.5")}
-        >
+        <Button size="sm" className="gap-1.5" onClick={onCreateOpen}>
           <Plus size={16} />
           Add Job
-        </Link>
+          <kbd className="ml-0.5 hidden items-center gap-0.5 rounded border bg-background/20 px-1.5 font-mono text-[10px] font-medium sm:inline-flex">
+            <span className="text-xs">⌘</span>J
+          </kbd>
+        </Button>
       </div>
       <div className="text-xs text-muted-foreground">
         {selectedCount > 0

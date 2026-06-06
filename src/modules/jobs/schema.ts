@@ -1,5 +1,5 @@
 import * as z from 'zod'
-import { APPLICATION_SOURCES } from '@/app/types/job-application'
+import { APPLICATION_SOURCES, APPLICATION_SOURCE_LABEL } from '@/app/types/job-application'
 
 export const createJobSchema = z.object({
   title: z.string().min(1, 'Job title is required'),
@@ -55,3 +55,8 @@ export const JobAnalysisSchema = z.object({
 
 export type JobAnalysis = z.infer<typeof JobAnalysisSchema>
 export type JobAnalysisRisk = z.infer<typeof JobAnalysisRiskSchema>
+
+export const SOURCE_OPTIONS = APPLICATION_SOURCES.map(value => ({
+  value,
+  label: APPLICATION_SOURCE_LABEL[value],
+}))
