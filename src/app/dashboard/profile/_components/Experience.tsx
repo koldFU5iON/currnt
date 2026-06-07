@@ -1,16 +1,25 @@
 'use client'
 
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState, type FormEvent } from "react"
 import {
-  Card, CardHeader, CardContent, CardDescription, CardFooter, CardTitle
+  Card, CardHeader, CardContent, CardDescription, CardTitle
 } from "@/components/ui/card"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader,
   DialogTitle, DialogFooter, DialogClose
 } from "@/components/ui/dialog"
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Field, FieldGroup } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -19,7 +28,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import { Calendar, ListChecks, MapPin, Pencil, Plus, Trash2, X } from "lucide-react"
+import {
+  Calendar, ListChecks, MapPin, MoreHorizontal,
+  Pencil, Plus, Trash2, X
+} from "lucide-react"
 import { ExperienceWithActivities, RoleActivityKind } from "@/app/types/profile"
 import { H } from "@/app/components/style/Style"
 import clsx from "clsx"
@@ -39,14 +51,15 @@ export function ExperienceBlock({ exp }: { exp: ExperienceWithActivities[] }) {
   const [experiences, setExperiences] = useState(exp)
   const [open, setOpen] = useState(false)
   const [activitiesFor, setActivitiesFor] = useState<ExperienceWithActivities | null>(null)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  const deleteTarget = experiences.find(e => e.id === deleteConfirmId)
 
   const handleDelete = async (id: string) => {
     const prev = experiences
     setExperiences(e => e.filter(e => e.id !== id))
+    setDeleteConfirmId(null)
     try { await deleteExperience(id) } catch { setExperiences(prev) }
   }
-
-  const openAdd = () => setOpen(true)
 
   const handleCreate = async (data: Parameters<typeof createExperience>[0]) => {
     setOpen(false)
@@ -60,7 +73,6 @@ export function ExperienceBlock({ exp }: { exp: ExperienceWithActivities[] }) {
     setExperiences(e => e.map(x =>
       x.id === experienceId ? { ...x, activities } : x
     ))
-    // Keep activitiesFor in sync so the dialog reflects latest state
     setActivitiesFor(prev => prev?.id === experienceId ? { ...prev, activities } : prev)
   }
 
@@ -68,103 +80,125 @@ export function ExperienceBlock({ exp }: { exp: ExperienceWithActivities[] }) {
     <div>
       <div className="flex items-center justify-between mb-4">
         <H size={2}>Experience</H>
-        <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={openAdd}>
+        <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => setOpen(true)}>
           <Plus size={12} /> Add
         </Button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 bg-background p-4">
-        {experiences.map(experience => (
-          <Card className="bg-accent group" key={experience.id}>
-            <CardHeader className="border-b border-primary/80">
-              <CardTitle>
-                <H size={3}>{experience.company}</H>
-              </CardTitle>
-              <CardDescription className="w-full">
-                {experience.location && (
-                  <div className="flex text-sm items-center gap-1">
-                    <MapPin size={12} className="text-red-500 shrink-0" />
-                    {experience.location}
-                    {experience.remote && (
-                      <span className="ml-1 text-xs text-muted-foreground">(Remote)</span>
-                    )}
+        {experiences.map(experience => {
+          const responsibilities = experience.activities.filter(a => a.kind === RoleActivityKind.Responsibility)
+          const achievements = experience.activities.filter(a => a.kind === RoleActivityKind.Achievement)
+          const firstResp = responsibilities[0]
+          const firstAchv = achievements[0]
+
+          return (
+            <Card className="bg-accent" key={experience.id}>
+              <CardHeader className="border-b border-primary/80">
+                <div className="flex justify-between items-start gap-2">
+                  <div className="min-w-0">
+                    <CardTitle>
+                      <H size={3}>{experience.company}</H>
+                    </CardTitle>
+                    <CardDescription className="w-full">
+                      {experience.location && (
+                        <div className="flex text-sm items-center gap-1">
+                          <MapPin size={12} className="text-red-500 shrink-0" />
+                          {experience.location}
+                          {experience.remote && (
+                            <span className="ml-1 text-xs text-muted-foreground">(Remote)</span>
+                          )}
+                        </div>
+                      )}
+                      <H size={4}>{experience.role}</H>
+                      <div className="flex items-center mt-1 gap-1 text-xs">
+                        <Calendar size={12} />
+                        <span>{experience.startDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}</span>
+                        <span>–</span>
+                        <span>
+                          {experience.endDate
+                            ? experience.endDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+                            : 'Present'}
+                        </span>
+                      </div>
+                    </CardDescription>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0 text-muted-foreground"
+                          aria-label={`Actions for ${experience.company}`}
+                        >
+                          <MoreHorizontal size={16} />
+                        </Button>
+                      }
+                    />
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => router.push(`/dashboard/profile/experience/${experience.id}`)}>
+                        <Pencil size={13} className="mr-2" /> Edit details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setActivitiesFor(experience)}>
+                        <ListChecks size={13} className="mr-2" /> Manage activities
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => setDeleteConfirmId(experience.id)}
+                      >
+                        <Trash2 size={13} className="mr-2" /> Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {experience.activities.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No activities yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-1.5">
+                      {responsibilities.length > 0 && (
+                        <span className="inline-block font-semibold text-xs py-0.5 px-2 rounded-sm bg-green-400">
+                          {responsibilities.length} {responsibilities.length === 1 ? 'Responsibility' : 'Responsibilities'}
+                        </span>
+                      )}
+                      {achievements.length > 0 && (
+                        <span className="inline-block font-semibold text-xs py-0.5 px-2 rounded-sm bg-amber-400">
+                          {achievements.length} {achievements.length === 1 ? 'Achievement' : 'Achievements'}
+                        </span>
+                      )}
+                    </div>
+                    <ul className="space-y-1">
+                      {firstResp && (
+                        <li className="text-xs text-muted-foreground pl-2 border-l-2 border-green-400 line-clamp-2">
+                          {firstResp.description}
+                        </li>
+                      )}
+                      {firstAchv && (
+                        <li className="text-xs text-muted-foreground pl-2 border-l-2 border-amber-400 line-clamp-2">
+                          {firstAchv.description}
+                        </li>
+                      )}
+                    </ul>
                   </div>
                 )}
-                <H size={4}>{experience.role}</H>
-                <div className="flex items-center mt-1 gap-1 text-xs">
-                  <Calendar size={12} />
-                  <span>{experience.startDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}</span>
-                  <span>–</span>
-                  <span>
-                    {experience.endDate
-                      ? experience.endDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
-                      : 'Present'}
-                  </span>
-                </div>
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
-                {experience.summary && (
-                  <p className="text-xs text-muted-foreground whitespace-pre-line">
-                    {experience.summary}
-                  </p>
-                )}
-                {(['responsibility', 'achievement'] as const).map(kind => {
-                  const items = experience.activities.filter(a => a.kind === kind)
-                  if (items.length === 0) return null
-                  return (
-                    <div key={kind}>
-                      <div className={clsx(
-                        "inline-block font-semibold text-xs py-0.5 px-2 rounded-sm mb-1",
-                        kind === 'responsibility' ? 'bg-green-400' : 'bg-amber-400'
-                      )}>
-                        {kind === 'responsibility' ? 'Responsibilities' : 'Achievements'}
-                      </div>
-                      <ul className="space-y-1">
-                        {items.map(activity => (
-                          <li key={activity.id} className="text-xs text-muted-foreground pl-2 border-l-2 border-border">
-                            {activity.description}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )
-                })}
-              </div>
-            </CardContent>
-            <CardFooter className="justify-end gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
-              <Button
-                variant="ghost" size="sm" className="gap-1 text-xs"
-                onClick={() => setActivitiesFor(experience)}
-                aria-label={`Manage activities for ${experience.company}`}
-              >
-                <ListChecks size={13} /> Activities
-              </Button>
-              <Link
-                href={`/dashboard/profile/experience/${experience.id}`}
-                className={buttonVariants({ variant: 'ghost', size: 'sm', className: 'gap-1 text-xs' })}
-                aria-label={`Edit ${experience.company}`}
-              >
-                <Pencil size={13} /> Edit
-              </Link>
-              <Button
-                variant="ghost" size="icon" className="h-9 w-9 hover:text-destructive"
-                onClick={() => handleDelete(experience.id)}
-                aria-label={`Delete ${experience.company}`}
-              >
-                <Trash2 size={13} />
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
-        <ExperienceCard onAdd={openAdd} />
+              </CardContent>
+            </Card>
+          )
+        })}
+        <ExperienceCard onAdd={() => setOpen(true)} />
       </div>
 
-      <ExperienceDialog
-        open={open}
-        onOpenChange={setOpen}
-        onSave={handleCreate}
-      />
+      {open && (
+        <ExperienceDialog
+          open={open}
+          onOpenChange={setOpen}
+          onSave={handleCreate}
+        />
+      )}
+
       {activitiesFor && (
         <ActivityManageDialog
           open={!!activitiesFor}
@@ -173,6 +207,26 @@ export function ExperienceBlock({ exp }: { exp: ExperienceWithActivities[] }) {
           onActivitiesChange={handleActivitiesChange}
         />
       )}
+
+      <AlertDialog open={!!deleteConfirmId} onOpenChange={(o) => { if (!o) setDeleteConfirmId(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {deleteTarget?.company ?? 'this role'}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove this role and all its activities.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (deleteConfirmId) handleDelete(deleteConfirmId) }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
@@ -208,6 +262,8 @@ function ExperienceDialog({
   onOpenChange: (o: boolean) => void
   onSave: (data: Parameters<typeof createExperience>[0]) => void
 }) {
+  const [remote, setRemote] = useState(false)
+
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
@@ -216,7 +272,7 @@ function ExperienceDialog({
       company: fd.get('company') as string,
       role: fd.get('role') as string,
       location: (fd.get('location') as string) || undefined,
-      remote: fd.get('remote') !== null,
+      remote,
       startDate: new Date(fd.get('startDate') as string),
       endDate: endDateStr ? new Date(endDateStr) : undefined,
       summary: '',
@@ -251,9 +307,10 @@ function ExperienceDialog({
               </Field>
               <Field>
                 <div className="flex items-center gap-2 mt-6">
-                  <input
-                    id="exp-remote" name="remote" type="checkbox"
-                    className="h-4 w-4 rounded border-border accent-primary"
+                  <Checkbox
+                    id="exp-remote"
+                    checked={remote}
+                    onCheckedChange={(checked) => setRemote(!!checked)}
                   />
                   <Label htmlFor="exp-remote">Remote position</Label>
                 </div>
@@ -382,11 +439,11 @@ function ActivityManageDialog({
                           <p className="text-xs text-muted-foreground mt-0.5">↳ {a.impact}</p>
                         )}
                       </div>
-                      <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity shrink-0">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditForm(a)} aria-label="Edit activity">
+                      <div className="flex gap-0.5 shrink-0">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditForm(a)} aria-label="Edit activity">
                           <Pencil size={11} />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive" onClick={() => handleDelete(a.id)} aria-label="Delete activity">
+                        <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={() => handleDelete(a.id)} aria-label="Delete activity">
                           <Trash2 size={11} />
                         </Button>
                       </div>
