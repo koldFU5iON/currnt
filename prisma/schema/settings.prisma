@@ -9,6 +9,8 @@ model UserSettings {
   llmModel              String    @default("claude-sonnet-4-5-20251001")
   llmApiKey             String?
   llmBaseUrl            String?
+  /// Cached model list from the provider. Shape: { id: string; name: string }[]
+  availableModels       Json?
   defaultTemplateId     String?
   theme                 String    @default("system")
   exportFormat          String    @default("pdf")
