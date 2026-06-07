@@ -1,9 +1,8 @@
 import Link from 'next/link'
 import { requireProfile } from '@/lib/session'
 import { listCoverLetters } from '@/modules/cover-letters/queries'
-import { daysAgo, formatRelative } from '@/lib/utils'
+import { daysAgo, formatRelative, cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 
 export default async function CoverLettersPage() {
   const { profile } = await requireProfile()
@@ -16,7 +15,7 @@ export default async function CoverLettersPage() {
           <h1 className="text-xl font-semibold">Cover Letters</h1>
           {letters.length > 0 && (
             <p className="mt-0.5 text-sm text-muted-foreground">
-              {letters.length} {letters.length === 1 ? 'letter' : 'letters'}
+              {letters.length} {letters.length === 1 ? 'draft' : 'drafts'}
             </p>
           )}
         </div>
@@ -42,7 +41,7 @@ export default async function CoverLettersPage() {
         <>
           <div className="divide-y divide-border/50 rounded-md border">
             {letters.map(letter => {
-              const snippet = letter.content.split('\n').find(l => l.trim()) ?? ''
+              const snippet = (letter.content ?? '').split('\n').find(line => line.trim()) ?? ''
               const days = daysAgo(letter.updatedAt)
               return (
                 <Link
