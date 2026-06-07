@@ -31,7 +31,7 @@ type EditJobDialogProps = {
 function valuesFromJob(job: Job): z.infer<typeof updateJobSchema> {
   return {
     title: job.title,
-    company: job.company,
+    company: job.company ?? '',
     url: job.url ?? '',
     location: job.countries.join(', '),
     jobNumber: job.jobNumber ?? '',
@@ -39,6 +39,8 @@ function valuesFromJob(job: Job): z.infer<typeof updateJobSchema> {
     datePublished: job.datePublished ?? undefined,
     applicationSource: job.applicationSource,
     salaryBand: job.salaryBand ?? '',
+    isRecruitmentAgency: job.isRecruitmentAgency ?? false,
+    recruiterName: job.recruiterName ?? '',
   }
 }
 

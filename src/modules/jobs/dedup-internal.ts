@@ -7,7 +7,7 @@ import { prisma } from '@/lib/db'
 export type DuplicateMatch = {
   id: string
   title: string
-  company: string
+  company: string | null
   jobNumber: string | null
   status: string
   archivedAt: Date | null
@@ -27,7 +27,7 @@ export async function findPotentialDuplicatesForProfile(
   input: {
     jobNumber?: string
     title: string
-    company: string
+    company?: string | null
   },
 ): Promise<DuplicateMatch[]> {
   const SELECT = {
@@ -49,7 +49,7 @@ export async function findPotentialDuplicatesForProfile(
   }
 
   const title = input.title.trim()
-  const company = input.company.trim()
+  const company = input.company?.trim()
   if (!title || !company) return []
 
   return prisma.jobApplication.findMany({

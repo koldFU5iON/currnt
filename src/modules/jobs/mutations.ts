@@ -50,6 +50,7 @@ export async function createJobApplication(data: z.infer<typeof createJobSchema>
   return prisma.jobApplication.create({
     data: {
       ...rest,
+      company: rest.company || null,
       url: url || undefined,
       countries,
       profileId: profile.id,
@@ -124,7 +125,7 @@ export async function updateJobApplication(
   const { profile } = await requireProfile()
   const validated = updateJobSchema.parse(data)
 
-  const { location, url, salaryBand, jobDescription, ...rest } = validated
+  const { location, url, salaryBand, jobDescription, recruiterName, ...rest } = validated
   const payload: Record<string, unknown> = { ...rest }
   if (url !== undefined) payload.url = url || null
   if (location !== undefined) {
@@ -134,6 +135,7 @@ export async function updateJobApplication(
   }
   if (salaryBand !== undefined) payload.salaryBand = salaryBand || null
   if (jobDescription !== undefined) payload.jobDescription = jobDescription
+  if (recruiterName !== undefined) payload.recruiterName = recruiterName || null
 
   // Check for stale fit/analysis data before updating
   let staleFitData = false

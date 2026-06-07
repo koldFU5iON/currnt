@@ -131,7 +131,7 @@ export function JobList({ jobs, hasLLMKey, openCreate, initialCreateUrl }: {
     let result = q
       ? jobs.filter(j =>
           j.title.toLowerCase().includes(q) ||
-          j.company.toLowerCase().includes(q) ||
+          (j.company ?? '').toLowerCase().includes(q) ||
           j.countries.join(' ').toLowerCase().includes(q) ||
           (j.notes ?? '').toLowerCase().includes(q) ||
           APPLICATION_STATUS_LABEL[j.status].toLowerCase().includes(q)
@@ -173,7 +173,7 @@ export function JobList({ jobs, hasLLMKey, openCreate, initialCreateUrl }: {
           break
         }
         case 'company':
-          cmp = a.company.localeCompare(b.company)
+          cmp = (a.company ?? '').localeCompare(b.company ?? '')
           break
         case 'fitRating':
           cmp = (a.jobFit?.rating ?? -1) - (b.jobFit?.rating ?? -1)

@@ -1,9 +1,11 @@
 'use client'
 
-import { Controller, useFormContext } from 'react-hook-form'
+import { Controller, useFormContext, useWatch } from 'react-hook-form'
 import { Loader2, RefreshCw, Sparkles, SquareArrowOutUpRight } from 'lucide-react'
 import { Field, FieldLabel, FieldError } from '@/components/ui/field'
 import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from '@/components/ui/input-group'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
 import { FormField } from '../create/_components/form-field'
 import { SOURCE_OPTIONS } from '@/modules/jobs/schema'
 import { cn } from '@/lib/utils'
@@ -22,6 +24,7 @@ export function JobFormFields({
   showOpenLink = false,
 }: JobFormFieldsProps) {
   const { control, watch } = useFormContext()
+  const isRecruitmentAgency = useWatch({ control, name: 'isRecruitmentAgency' })
   const urlValue = watch('url')
 
   return (
@@ -78,8 +81,34 @@ export function JobFormFields({
 
       <div className="grid grid-cols-2 gap-4">
         <FormField name="title" label="Job Title" placeholder="e.g. Senior Product Manager" required />
-        <FormField name="company" label="Company" placeholder="e.g. Google" required />
+        <FormField
+          name="company"
+          label={isRecruitmentAgency ? 'Company (if known)' : 'Company'}
+          placeholder={isRecruitmentAgency ? 'e.g. Google (optional)' : 'e.g. Google'}
+          required={!isRecruitmentAgency}
+        />
       </div>
+
+      <Controller
+        name="isRecruitmentAgency"
+        control={control}
+        render={({ field }) => (
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="isRecruitmentAgency"
+              checked={!!field.value}
+              onCheckedChange={field.onChange}
+            />
+            <Label htmlFor="isRecruitmentAgency" className="text-sm font-normal cursor-pointer">
+              Via recruitment agency
+            </Label>
+          </div>
+        )}
+      />
+
+      {isRecruitmentAgency && (
+        <FormField name="recruiterName" label="Recruiter / Agency Name" placeholder="e.g. Hays, Michael Page…" />
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <FormField name="location" label="Location" placeholder="e.g. London, UK or Remote" />

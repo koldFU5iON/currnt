@@ -159,7 +159,7 @@ export function FeedbackDrawer({ open, onOpenChange }: Props) {
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={handleOpenChange} repositionInputs={false}>
-        <DrawerContent>
+        <DrawerContent className="max-h-[90vh] flex flex-col overflow-hidden">
           <DrawerHeader>
             <DrawerTitle>Report an issue</DrawerTitle>
             <DrawerDescription>Tell us what you ran into or share an idea.</DrawerDescription>
@@ -180,12 +180,12 @@ export function FeedbackDrawer({ open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(next) => handleOpenChange(next)}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Report an issue</DialogTitle>
           <DialogDescription>Tell us what you ran into or share an idea.</DialogDescription>
         </DialogHeader>
-        <div className="px-4">{formFields}</div>
+        <div className="flex-1 overflow-y-auto px-4">{formFields}</div>
         <DialogFooter>
           <DialogClose render={<Button type="button" variant="outline" size="sm" className="min-w-28" disabled={isPending} />}>
             Cancel
