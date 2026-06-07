@@ -29,15 +29,16 @@ type JobRowProps = {
   onEdit: (job: Job) => void
   onArchive: (id: string) => void
   onGenerateCV: (id: string) => void
+  onCreateCoverLetter: (id: string) => void
   hasLLMKey: boolean
 }
 
-export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArchive, onGenerateCV, hasLLMKey }: JobRowProps) {
+export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArchive, onGenerateCV, onCreateCoverLetter, hasLLMKey }: JobRowProps) {
   const {
     id, jobNumber, title, company, countries, url,
     dateApplied, datePublished, lastUpdated, status, progress,
     jobFit, notes, notesIncludeInFit, applicationSource,
-    jobDescription, salaryBand, cvDocumentId,
+    jobDescription, salaryBand, cvDocumentId, coverLetterDocumentId,
   } = job
   const showSourceBadge = applicationSource !== ApplicationSource.Cold
   const busy = Boolean(busyLabel)
@@ -179,9 +180,11 @@ export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArc
         <AppControls
           id={id}
           cvDocumentId={cvDocumentId}
+          coverLetterDocumentId={coverLetterDocumentId}
           onEdit={() => onEdit(job)}
           onArchive={() => onArchive(id)}
           onGenerateCV={() => onGenerateCV(id)}
+          onCreateCoverLetter={() => onCreateCoverLetter(id)}
         />
       </div>
     </div>

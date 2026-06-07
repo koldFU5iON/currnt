@@ -31,6 +31,7 @@ type JobGroupProps = {
   onEdit: (job: Job) => void
   onArchive: (id: string) => void
   onGenerateCV: (id: string) => void
+  onCreateCoverLetter: (id: string) => void
   defaultCollapsed?: boolean
   hasLLMKey: boolean
   isMobile?: boolean
@@ -46,6 +47,7 @@ export function JobGroup({
   onEdit,
   onArchive,
   onGenerateCV,
+  onCreateCoverLetter,
   defaultCollapsed = false,
   hasLLMKey,
   isMobile = false,
@@ -105,6 +107,7 @@ export function JobGroup({
           onEdit={onEdit}
           onArchive={onArchive}
           onGenerateCV={onGenerateCV}
+          onCreateCoverLetter={onCreateCoverLetter}
           hasLLMKey={hasLLMKey}
         />
       ) : (
@@ -117,6 +120,7 @@ export function JobGroup({
           onEdit={onEdit}
           onArchive={onArchive}
           onGenerateCV={onGenerateCV}
+          onCreateCoverLetter={onCreateCoverLetter}
           hasLLMKey={hasLLMKey}
         />
       ))}

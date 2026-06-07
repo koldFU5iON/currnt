@@ -5,6 +5,7 @@ import {
   FilePlus,
   Inspect,
   LucideIcon,
+  Mail,
   MoreHorizontal,
   Pencil,
   Trash
@@ -23,12 +24,14 @@ import {
 type AppControlsProps = {
   id: string
   cvDocumentId?: string | null
+  coverLetterDocumentId?: string | null
   onEdit?: () => void
   onArchive?: () => void
   onGenerateCV?: () => void
+  onCreateCoverLetter?: () => void
 }
 
-export function AppControls({ id, cvDocumentId, onEdit, onArchive, onGenerateCV }: AppControlsProps) {
+export function AppControls({ id, cvDocumentId, coverLetterDocumentId, onEdit, onArchive, onGenerateCV, onCreateCoverLetter }: AppControlsProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -66,6 +69,20 @@ export function AppControls({ id, cvDocumentId, onEdit, onArchive, onGenerateCV 
               onSelect={onGenerateCV}
               action={onGenerateCV ? undefined : `/dashboard/cv-builder/new?jobId=${id}`}
               shortcut="⌘D"
+            />
+          )}
+          {coverLetterDocumentId ? (
+            <AppControlsItem
+              Icon={Mail}
+              label="View Cover Letter"
+              action={`/dashboard/cover-letters/${coverLetterDocumentId}`}
+            />
+          ) : (
+            <AppControlsItem
+              Icon={Mail}
+              label="Create Cover Letter"
+              onSelect={onCreateCoverLetter}
+              action={onCreateCoverLetter ? undefined : `/dashboard/cover-letters/new?jobId=${id}`}
             />
           )}
           <AppControlsItem
