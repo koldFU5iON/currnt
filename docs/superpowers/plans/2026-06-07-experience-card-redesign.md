@@ -1,7 +1,67 @@
+# Experience Card Redesign Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Make experience cards fully accessible on mobile by replacing the hover-only action buttons with an always-visible DropdownMenu, replacing the noisy activity list with count chips + 2 previews, adding a delete confirmation dialog, fixing the ActivityManageDialog hover buttons, and replacing the raw checkbox in ExperienceDialog with the shadcn Checkbox.
+
+**Architecture:** All changes are contained in a single file — `src/app/dashboard/profile/_components/Experience.tsx`. A new `AlertDialog` shadcn component is installed first. The `CardFooter` is removed entirely and replaced with a `DropdownMenu` trigger anchored in the `CardHeader`. Delete confirmation is managed via a single `deleteConfirmId: string | null` state at the `ExperienceBlock` level.
+
+**Tech Stack:** Next.js 16 App Router, shadcn/ui (DropdownMenu, AlertDialog, Checkbox), Lucide icons, Tailwind CSS v4
+
+**Branch:** `fix/quick-issues-97-113-126` (already open)
+
+---
+
+## File Map
+
+**Modified:**
+- `src/app/dashboard/profile/_components/Experience.tsx` — all UI changes
+- `src/components/ui/alert-dialog.tsx` — new file, created by shadcn CLI
+
+---
+
+## Task 1: Install AlertDialog
+
+**Files:**
+- Create: `src/components/ui/alert-dialog.tsx`
+
+- [ ] **Step 1: Run shadcn install**
+
+```bash
+npx shadcn@latest add alert-dialog
+```
+
+Expected output: `✔ Done!` — creates `src/components/ui/alert-dialog.tsx`.
+
+- [ ] **Step 2: Verify the file exists**
+
+```bash
+ls src/components/ui/alert-dialog.tsx
+```
+
+Expected: file path printed, no error.
+
+---
+
+## Task 2: Update imports in Experience.tsx
+
+**Files:**
+- Modify: `src/app/dashboard/profile/_components/Experience.tsx`
+
+The current import block needs these changes:
+- **Remove:** `CardFooter` (card footer is deleted), `buttonVariants` (no longer used), `Link` from next/link (replaced by `router.push`)
+- **Remove from lucide:** `ListChecks` moves to the dropdown but we keep it; remove nothing from lucide actually — add `MoreHorizontal`
+- **Add:** DropdownMenu family, AlertDialog family, Checkbox
+
+- [ ] **Step 1: Replace the import block at the top of the file**
+
+Replace everything from line 1 through the last import line with:
+
+```tsx
 'use client'
 
 import { useRouter } from "next/navigation"
-import { useState, type FormEvent } from "react"
+import { useState, useEffect, type FormEvent } from "react"
 import {
   Card, CardHeader, CardContent, CardDescription, CardTitle
 } from "@/components/ui/card"
@@ -39,13 +99,28 @@ import {
   createExperience, deleteExperience,
   createActivity, updateActivity, deleteActivity,
 } from "@/modules/profile/actions"
+```
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+- [ ] **Step 2: Verify typecheck passes (catches missing imports early)**
 
-type ActivityType = ExperienceWithActivities['activities'][number]
+```bash
+npm run typecheck 2>&1 | head -20
+```
 
-// ── Experience block ──────────────────────────────────────────────────────────
+Expected: errors only about `deleteConfirmId` not existing yet (fine at this stage) or clean. No "module not found" errors.
 
+---
+
+## Task 3: Add deleteConfirmId state and refactor ExperienceBlock
+
+**Files:**
+- Modify: `src/app/dashboard/profile/_components/Experience.tsx`
+
+- [ ] **Step 1: Replace the `ExperienceBlock` function**
+
+Replace the entire `ExperienceBlock` function (lines 37–178) with:
+
+```tsx
 export function ExperienceBlock({ exp }: { exp: ExperienceWithActivities[] }) {
   const router = useRouter()
   const [experiences, setExperiences] = useState(exp)
@@ -123,18 +198,16 @@ export function ExperienceBlock({ exp }: { exp: ExperienceWithActivities[] }) {
                     </CardDescription>
                   </div>
                   <DropdownMenu>
-                    <DropdownMenuTrigger
-                      render={
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 shrink-0 text-muted-foreground"
-                          aria-label={`Actions for ${experience.company}`}
-                        >
-                          <MoreHorizontal size={16} />
-                        </Button>
-                      }
-                    />
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0 text-muted-foreground"
+                        aria-label={`Actions for ${experience.company}`}
+                      >
+                        <MoreHorizontal size={16} />
+                      </Button>
+                    </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => router.push(`/dashboard/profile/experience/${experience.id}`)}>
                         <Pencil size={13} className="mr-2" /> Edit details
@@ -191,13 +264,11 @@ export function ExperienceBlock({ exp }: { exp: ExperienceWithActivities[] }) {
         <ExperienceCard onAdd={() => setOpen(true)} />
       </div>
 
-      {open && (
-        <ExperienceDialog
-          open={open}
-          onOpenChange={setOpen}
-          onSave={handleCreate}
-        />
-      )}
+      <ExperienceDialog
+        open={open}
+        onOpenChange={setOpen}
+        onSave={handleCreate}
+      />
 
       {activitiesFor && (
         <ActivityManageDialog
@@ -230,31 +301,67 @@ export function ExperienceBlock({ exp }: { exp: ExperienceWithActivities[] }) {
     </div>
   )
 }
+```
 
-// ── Add experience card ───────────────────────────────────────────────────────
+- [ ] **Step 2: Run typecheck**
 
-function ExperienceCard({ onAdd }: { onAdd: () => void }) {
-  return (
-    <Card
-      role="button"
-      tabIndex={0}
-      className="hover:bg-accent cursor-pointer min-h-[200px]"
-      onClick={onAdd}
-      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onAdd() } }}
-      aria-label="Add work experience"
-    >
-      <CardContent className="flex-1 h-full">
-        <div className="flex flex-col justify-center items-center h-full rounded-lg border border-primary/80 border-dashed min-h-[160px] gap-1 text-sm text-muted-foreground">
-          <Plus size={18} />
-          Add Work Experience
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
+```bash
+npm run typecheck 2>&1 | grep "Experience.tsx"
+```
 
-// ── Experience add/edit dialog ────────────────────────────────────────────────
+Expected: no errors from `Experience.tsx` at this point. (Other file errors are pre-existing and unrelated.)
 
+---
+
+## Task 4: Fix ActivityManageDialog hover-only buttons
+
+**Files:**
+- Modify: `src/app/dashboard/profile/_components/Experience.tsx` — `ActivityManageDialog` function
+
+The activity row currently has `opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity` on the button container. Remove that, and shrink buttons from `h-8 w-8` to `h-7 w-7`.
+
+- [ ] **Step 1: Update the activity row button container and button sizes**
+
+Find this block inside `ActivityManageDialog` (the `items.map(a => ...)` render):
+
+```tsx
+<div className="flex gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity shrink-0">
+  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditForm(a)} aria-label="Edit activity">
+    <Pencil size={11} />
+  </Button>
+  <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive" onClick={() => handleDelete(a.id)} aria-label="Delete activity">
+    <Trash2 size={11} />
+  </Button>
+</div>
+```
+
+Replace with:
+
+```tsx
+<div className="flex gap-0.5 shrink-0">
+  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditForm(a)} aria-label="Edit activity">
+    <Pencil size={11} />
+  </Button>
+  <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={() => handleDelete(a.id)} aria-label="Delete activity">
+    <Trash2 size={11} />
+  </Button>
+</div>
+```
+
+---
+
+## Task 5: Fix ExperienceDialog — replace raw checkbox with Checkbox
+
+**Files:**
+- Modify: `src/app/dashboard/profile/_components/Experience.tsx` — `ExperienceDialog` function
+
+The raw `<input type="checkbox">` doesn't submit its value via the shadcn `Checkbox` component, so we need local state.
+
+- [ ] **Step 1: Replace the `ExperienceDialog` function**
+
+Replace the entire `ExperienceDialog` function with:
+
+```tsx
 function ExperienceDialog({
   open, onOpenChange, onSave,
 }: {
@@ -263,6 +370,10 @@ function ExperienceDialog({
   onSave: (data: Parameters<typeof createExperience>[0]) => void
 }) {
   const [remote, setRemote] = useState(false)
+
+  useEffect(() => {
+    if (!open) setRemote(false)
+  }, [open])
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -336,182 +447,67 @@ function ExperienceDialog({
     </Dialog>
   )
 }
+```
 
-// ── Activities management dialog ──────────────────────────────────────────────
+---
 
-function ActivityManageDialog({
-  open, onOpenChange, experience, onActivitiesChange,
-}: {
-  open: boolean
-  onOpenChange: (o: boolean) => void
-  experience: ExperienceWithActivities
-  onActivitiesChange: (experienceId: string, activities: ActivityType[]) => void
-}) {
-  const [activities, setActivities] = useState<ActivityType[]>(experience.activities)
-  const [formVisible, setFormVisible] = useState(false)
-  const [editingActivity, setEditingActivity] = useState<ActivityType | null>(null)
-  const [kind, setKind] = useState<string>(RoleActivityKind.Responsibility)
-  const [description, setDescription] = useState('')
-  const [impact, setImpact] = useState('')
+## Task 6: Typecheck, verify, and commit
 
-  const openAddForm = () => {
-    setEditingActivity(null)
-    setKind(RoleActivityKind.Responsibility)
-    setDescription('')
-    setImpact('')
-    setFormVisible(true)
-  }
+**Files:**
+- All changes are in `src/app/dashboard/profile/_components/Experience.tsx`
 
-  const openEditForm = (a: ActivityType) => {
-    setEditingActivity(a)
-    setKind(a.kind)
-    setDescription(a.description)
-    setImpact(a.impact ?? '')
-    setFormVisible(true)
-  }
+- [ ] **Step 1: Full typecheck**
 
-  const closeForm = () => {
-    setFormVisible(false)
-    setEditingActivity(null)
-  }
+```bash
+npm run typecheck 2>&1
+```
 
-  const handleSave = async () => {
-    if (!description.trim()) return
-    const data = { kind, description: description.trim(), impact: impact.trim() || undefined }
-    try {
-      if (editingActivity) {
-        const updated = await updateActivity(editingActivity.id, data)
-        const next = activities.map(a => a.id === editingActivity.id ? updated as unknown as ActivityType : a)
-        setActivities(next)
-        onActivitiesChange(experience.id, next)
-      } else {
-        const created = await createActivity(experience.id, data)
-        const next = [...activities, created as unknown as ActivityType]
-        setActivities(next)
-        onActivitiesChange(experience.id, next)
-      }
-      closeForm()
-    } catch { }
-  }
+Expected: clean (no errors).
 
-  const handleDelete = async (id: string) => {
-    const prev = activities
-    const next = activities.filter(a => a.id !== id)
-    setActivities(next)
-    onActivitiesChange(experience.id, next)
-    try { await deleteActivity(id) } catch {
-      setActivities(prev)
-      onActivitiesChange(experience.id, prev)
-    }
-  }
+- [ ] **Step 2: Run tests**
 
-  const grouped = {
-    responsibility: activities.filter(a => a.kind === RoleActivityKind.Responsibility),
-    achievement: activities.filter(a => a.kind === RoleActivityKind.Achievement),
-  }
+```bash
+npm test 2>&1 | tail -8
+```
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Activities — {experience.company}</DialogTitle>
-          <DialogDescription>{experience.role}</DialogDescription>
-        </DialogHeader>
+Expected: all tests pass (no tests exist for this component — just confirm nothing else broke).
 
-        <div className="max-h-72 overflow-y-auto space-y-4 pr-1">
-          {(['responsibility', 'achievement'] as const).map(kind => {
-            const items = grouped[kind]
-            if (items.length === 0) return null
-            return (
-              <div key={kind}>
-                <div className={clsx(
-                  "inline-block font-semibold text-xs py-0.5 px-2 rounded-sm mb-2",
-                  kind === 'responsibility' ? 'bg-green-400' : 'bg-amber-400'
-                )}>
-                  {kind === 'responsibility' ? 'Responsibilities' : 'Achievements'}
-                </div>
-                <div className="space-y-1">
-                  {items.map(a => (
-                    <div key={a.id} className="group flex items-start gap-2 py-1 rounded hover:bg-accent/50 px-1">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm">{a.description}</p>
-                        {a.impact && (
-                          <p className="text-xs text-muted-foreground mt-0.5">↳ {a.impact}</p>
-                        )}
-                      </div>
-                      <div className="flex gap-0.5 shrink-0">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditForm(a)} aria-label="Edit activity">
-                          <Pencil size={11} />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={() => handleDelete(a.id)} aria-label="Delete activity">
-                          <Trash2 size={11} />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )
-          })}
-          {activities.length === 0 && !formVisible && (
-            <p className="text-sm text-muted-foreground text-center py-4">No activities yet.</p>
-          )}
-        </div>
+- [ ] **Step 3: Manual smoke test — start dev server and verify**
 
-        {activities.length > 0 && <Separator />}
+```bash
+npm run dev
+```
 
-        {formVisible ? (
-          <div className="space-y-3 rounded-md border border-border p-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">
-                {editingActivity ? 'Edit Activity' : 'New Activity'}
-              </span>
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={closeForm}>
-                <X size={13} />
-              </Button>
-            </div>
-            <Field>
-              <Label>Type</Label>
-              <Select value={kind} onValueChange={(v) => v && setKind(v)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={RoleActivityKind.Responsibility}>Responsibility</SelectItem>
-                  <SelectItem value={RoleActivityKind.Achievement}>Achievement</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field>
-              <Label>Description</Label>
-              <Textarea
-                rows={2}
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-                placeholder="What did you do?"
-              />
-            </Field>
-            <Field>
-              <Label>Impact <span className="text-muted-foreground font-normal">(optional)</span></Label>
-              <Input
-                value={impact}
-                onChange={e => setImpact(e.target.value)}
-                placeholder="Measurable outcome or result..."
-              />
-            </Field>
-            <div className="flex justify-end gap-2">
-              <Button variant="secondary" size="sm" onClick={closeForm}>Cancel</Button>
-              <Button size="sm" onClick={handleSave}>
-                {editingActivity ? 'Save' : 'Add'}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <Button variant="outline" className="w-full gap-1" onClick={openAddForm}>
-            <Plus size={14} /> Add Activity
-          </Button>
-        )}
-      </DialogContent>
-    </Dialog>
-  )
-}
+Navigate to `http://localhost:3000/dashboard/profile` and verify:
+
+- Each experience card shows the ⋯ button in the header (always visible, not hover-dependent)
+- Tapping/clicking ⋯ shows: Edit details, Manage activities, (separator), Delete
+- "Edit details" navigates to `/dashboard/profile/experience/[id]`
+- "Manage activities" opens the ActivityManageDialog
+- "Delete" opens the AlertDialog confirmation — Cancel dismisses, Delete removes the card
+- Card body shows count chips + up to 2 activity previews (green/amber borders)
+- Roles with no activities show "No activities yet."
+- Inside ActivityManageDialog, edit and delete buttons on activity rows are always visible (no hover needed)
+- "Add Experience" dialog — Remote checkbox works (toggle on/off)
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add src/app/dashboard/profile/_components/Experience.tsx src/components/ui/alert-dialog.tsx
+git commit -m "$(cat <<'EOF'
+fix(profile): mobile-accessible experience cards (#115)
+
+- Replace hover-only CardFooter with always-visible DropdownMenu (⋯)
+  in the card header — Edit, Manage activities, Delete all reachable on touch
+- Add AlertDialog delete confirmation so roles can't be removed by accident
+- Replace scrollable activity list in card body with count chips + 2
+  activity previews (first responsibility + first achievement)
+- Fix ActivityManageDialog: always-visible edit/delete buttons on activity rows
+- Replace raw <input type="checkbox"> with shadcn Checkbox in ExperienceDialog
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+EOF
+)"
+```
+
+Expected output: commit hash printed, branch name shown.
