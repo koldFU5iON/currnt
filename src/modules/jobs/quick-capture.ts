@@ -6,7 +6,7 @@ import { requireProfile } from '@/lib/session'
 import { extractJobFromUrl } from './extract'
 
 export type QuickCaptureResult =
-  | { ok: true; jobId: string; title: string; company: string; duplicate: boolean }
+  | { ok: true; jobId: string; title: string; company: string | null; duplicate: boolean }
   | { ok: false; error: string }
 
 export async function quickCaptureJob(rawUrl: string): Promise<QuickCaptureResult> {
@@ -20,7 +20,7 @@ export async function quickCaptureJob(rawUrl: string): Promise<QuickCaptureResul
     select: { id: true, title: true, company: true },
   })
   if (existing) {
-    return { ok: true, jobId: existing.id, title: existing.title, company: existing.company, duplicate: true }
+    return { ok: true, jobId: existing.id, title: existing.title, company: existing.company ?? null, duplicate: true }
   }
 
   const extraction = await extractJobFromUrl(url)
@@ -53,5 +53,5 @@ export async function quickCaptureJob(rawUrl: string): Promise<QuickCaptureResul
   })
 
   revalidatePath('/dashboard/job-applications')
-  return { ok: true, jobId: job.id, title: job.title, company: job.company, duplicate: false }
+  return { ok: true, jobId: job.id, title: job.title, company: job.company ?? null, duplicate: false }
 }

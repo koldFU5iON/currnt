@@ -50,6 +50,8 @@ const DEFAULT_VALUES: z.infer<typeof createJobSchema> = {
   jobDescription: '',
   datePublished: new Date(),
   applicationSource: 'cold',
+  isRecruitmentAgency: false,
+  recruiterName: '',
 }
 
 export function CreateJobSheet({ open, onOpenChange, initialUrl }: CreateJobSheetProps) {
@@ -93,6 +95,10 @@ export function CreateJobSheet({ open, onOpenChange, initialUrl }: CreateJobShee
   }
 
   async function onSubmit(data: z.infer<typeof createJobSchema>) {
+    if (!data.isRecruitmentAgency && !data.company?.trim()) {
+      form.setError('company', { message: 'Company is required' })
+      return
+    }
     try {
       const matches = await findPotentialDuplicates({
         jobNumber: data.jobNumber,

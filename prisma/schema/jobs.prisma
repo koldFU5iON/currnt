@@ -7,7 +7,7 @@ model JobApplication {
   profileId         String
   jobNumber         String?
   title             String
-  company           String
+  company           String?
   url               String?
   countries         String[]
   dateApplied       DateTime?
@@ -19,6 +19,8 @@ model JobApplication {
   jobAnalysis         Json?
   jobAnalysedAt       DateTime?
   jobDescription      String?
+  isRecruitmentAgency Boolean   @default(false)
+  recruiterName       String?
   notes             String?
   notesIncludeInFit Boolean   @default(false)
   salaryBand        String?

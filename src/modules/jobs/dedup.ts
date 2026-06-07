@@ -9,7 +9,7 @@ import { findPotentialDuplicatesForProfile } from './dedup-internal'
 export async function findPotentialDuplicates(input: {
   jobNumber?: string
   title: string
-  company: string
+  company?: string | null
 }) {
   const { profile } = await requireProfile()
   return findPotentialDuplicatesForProfile(profile.id, input)

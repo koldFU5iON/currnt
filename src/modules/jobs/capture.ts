@@ -30,7 +30,7 @@ export type CaptureSuccess = {
   job: {
     id: string
     title: string
-    company: string
+    company: string | null
   }
   duplicate: DuplicateMatch | null  // populated whenever a match was found, regardless of strategy
   extraction: {
@@ -87,7 +87,7 @@ export async function captureJobFromUrl(
     return {
       ok: true,
       created: false,
-      job: { id: duplicate.id, title: duplicate.title, company: duplicate.company },
+      job: { id: duplicate.id, title: duplicate.title, company: duplicate.company ?? '' },
       duplicate,
       extraction: { fieldsExtracted: extractedFieldList(data) },
     }

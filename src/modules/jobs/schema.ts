@@ -1,9 +1,9 @@
 import * as z from 'zod'
 import { APPLICATION_SOURCES, APPLICATION_SOURCE_LABEL } from '@/app/types/job-application'
 
-export const createJobSchema = z.object({
+const jobSchemaBase = z.object({
   title: z.string().min(1, 'Job title is required'),
-  company: z.string().min(1, 'Company is required'),
+  company: z.string().optional(),
   url: z.string().optional().refine(
     val => !val || z.string().url().safeParse(val).success,
     { message: 'Must be a valid URL' },
@@ -14,11 +14,14 @@ export const createJobSchema = z.object({
   location: z.string().optional(),
   applicationSource: z.enum(APPLICATION_SOURCES),
   salaryBand: z.string().optional(),
+  isRecruitmentAgency: z.boolean().optional(),
+  recruiterName: z.string().optional(),
 })
 
+export const createJobSchema = jobSchemaBase
+
 // Same fields, all optional — for partial updates from the edit dialog.
-// Per-field constraints (e.g. min(1) on title) still apply when a value is sent.
-export const updateJobSchema = createJobSchema.partial()
+export const updateJobSchema = jobSchemaBase.partial()
 
 // Lives here (not next to assessJobFit) because action files use 'use server',
 // which forbids non-async exports — schemas have to be reachable from a plain module.
