@@ -185,7 +185,7 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
 
         {/* Job context panel */}
         {panelOpen && job && (
-          <div className="flex w-[42%] min-w-[240px] flex-col border-l bg-background p-4 overflow-y-auto">
+          <div className="absolute inset-y-0 right-0 z-10 flex w-[42%] min-w-[240px] flex-col border-l bg-background p-4 overflow-y-auto">
             <div className="mb-3 flex items-center justify-between">
               <span className="text-sm font-semibold">Job Context</span>
               <button
