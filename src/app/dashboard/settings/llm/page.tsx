@@ -17,6 +17,7 @@ export default async function Page() {
           provider: status.provider ?? 'anthropic',
           model: status.model ?? '',
           keyConfigured: status.configured,
+          availableModels: status.availableModels,
         }}
       />
     </ContentContainer>

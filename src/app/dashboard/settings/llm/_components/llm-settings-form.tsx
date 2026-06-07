@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Check, Eye, EyeOff, Loader2, Trash2 } from 'lucide-react'
+import { Check, Eye, EyeOff, Loader2, RefreshCw, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,189 +13,261 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { saveLLMSettings, clearLLMApiKey } from '@/modules/llm/actions'
+import { saveLLMApiKey, saveLLMModel, refreshModels, clearLLMApiKey } from '@/modules/llm/actions'
 import { toast } from 'sonner'
+
+type ProviderModel = { id: string; name: string }
 
 type Props = {
   initial: {
     provider: string
     model: string
     keyConfigured: boolean
+    availableModels: ProviderModel[] | null
   }
 }
 
 const PROVIDERS = [
-  { value: 'anthropic', label: 'Anthropic (Claude)', sampleModel: 'claude-sonnet-4-6' },
-  { value: 'openai',    label: 'OpenAI (GPT)',       sampleModel: 'gpt-5' },
-  { value: 'google',    label: 'Google (Gemini)',    sampleModel: 'gemini-2.5-pro' },
+  { value: 'anthropic', label: 'Anthropic (Claude)' },
+  { value: 'openai',    label: 'OpenAI (GPT)' },
+  { value: 'google',    label: 'Google (Gemini)' },
 ] as const
-
-function sampleModelFor(provider: string): string {
-  return PROVIDERS.find(p => p.value === provider)?.sampleModel ?? ''
-}
 
 export function LLMSettingsForm({ initial }: Props) {
   const [provider, setProvider] = useState(initial.provider || 'anthropic')
-  const [model, setModel] = useState(initial.model || sampleModelFor(initial.provider || 'anthropic'))
   const [apiKey, setApiKey] = useState('')
   const [showKey, setShowKey] = useState(false)
   const [keyConfigured, setKeyConfigured] = useState(initial.keyConfigured)
-  const [testing, setTesting] = useState(false)
+  const [availableModels, setAvailableModels] = useState<ProviderModel[] | null>(
+    initial.availableModels,
+  )
+  const [selectedModel, setSelectedModel] = useState(initial.model)
+  const [modelError, setModelError] = useState<string | null>(null)
   const [saving, startSaveTransition] = useTransition()
+  const [refreshing, startRefreshTransition] = useTransition()
+  const [modelSaving, startModelSaveTransition] = useTransition()
 
   function handleProviderChange(next: string | null) {
     if (!next) return
     setProvider(next)
-    // If the user hasn't typed a custom model, switch the model to the new provider's sample.
-    if (!model || PROVIDERS.some(p => p.sampleModel === model)) {
-      setModel(sampleModelFor(next))
-    }
+    setAvailableModels(null)
+    setModelError(null)
   }
 
-  function handleSave(e: React.FormEvent) {
-    e.preventDefault()
+  function handleSaveKey() {
+    if (!apiKey.trim()) return
     startSaveTransition(async () => {
       try {
-        await saveLLMSettings({ provider, model: model.trim(), apiKey: apiKey || undefined })
-        toast.success('Settings saved')
-        if (apiKey) {
-          setKeyConfigured(true)
-          setApiKey('') // form clears the field so it can't be accidentally exfiltrated
-        }
+        const { models } = await saveLLMApiKey({ provider, apiKey })
+        setKeyConfigured(true)
+        setAvailableModels(models)
+        setSelectedModel(models[0]?.id ?? '')
+        setApiKey('')
+        toast.success('Key saved and models loaded')
+        // Auto-save the first model so there's always a selection
+        if (models[0]) await saveLLMModel(models[0].id)
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : 'Failed to save')
+        toast.error(err instanceof Error ? err.message : 'Failed to save key')
+      }
+    })
+  }
+
+  function handleModelSelect(model: string | null) {
+    if (!model) return
+    setSelectedModel(model)
+    startModelSaveTransition(async () => {
+      try {
+        await saveLLMModel(model)
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Failed to save model')
+      }
+    })
+  }
+
+  function handleRefresh() {
+    setModelError(null)
+    startRefreshTransition(async () => {
+      try {
+        const models = await refreshModels()
+        setAvailableModels(models)
+        toast.success('Models refreshed')
+      } catch (err) {
+        setModelError(
+          err instanceof Error ? err.message : "Couldn't load models — Refresh to retry.",
+        )
       }
     })
   }
 
   async function handleClearKey() {
-    if (!confirm('Remove the saved API key? Any AI features that need it will stop working until you re-enter it.')) return
+    if (
+      !confirm(
+        'Remove the saved API key? Any AI features that need it will stop working until you re-enter it.',
+      )
+    )
+      return
     try {
       await clearLLMApiKey()
       setKeyConfigured(false)
+      setAvailableModels(null)
+      setSelectedModel('')
       toast.success('API key removed')
     } catch {
       toast.error('Failed to remove key')
     }
   }
 
-  async function handleTest() {
-    setTesting(true)
-    try {
-      const res = await fetch('/api/llm/ping', { cache: 'no-store' })
-      const data = await res.json()
-      if (data.ok) {
-        toast.success(`OK — ${data.provider}/${data.model} replied in ${data.latencyMs}ms`)
-      } else {
-        toast.error(`${data.error}: ${data.message}`)
-      }
-    } catch {
-      toast.error('Test failed — server didn\'t respond')
-    } finally {
-      setTesting(false)
-    }
-  }
+  const isBusy = saving || refreshing
 
   return (
-    <form onSubmit={handleSave} className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-2xl">
+      {/* Provider */}
       <div className="space-y-2">
         <Label htmlFor="provider">Provider</Label>
-        <Select value={provider} onValueChange={handleProviderChange}>
+        <Select value={provider} onValueChange={handleProviderChange} disabled={isBusy}>
           <SelectTrigger id="provider" className="w-full">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {PROVIDERS.map(p => (
-              <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+              <SelectItem key={p.value} value={p.value}>
+                {p.label}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="model">Model</Label>
-        <Input
-          id="model"
-          value={model}
-          onChange={(e) => setModel(e.target.value)}
-          placeholder={sampleModelFor(provider)}
-          className="font-mono"
-        />
-        <p className="text-xs text-muted-foreground">
-          The exact model ID from your provider. Examples: <code className="font-mono">{sampleModelFor(provider)}</code>.
-        </p>
-      </div>
-
+      {/* API Key — input group */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label htmlFor="api-key">API key</Label>
+          <Label htmlFor="api-key">API Key</Label>
           {keyConfigured && (
-            <Badge variant="outline" className="gap-1 text-xs">
+            <Badge
+              variant="outline"
+              className="gap-1 text-xs text-emerald-600 border-emerald-300"
+            >
               <Check size={11} />
               Saved
             </Badge>
           )}
         </div>
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Input
-              id="api-key"
-              type={showKey ? 'text' : 'password'}
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder={keyConfigured ? '••••••• (leave blank to keep existing)' : 'sk-ant-... / sk-... / AI...'}
-              autoComplete="off"
-              className="pr-9 font-mono"
-            />
-            <button
-              type="button"
-              onClick={() => setShowKey(v => !v)}
-              aria-label={showKey ? 'Hide key' : 'Show key'}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              tabIndex={-1}
-            >
-              {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
-            </button>
-          </div>
-          {keyConfigured && (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={handleClearKey}
-              className="text-destructive hover:bg-destructive/10 hover:text-destructive gap-1.5"
-              aria-label="Remove saved API key"
-            >
-              <Trash2 size={14} />
-              Remove
-            </Button>
-          )}
+        <div className="flex rounded-md border overflow-hidden">
+          <Input
+            id="api-key"
+            type={showKey ? 'text' : 'password'}
+            value={apiKey}
+            onChange={e => setApiKey(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleSaveKey()}
+            placeholder={
+              keyConfigured
+                ? '•••••••• (leave blank to keep existing)'
+                : 'sk-ant-api03-…'
+            }
+            autoComplete="off"
+            disabled={isBusy}
+            className="border-0 rounded-none flex-1 font-mono focus-visible:ring-0 focus-visible:ring-offset-0"
+          />
+          <button
+            type="button"
+            onClick={handleSaveKey}
+            disabled={isBusy || !apiKey.trim()}
+            aria-label="Save API key"
+            className="px-3 border-l bg-muted text-muted-foreground hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            {saving ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Check size={14} />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowKey(v => !v)}
+            aria-label={showKey ? 'Hide key' : 'Show key'}
+            className="px-3 border-l bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            tabIndex={-1}
+          >
+            {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
+          </button>
         </div>
         <p className="text-xs text-muted-foreground">
-          Stored encrypted (AES-256-GCM) at rest. Never logged, never sent to the client after save.
-          Get a key from your provider&apos;s dashboard.
+          Encrypted at rest (AES-256-GCM). Saves key and loads available models.
         </p>
       </div>
 
-      <div className="flex items-center gap-3 pt-2">
-        <Button type="submit" disabled={saving}>
-          {saving ? 'Saving…' : 'Save'}
-        </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={handleTest}
-          disabled={testing || !keyConfigured}
-          className="gap-1.5"
-        >
-          {testing ? <Loader2 size={14} className="animate-spin" /> : null}
-          {testing ? 'Testing…' : 'Test connection'}
-        </Button>
-        {!keyConfigured && (
+      {/* Model */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label>Model</Label>
+          {keyConfigured && availableModels !== null && (
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-50"
+            >
+              {refreshing ? (
+                <Loader2 size={11} className="animate-spin" />
+              ) : (
+                <RefreshCw size={11} />
+              )}
+              Refresh
+            </button>
+          )}
+        </div>
+
+        {!keyConfigured ? (
+          <div className="flex h-9 items-center rounded-md border bg-muted px-3 text-sm text-muted-foreground">
+            Save a key first
+          </div>
+        ) : availableModels === null ? (
+          <div className="flex h-9 items-center rounded-md border bg-muted px-3 text-sm text-muted-foreground gap-2">
+            {saving && <Loader2 size={13} className="animate-spin" />}
+            {saving ? 'Fetching models…' : 'No models loaded'}
+          </div>
+        ) : (
+          <Select
+            value={selectedModel}
+            onValueChange={handleModelSelect}
+            disabled={modelSaving || isBusy}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select a model" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableModels.map(m => (
+                <SelectItem key={m.id} value={m.id}>
+                  {m.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
+        {modelError && <p className="text-xs text-destructive">{modelError}</p>}
+        {availableModels !== null && !modelError && (
           <p className="text-xs text-muted-foreground">
-            Save a key first to test.
+            {availableModels.length} model{availableModels.length !== 1 ? 's' : ''} · saves on
+            select
           </p>
         )}
       </div>
-    </form>
+
+      {/* Remove key */}
+      {keyConfigured && (
+        <div className="border-t pt-4">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={handleClearKey}
+            className="text-destructive hover:bg-destructive/10 hover:text-destructive gap-1.5"
+          >
+            <Trash2 size={14} />
+            Remove API key
+          </Button>
+        </div>
+      )}
+    </div>
   )
 }
