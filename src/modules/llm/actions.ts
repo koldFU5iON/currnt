@@ -1,52 +1,89 @@
 'use server'
 
+import { Prisma } from '@prisma/client'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { requireProfile } from '@/lib/session'
-import { encrypt } from '@/lib/encryption'
+import { encrypt, decrypt } from '@/lib/encryption'
 import { SUPPORTED_PROVIDERS } from './client'
+import { fetchProviderModels, type ProviderModel } from './models'
 
-export type SaveLLMSettingsInput = {
+export type SaveLLMApiKeyInput = {
   provider: string
-  model: string
-  /** When provided, replaces the stored encrypted key. Leave blank to keep existing. */
-  apiKey?: string
+  apiKey: string
 }
 
-export async function saveLLMSettings(input: SaveLLMSettingsInput): Promise<void> {
+/**
+ * Validates the API key by fetching models from the provider, then writes
+ * both the encrypted key and the model list atomically. If the key is
+ * invalid or the provider is unreachable, nothing is written.
+ */
+export async function saveLLMApiKey(
+  input: SaveLLMApiKeyInput,
+): Promise<{ models: ProviderModel[] }> {
   const { profile } = await requireProfile()
 
   const provider = input.provider.trim()
-  const model = input.model.trim()
-
   if (!SUPPORTED_PROVIDERS.includes(provider as typeof SUPPORTED_PROVIDERS[number])) {
     throw new Error(`Unsupported provider "${provider}"`)
   }
-  if (!model) {
-    throw new Error('Model is required')
-  }
+  if (!input.apiKey.trim()) throw new Error('API key is required')
 
-  // Build the patch — only overwrite the encrypted key if the form sent a new one.
-  const patch: { llmProvider: string; llmModel: string; llmApiKey?: string } = {
-    llmProvider: provider,
-    llmModel: model,
-  }
-  if (input.apiKey && input.apiKey.trim()) {
-    patch.llmApiKey = encrypt(input.apiKey.trim())
-  }
+  const models = await fetchProviderModels(provider, input.apiKey.trim())
 
   await prisma.userSettings.upsert({
     where: { profileId: profile.id },
-    update: patch,
+    update: {
+      llmProvider: provider,
+      llmApiKey: encrypt(input.apiKey.trim()),
+      availableModels: models,
+    },
     create: {
       profileId: profile.id,
       llmProvider: provider,
-      llmModel: model,
-      llmApiKey: input.apiKey?.trim() ? encrypt(input.apiKey.trim()) : null,
+      llmApiKey: encrypt(input.apiKey.trim()),
+      availableModels: models,
     },
   })
 
   revalidatePath('/dashboard/settings/llm')
+  return { models }
+}
+
+export async function saveLLMModel(model: string): Promise<void> {
+  const { profile } = await requireProfile()
+  if (!model.trim()) throw new Error('Model is required')
+
+  await prisma.userSettings.update({
+    where: { profileId: profile.id },
+    data: { llmModel: model.trim() },
+  })
+
+  revalidatePath('/dashboard/settings/llm')
+}
+
+export async function refreshModels(): Promise<ProviderModel[]> {
+  const { profile } = await requireProfile()
+
+  const settings = await prisma.userSettings.findUnique({
+    where: { profileId: profile.id },
+    select: { llmProvider: true, llmApiKey: true },
+  })
+
+  if (!settings?.llmApiKey) throw new Error('No API key configured.')
+
+  const apiKey = decrypt(settings.llmApiKey)
+  if (!apiKey) throw new Error('Stored API key could not be decrypted. Re-enter your key.')
+
+  const models = await fetchProviderModels(settings.llmProvider, apiKey)
+
+  await prisma.userSettings.update({
+    where: { profileId: profile.id },
+    data: { availableModels: models },
+  })
+
+  revalidatePath('/dashboard/settings/llm')
+  return models
 }
 
 export async function clearLLMApiKey(): Promise<void> {
@@ -54,7 +91,7 @@ export async function clearLLMApiKey(): Promise<void> {
 
   await prisma.userSettings.update({
     where: { profileId: profile.id },
-    data: { llmApiKey: null },
+    data: { llmApiKey: null, availableModels: Prisma.JsonNull },
   })
 
   revalidatePath('/dashboard/settings/llm')
