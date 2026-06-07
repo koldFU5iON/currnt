@@ -34,7 +34,6 @@ export async function createCoverLetter(jobApplicationId?: string): Promise<{ id
     select: { id: true },
   })
 
-  revalidatePath('/dashboard/cover-letters')
   return { id: letter.id }
 }
 
