@@ -12,6 +12,7 @@ model CoverLetterDocument {
   jobTitle         String?
   company          String?
   sections         String   @default("[]")
+  content          String   @default("")
   status           String   @default("draft")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
