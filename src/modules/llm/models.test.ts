@@ -49,6 +49,11 @@ describe('fetchProviderModels — anthropic', () => {
     mockFetch.mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ data: [] }) })
     await expect(fetchProviderModels('anthropic', 'sk-ant-test')).rejects.toThrow('No models returned')
   })
+
+  it('throws "Couldn\'t reach provider" on network failure', async () => {
+    mockFetch.mockRejectedValueOnce(new TypeError('fetch failed'))
+    await expect(fetchProviderModels('anthropic', 'sk-ant-test')).rejects.toThrow("Couldn't reach provider")
+  })
 })
 
 describe('fetchProviderModels — openai', () => {
@@ -75,6 +80,16 @@ describe('fetchProviderModels — openai', () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 401 })
     await expect(fetchProviderModels('openai', 'bad')).rejects.toThrow('Invalid API key')
   })
+
+  it('throws "Couldn\'t reach provider" on 500', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 500 })
+    await expect(fetchProviderModels('openai', 'sk-test')).rejects.toThrow("Couldn't reach provider")
+  })
+
+  it('throws "Couldn\'t reach provider" on network failure', async () => {
+    mockFetch.mockRejectedValueOnce(new TypeError('fetch failed'))
+    await expect(fetchProviderModels('openai', 'sk-test')).rejects.toThrow("Couldn't reach provider")
+  })
 })
 
 describe('fetchProviderModels — google', () => {
@@ -96,6 +111,11 @@ describe('fetchProviderModels — google', () => {
   it('throws "Invalid API key" on 403', async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 403 })
     await expect(fetchProviderModels('google', 'bad')).rejects.toThrow('Invalid API key')
+  })
+
+  it('throws "Couldn\'t reach provider" on network failure', async () => {
+    mockFetch.mockRejectedValueOnce(new TypeError('fetch failed'))
+    await expect(fetchProviderModels('google', 'AI-test')).rejects.toThrow("Couldn't reach provider")
   })
 })
 
