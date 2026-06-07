@@ -153,7 +153,7 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
             panelOpen && 'opacity-50'
           )}
         >
-          <div className="w-full max-w-[560px] rounded-md bg-background p-5 shadow-sm">
+          <div className="w-full max-w-[794px] rounded-md bg-background p-5 shadow-sm">
             {!showEditor && content === '' ? (
               <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 text-center">
                 <p className="text-sm font-semibold">No cover letter yet</p>
