@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { X } from 'lucide-react'
@@ -20,16 +20,28 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
   const [showEditor, setShowEditor] = useState(letter.content !== '')
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const mountedRef = useRef(true)
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [])
 
   const save = useCallback(async (value: string) => {
     setSaveState('saving')
     try {
       await updateCoverLetterContent(letter.id, value)
-      setSaveState('saved')
+      if (mountedRef.current) setSaveState('saved')
     } catch {
-      setSaveState('error')
+      if (mountedRef.current) setSaveState('error')
     }
   }, [letter.id])
+
+  useEffect(() => {
+    if (showEditor && content === '') textareaRef.current?.focus()
+  }, [showEditor]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleChange(value: string) {
     setContent(value)
@@ -40,7 +52,6 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
 
   function handleStartWriting() {
     setShowEditor(true)
-    setTimeout(() => textareaRef.current?.focus(), 0)
   }
 
   const job = letter.jobApplication
@@ -77,6 +88,7 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
         {/* Centre: mode toggle */}
         <div className="flex shrink-0 overflow-hidden rounded-md border text-xs">
           <button
+            type="button"
             onClick={() => setMode('markdown')}
             className={cn(
               'px-3 py-1.5 transition-colors',
@@ -88,6 +100,7 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
             Markdown
           </button>
           <button
+            type="button"
             onClick={() => setMode('preview')}
             className={cn(
               'px-3 py-1.5 transition-colors',
@@ -114,7 +127,7 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
             variant="outline"
             size="sm"
             className="h-7 text-xs"
-            onClick={() => navigator.clipboard.writeText(content)}
+            onClick={() => navigator.clipboard.writeText(content).catch(() => {})}
           >
             Copy
           </Button>
@@ -189,6 +202,7 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
             <div className="mb-3 flex items-center justify-between">
               <span className="text-sm font-semibold">Job Context</span>
               <button
+                type="button"
                 onClick={() => setPanelOpen(false)}
                 className="text-muted-foreground hover:text-foreground"
                 aria-label="Close job context panel"
@@ -210,8 +224,8 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
                     <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                       Must-haves
                     </p>
-                    {analysis.mustHave.map((item, i) => (
-                      <p key={i} className="text-xs text-muted-foreground">• {item}</p>
+                    {analysis.mustHave.map((item) => (
+                      <p key={item} className="text-xs text-muted-foreground">• {item}</p>
                     ))}
                   </div>
                 )}
@@ -220,8 +234,8 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
                     <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                       Nice-to-haves
                     </p>
-                    {analysis.niceToHave.map((item, i) => (
-                      <p key={i} className="text-xs text-muted-foreground">• {item}</p>
+                    {analysis.niceToHave.map((item) => (
+                      <p key={item} className="text-xs text-muted-foreground">• {item}</p>
                     ))}
                   </div>
                 )}
