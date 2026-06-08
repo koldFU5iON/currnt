@@ -73,13 +73,13 @@ export function NotesPanel({ sessionId, notes, activeNoteId, onNoteChange, activ
 
         <div className="flex flex-1 flex-col overflow-y-auto">
           <div className="flex flex-1 flex-col gap-3 p-4">
-            {sorted.map(block => (
+            {sorted.map((block, idx) => (
               <div key={block.id} ref={el => { blockRefs.current[block.id] = el }}>
                 <BlockEditor
                   noteId={activeNote!.id}
                   block={block}
-                  isFirst={block.order === 0}
-                  isLast={block.order === sorted.length - 1}
+                  isFirst={idx === 0}
+                  isLast={idx === sorted.length - 1}
                 />
               </div>
             ))}

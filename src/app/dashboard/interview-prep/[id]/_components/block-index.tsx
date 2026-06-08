@@ -23,7 +23,7 @@ export function BlockIndex({ blocks, onScrollTo }: Props) {
           onClick={() => onScrollTo(block.id)}
           className={cn(
             'rounded px-2 py-1.5 text-left text-xs transition-colors hover:bg-accent',
-            block.type === 'ai-analysis' && 'text-primary',
+            (block.type === 'ai-analysis' || block.type === 'qa-bank') && 'text-primary',
           )}
         >
           {block.type === 'ai-analysis' || block.type === 'qa-bank' ? '✦ ' : ''}
