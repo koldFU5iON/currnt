@@ -12,7 +12,11 @@ const FEATURE_LABELS: Record<string, string> = {
   'cv-evidence-score': 'Evidence scoring',
   'cv-recruiter-scan': 'Recruiter scan',
   'cv-generate': 'CV generation',
-  'cover-letter-generate': 'Cover letter — generate draft',
+  'cover-letter-analyse':      'Cover letter — analyse role',
+  'cover-letter-architect':    'Cover letter — build message',
+  'cover-letter-draft':        'Cover letter — write draft',
+  'cover-letter-review-pass':  'Cover letter — review draft',
+  'cover-letter-finalise':     'Cover letter — finalise',
   'cover-letter-build': 'Cover letter — build with me',
   'cover-letter-review': 'Cover letter — review',
 }
