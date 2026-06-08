@@ -90,6 +90,11 @@ export async function deleteSession(sessionId: string): Promise<void> {
 
 export async function createNote(sessionId: string, title: string): Promise<{ id: string }> {
   const { profile } = await requireProfile()
+  const session = await prisma.interviewPrepSession.findFirst({
+    where: { id: sessionId, profileId: profile.id },
+    select: { id: true },
+  })
+  if (!session) throw new Error('Session not found')
   const count = await prisma.prepNote.count({ where: { sessionId, profileId: profile.id } })
   const note = await prisma.prepNote.create({
     data: { sessionId, profileId: profile.id, title, order: count },
@@ -121,6 +126,11 @@ export async function addDocument(
   input: { name: string; docType: string; content: string },
 ): Promise<{ id: string }> {
   const { profile } = await requireProfile()
+  const session = await prisma.interviewPrepSession.findFirst({
+    where: { id: sessionId, profileId: profile.id },
+    select: { id: true },
+  })
+  if (!session) throw new Error('Session not found')
   const doc = await prisma.prepDocument.create({
     data: { sessionId, profileId: profile.id, ...input },
     select: { id: true },
@@ -143,6 +153,11 @@ export async function addInterviewer(
   input: { name: string; role?: string; linkedInText?: string; notes?: string },
 ): Promise<{ id: string }> {
   const { profile } = await requireProfile()
+  const session = await prisma.interviewPrepSession.findFirst({
+    where: { id: sessionId, profileId: profile.id },
+    select: { id: true },
+  })
+  if (!session) throw new Error('Session not found')
   const interviewer = await prisma.prepInterviewer.create({
     data: { sessionId, profileId: profile.id, ...input },
     select: { id: true },

@@ -5,7 +5,7 @@ vi.mock('@/lib/session', () => ({
 }))
 vi.mock('@/lib/db', () => ({
   prisma: {
-    interviewPrepSession: { create: vi.fn(), update: vi.fn(), updateMany: vi.fn(), deleteMany: vi.fn() },
+    interviewPrepSession: { create: vi.fn(), update: vi.fn(), updateMany: vi.fn(), deleteMany: vi.fn(), findFirst: vi.fn() },
     prepNote: { create: vi.fn(), count: vi.fn(), updateMany: vi.fn(), deleteMany: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
     prepDocument: { create: vi.fn(), deleteMany: vi.fn() },
     prepInterviewer: { create: vi.fn(), updateMany: vi.fn(), deleteMany: vi.fn() },
@@ -21,6 +21,7 @@ import {
 import { prisma } from '@/lib/db'
 
 const mockSessionCreate = vi.mocked(prisma.interviewPrepSession.create)
+const mockSessionFindFirst = vi.mocked(prisma.interviewPrepSession.findFirst)
 const mockNoteCreate = vi.mocked(prisma.prepNote.create)
 const mockNoteCount = vi.mocked(prisma.prepNote.count)
 const mockSessionUpdate = vi.mocked(prisma.interviewPrepSession.updateMany)
@@ -89,6 +90,7 @@ describe('createNote', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('creates a note with the correct session and profile', async () => {
+    mockSessionFindFirst.mockResolvedValue({ id: 'sess-1' } as never)
     mockNoteCreate.mockResolvedValue({ id: 'note-3' } as never)
     mockNoteCount.mockResolvedValue(2)
     const result = await createNote('sess-1', 'Hiring Manager')
@@ -141,6 +143,7 @@ describe('addDocument', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('creates a document scoped to session and profile', async () => {
+    mockSessionFindFirst.mockResolvedValue({ id: 'sess-1' } as never)
     mockDocCreate.mockResolvedValue({ id: 'doc-1' } as never)
     const result = await addDocument('sess-1', {
       name: 'Interview Pack', docType: 'interview-pack', content: 'Lorem ipsum',
@@ -173,6 +176,7 @@ describe('addInterviewer', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('creates an interviewer record', async () => {
+    mockSessionFindFirst.mockResolvedValue({ id: 'sess-1' } as never)
     mockInterviewerCreate.mockResolvedValue({ id: 'int-1' } as never)
     const result = await addInterviewer('sess-1', { name: 'Sarah Chen', role: 'Head of Design' })
     expect(mockInterviewerCreate).toHaveBeenCalledWith(
