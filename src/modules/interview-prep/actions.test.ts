@@ -208,3 +208,93 @@ describe('deleteInterviewer', () => {
     })
   })
 })
+
+import {
+  addTextBlock, updateBlock, deleteBlock, moveBlockUp, moveBlockDown, convertAiBlockToText, insertAiBlock,
+} from './actions'
+
+const mockNoteFind = vi.mocked(prisma.prepNote.findFirst)
+const mockNoteUpdate = vi.mocked(prisma.prepNote.update)
+
+describe('addTextBlock', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('appends a new text block to the note sections', async () => {
+    const existingSections = [{ id: 'b1', type: 'text', title: 'Existing', content: 'hi', order: 0 }]
+    mockNoteFind.mockResolvedValue({ id: 'note-1', sessionId: 'sess-1', sections: existingSections } as never)
+    mockNoteUpdate.mockResolvedValue({} as never)
+
+    await addTextBlock('note-1')
+
+    const updateCall = mockNoteUpdate.mock.calls[0][0]
+    const sections = (updateCall.data as { sections: unknown }).sections as Array<{ type: string; order: number }>
+    expect(sections).toHaveLength(2)
+    expect(sections[1].type).toBe('text')
+    expect(sections[1].order).toBe(1)
+  })
+})
+
+describe('updateBlock', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('updates matching block content', async () => {
+    const sections = [{ id: 'b1', type: 'text', title: 'Old', content: '', order: 0 }]
+    mockNoteFind.mockResolvedValue({ id: 'note-1', sessionId: 'sess-1', sections } as never)
+    mockNoteUpdate.mockResolvedValue({} as never)
+
+    await updateBlock('note-1', 'b1', { content: 'Updated content' })
+
+    const updateCall = mockNoteUpdate.mock.calls[0][0]
+    const updated = (updateCall.data as { sections: unknown }).sections as Array<{ id: string; content: string }>
+    expect(updated[0].content).toBe('Updated content')
+  })
+})
+
+describe('deleteBlock', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('removes the block and resets order', async () => {
+    const sections = [
+      { id: 'b1', type: 'text', title: 'A', content: '', order: 0 },
+      { id: 'b2', type: 'text', title: 'B', content: '', order: 1 },
+    ]
+    mockNoteFind.mockResolvedValue({ id: 'note-1', sessionId: 'sess-1', sections } as never)
+    mockNoteUpdate.mockResolvedValue({} as never)
+
+    await deleteBlock('note-1', 'b1')
+
+    const updateCall = mockNoteUpdate.mock.calls[0][0]
+    const updated = (updateCall.data as { sections: unknown }).sections as Array<{ id: string; order: number }>
+    expect(updated).toHaveLength(1)
+    expect(updated[0].id).toBe('b2')
+    expect(updated[0].order).toBe(0)
+  })
+})
+
+describe('moveBlockUp', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('swaps a block with the one above it', async () => {
+    const sections = [
+      { id: 'b1', type: 'text', title: 'A', content: '', order: 0 },
+      { id: 'b2', type: 'text', title: 'B', content: '', order: 1 },
+    ]
+    mockNoteFind.mockResolvedValue({ id: 'note-1', sessionId: 'sess-1', sections } as never)
+    mockNoteUpdate.mockResolvedValue({} as never)
+
+    await moveBlockUp('note-1', 'b2')
+
+    const updateCall = mockNoteUpdate.mock.calls[0][0]
+    const updated = (updateCall.data as { sections: unknown }).sections as Array<{ id: string; order: number }>
+    const sorted = [...updated].sort((a, b) => a.order - b.order)
+    expect(sorted[0].id).toBe('b2')
+    expect(sorted[1].id).toBe('b1')
+  })
+
+  it('does nothing if block is already first', async () => {
+    const sections = [{ id: 'b1', type: 'text', title: 'A', content: '', order: 0 }]
+    mockNoteFind.mockResolvedValue({ id: 'note-1', sessionId: 'sess-1', sections } as never)
+    await moveBlockUp('note-1', 'b1')
+    expect(mockNoteUpdate).not.toHaveBeenCalled()
+  })
+})

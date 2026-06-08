@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { requireProfile } from '@/lib/session'
+import { normalizeSections, type Block } from './schema'
+import { nanoid } from 'nanoid'
 
 // ─── Session ─────────────────────────────────────────────────
 
@@ -165,4 +167,111 @@ export async function deleteInterviewer(interviewerId: string): Promise<void> {
   await prisma.prepInterviewer.deleteMany({
     where: { id: interviewerId, profileId: profile.id },
   })
+}
+
+// ─── Block helpers (used only within this file) ───────────────
+
+async function loadNote(noteId: string, profileId: string) {
+  const note = await prisma.prepNote.findFirst({
+    where: { id: noteId, profileId },
+    select: { id: true, sessionId: true, sections: true },
+  })
+  if (!note) throw new Error('Note not found')
+  return { ...note, blocks: normalizeSections(note.sections) }
+}
+
+async function saveBlocks(
+  noteId: string,
+  sessionId: string,
+  blocks: ReturnType<typeof normalizeSections>,
+): Promise<void> {
+  const reindexed = [...blocks]
+    .sort((a, b) => a.order - b.order)
+    .map((b, i) => ({ ...b, order: i }))
+  await prisma.prepNote.update({
+    where: { id: noteId },
+    data: { sections: reindexed },
+  })
+  revalidatePath(`/dashboard/interview-prep/${sessionId}`)
+}
+
+// ─── Block operations ─────────────────────────────────────────
+
+export async function addTextBlock(noteId: string): Promise<void> {
+  const { profile } = await requireProfile()
+  const note = await loadNote(noteId, profile.id)
+  const newBlock = { id: nanoid(), type: 'text' as const, title: 'New block', content: '', order: note.blocks.length }
+  await saveBlocks(noteId, note.sessionId, [...note.blocks, newBlock])
+}
+
+export async function updateBlock(
+  noteId: string,
+  blockId: string,
+  updates: { title?: string; content?: string },
+): Promise<void> {
+  const { profile } = await requireProfile()
+  const note = await loadNote(noteId, profile.id)
+  const updated = note.blocks.map((b: Block) => b.id === blockId ? { ...b, ...updates } : b)
+  await saveBlocks(noteId, note.sessionId, updated)
+}
+
+export async function deleteBlock(noteId: string, blockId: string): Promise<void> {
+  const { profile } = await requireProfile()
+  const note = await loadNote(noteId, profile.id)
+  const remaining = note.blocks.filter((b: Block) => b.id !== blockId)
+  await saveBlocks(noteId, note.sessionId, remaining)
+}
+
+export async function moveBlockUp(noteId: string, blockId: string): Promise<void> {
+  const { profile } = await requireProfile()
+  const note = await loadNote(noteId, profile.id)
+  const sorted = [...note.blocks].sort((a, b) => a.order - b.order)
+  const idx = sorted.findIndex(b => b.id === blockId)
+  if (idx <= 0) return
+  const prevOrder = sorted[idx - 1].order
+  const curOrder = sorted[idx].order
+  sorted[idx - 1] = { ...sorted[idx - 1], order: curOrder }
+  sorted[idx] = { ...sorted[idx], order: prevOrder }
+  await saveBlocks(noteId, note.sessionId, sorted)
+}
+
+export async function moveBlockDown(noteId: string, blockId: string): Promise<void> {
+  const { profile } = await requireProfile()
+  const note = await loadNote(noteId, profile.id)
+  const sorted = [...note.blocks].sort((a, b) => a.order - b.order)
+  const idx = sorted.findIndex(b => b.id === blockId)
+  if (idx < 0 || idx >= sorted.length - 1) return
+  const curOrder = sorted[idx].order
+  const nextOrder = sorted[idx + 1].order
+  sorted[idx] = { ...sorted[idx], order: nextOrder }
+  sorted[idx + 1] = { ...sorted[idx + 1], order: curOrder }
+  await saveBlocks(noteId, note.sessionId, sorted)
+}
+
+export async function convertAiBlockToText(noteId: string, blockId: string): Promise<void> {
+  const { profile } = await requireProfile()
+  const note = await loadNote(noteId, profile.id)
+  const updated = note.blocks.map((b: Block) => {
+    if (b.id !== blockId || b.type !== 'ai-analysis') return b
+    return { id: b.id, type: 'text' as const, title: b.title, content: b.content, order: b.order }
+  })
+  await saveBlocks(noteId, note.sessionId, updated)
+}
+
+export async function insertAiBlock(
+  noteId: string,
+  block: { title: string; content: string; sourceDocIds?: string[]; sourceInterviewerIds?: string[] },
+): Promise<void> {
+  const { profile } = await requireProfile()
+  const note = await loadNote(noteId, profile.id)
+  const newBlock = {
+    id: nanoid(),
+    type: 'ai-analysis' as const,
+    title: block.title,
+    content: block.content,
+    sourceDocIds: block.sourceDocIds ?? [],
+    sourceInterviewerIds: block.sourceInterviewerIds ?? [],
+    order: note.blocks.length,
+  }
+  await saveBlocks(noteId, note.sessionId, [...note.blocks, newBlock])
 }
