@@ -3,7 +3,7 @@ export type ChecklistSection = {
   prompts: string[]
 }
 
-export const CHECKLIST: ChecklistSection[] = [
+export const CHECKLIST: readonly ChecklistSection[] = [
   {
     heading: 'Opening',
     prompts: [
