@@ -38,7 +38,7 @@ export function InterviewersTab({ sessionId, activeNoteId, interviewers }: Props
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {interviewers.length === 0 && !showAddForm && (
           <p className="py-4 text-center text-xs text-muted-foreground">
-            Add interviewers to get AI-powered insights about who you'll be speaking with.
+            Add interviewers to get AI-powered insights about who you&apos;ll be speaking with.
           </p>
         )}
 
