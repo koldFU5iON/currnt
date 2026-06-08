@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
+import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Download, X } from 'lucide-react'
@@ -141,6 +142,25 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
               {saveLabel}
             </span>
           )}
+          <Link
+            href={`/dashboard/cover-letters/${letter.id}/guide`}
+            className="flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            ✦ Writing Guide
+          </Link>
+          <Link
+            href={content.trim() ? `/dashboard/cover-letters/${letter.id}/review` : '#'}
+            aria-disabled={!content.trim()}
+            title={!content.trim() ? 'Write something first' : undefined}
+            className={cn(
+              'flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs',
+              content.trim()
+                ? 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                : 'pointer-events-none opacity-40'
+            )}
+          >
+            ✦ Review
+          </Link>
           <div className="relative">
             <Button
               variant="outline"
