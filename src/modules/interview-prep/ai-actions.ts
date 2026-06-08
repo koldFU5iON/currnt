@@ -135,8 +135,8 @@ export async function analyseAllDocuments(
   let count = 0
   for (const doc of docs) {
     const result = await analyseDocument(doc.id, noteId)
-    if (!result.ok && result.error !== 'no_content') {
-      return { ok: false, error: result.error as LLMErrorKind, message: result.message }
+    if (!result.ok && result.error !== 'no_content' && result.error !== 'not_found') {
+      return { ok: false, error: result.error, message: result.message }
     }
     if (result.ok) count++
   }
