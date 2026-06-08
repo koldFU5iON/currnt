@@ -245,11 +245,11 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
         {/* Editor / preview area */}
         <div
           className={cn(
-            'flex flex-1 min-w-0 justify-center overflow-y-auto bg-secondary p-5 transition-opacity',
+            'flex flex-1 min-w-0 flex-col items-center overflow-y-auto bg-secondary p-5 transition-opacity',
             panelOpen && 'opacity-50'
           )}
         >
-          <div className="w-full max-w-[794px] rounded-md bg-background p-5 shadow-sm">
+          <div className="flex w-full max-w-[794px] flex-1 flex-col rounded-md bg-background p-5 shadow-sm">
             {!showEditor && content === '' ? (
               <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 text-center">
                 <p className="text-sm font-semibold">No cover letter yet</p>
@@ -278,7 +278,7 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
                 ref={textareaRef}
                 value={content}
                 onChange={e => handleChange(e.target.value)}
-                className="min-h-[400px] w-full resize-none bg-transparent font-mono text-sm leading-relaxed outline-none placeholder:text-muted-foreground/50"
+                className="min-h-[400px] flex-1 w-full resize-none bg-transparent font-mono text-sm leading-relaxed outline-none placeholder:text-muted-foreground/50"
                 placeholder="Start writing…"
                 autoFocus={showEditor && content === ''}
               />
