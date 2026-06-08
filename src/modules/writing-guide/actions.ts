@@ -132,7 +132,39 @@ export async function buildWithMe(
   letterId: string,
   answers: BuildWithMeInputs,
 ): Promise<GenerateResult> {
-  return { ok: false, error: 'not_found', message: 'not implemented' }
+  const { profile } = await requireProfile()
+
+  const inputs = await gatherInputs(profile.id, letterId)
+  if (!inputs) return { ok: false, error: 'not_found', message: 'Cover letter not found' }
+
+  let userPrompt = buildGeneratePrompt(inputs)
+
+  const answerLines: string[] = []
+  if (answers.whyRole)      answerLines.push(`**Why this role:** ${answers.whyRole}`)
+  if (answers.whyCompany)   answerLines.push(`**Why this company:** ${answers.whyCompany}`)
+  if (answers.bestEvidence) answerLines.push(`**Best evidence of fit:** ${answers.bestEvidence}`)
+  if (answers.whyNow)       answerLines.push(`**Why making this move now:** ${answers.whyNow}`)
+  if (answers.anythingElse) answerLines.push(`**Additional context:** ${answers.anythingElse}`)
+
+  if (answerLines.length > 0) {
+    userPrompt += `\n\n# Your Context\n\n${answerLines.join('\n\n')}`
+  }
+
+  const systemPrompt = await loadGeneratePrompt()
+  const system = composeSystem(inputs.writingCtx.rules, inputs.writingCtx.brief ?? '', systemPrompt)
+
+  try {
+    const result = await complete(profile.id, userPrompt, {
+      system,
+      feature: 'cover-letter-build',
+      temperature: 0.7,
+      maxOutputTokens: 1200,
+    })
+    return { ok: true, content: result.text }
+  } catch (err) {
+    if (err instanceof LLMError) return { ok: false, error: err.kind, message: err.message }
+    throw err
+  }
 }
 
 export async function reviewLetter(letterId: string): Promise<ReviewResult> {

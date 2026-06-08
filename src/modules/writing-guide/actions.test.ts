@@ -31,7 +31,7 @@ vi.mock('@/modules/cv/schema', () => ({
   CVDocumentContentSchema: { safeParse: vi.fn().mockReturnValue({ success: true, data: {} }) },
 }))
 
-import { generateDraft } from './actions'
+import { generateDraft, buildWithMe } from './actions'
 import { prisma } from '@/lib/db'
 import { complete } from '@/modules/llm/client'
 
@@ -77,5 +77,33 @@ describe('generateDraft', () => {
 
     const result = await generateDraft('letter-1')
     expect(result).toEqual({ ok: false, error: 'not_configured', message: 'No key' })
+  })
+})
+
+describe('buildWithMe', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('returns not_found when letter missing', async () => {
+    mockLetterFind.mockResolvedValue(null)
+    const result = await buildWithMe('missing', {})
+    expect(result).toEqual({ ok: false, error: 'not_found', message: expect.any(String) })
+  })
+
+  it('includes answers in prompt and calls complete', async () => {
+    mockLetterFind.mockResolvedValue({ id: 'letter-1', content: '', jobApplicationId: null, jobTitle: null, company: null, jobApplication: null } as never)
+    mockCVFind.mockResolvedValue(null)
+    mockComplete.mockResolvedValue({ text: 'Dear Hiring Manager,' } as never)
+
+    const result = await buildWithMe('letter-1', { whyRole: 'Excited about the product', whyCompany: 'Love the mission' })
+    expect(result).toEqual({ ok: true, content: 'Dear Hiring Manager,' })
+
+    const promptArg = mockComplete.mock.calls[0][1] as string
+    expect(promptArg).toContain('Excited about the product')
+    expect(promptArg).toContain('Love the mission')
+    expect(mockComplete).toHaveBeenCalledWith(
+      'profile-1',
+      expect.any(String),
+      expect.objectContaining({ feature: 'cover-letter-build' }),
+    )
   })
 })
