@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { requireProfile } from '@/lib/session'
+import { buildCoverLetterTemplate } from './template'
 
 export async function createCoverLetter(jobApplicationId?: string): Promise<{ id: string }> {
   const { profile } = await requireProfile()
@@ -29,7 +30,7 @@ export async function createCoverLetter(jobApplicationId?: string): Promise<{ id
       company,
       mode: 'markdown',
       status: 'draft',
-      content: '',
+      content: buildCoverLetterTemplate(profile),
     },
     select: { id: true },
   })

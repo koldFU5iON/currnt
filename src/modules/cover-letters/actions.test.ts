@@ -1,7 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('@/lib/session', () => ({
-  requireProfile: vi.fn().mockResolvedValue({ profile: { id: 'profile-1' } }),
+  requireProfile: vi.fn().mockResolvedValue({
+    profile: {
+      id: 'profile-1',
+      name: 'Test User',
+      headline: 'Software Engineer',
+      email: 'test@example.com',
+      phone: null,
+      linkedIn: null,
+      website: null,
+    },
+  }),
 }))
 vi.mock('@/lib/db', () => ({
   prisma: {
@@ -38,7 +48,7 @@ describe('createCoverLetter', () => {
           jobApplicationId: null,
           mode: 'markdown',
           status: 'draft',
-          content: '',
+          content: expect.stringContaining('# Test User'),
           jobTitle: null,
           company: null,
         }),
