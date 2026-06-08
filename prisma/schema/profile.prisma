@@ -29,9 +29,10 @@ model Profile {
   competencies    Competency[]
   languages       Language[]
   tools           Tool[]
-  settings        UserSettings?
-  apiTokens       ApiToken[]
-  usageLogs       LlmUsageLog[]
+  settings            UserSettings?
+  apiTokens           ApiToken[]
+  usageLogs           LlmUsageLog[]
+  interviewPrepSessions InterviewPrepSession[]
 }
 
 model Skill {

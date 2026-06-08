@@ -1,0 +1,74 @@
+// ------------------------------------------------------------
+// INTERVIEW PREP
+// ------------------------------------------------------------
+
+model InterviewPrepSession {
+  id               String    @id @default(cuid())
+  profileId        String
+  title            String
+  company          String?
+  jobTitle         String?
+  jobApplicationId String?
+  status           String    @default("draft")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  profile        Profile              @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  jobApplication JobApplication?      @relation(fields: [jobApplicationId], references: [id], onDelete: SetNull)
+  notes          PrepNote[]
+  documents      PrepDocument[]
+  interviewers   PrepInterviewer[]
+
+  @@index([profileId])
+  @@index([jobApplicationId])
+}
+
+model PrepNote {
+  id        String   @id @default(cuid())
+  sessionId String
+  profileId String
+  title     String   @default("Prep Notes")
+  sections  Json     @default("[]")
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  session InterviewPrepSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+}
+
+model PrepDocument {
+  id           String    @id @default(cuid())
+  sessionId    String
+  profileId    String
+  name         String
+  docType      String    @default("other")
+  content      String
+  aiAnalysis   Json?
+  aiAnalysedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  session InterviewPrepSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+}
+
+model PrepInterviewer {
+  id           String    @id @default(cuid())
+  sessionId    String
+  profileId    String
+  name         String
+  role         String?
+  linkedInText String?
+  notes        String?
+  aiAnalysis   Json?
+  aiAnalysedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  session InterviewPrepSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+}

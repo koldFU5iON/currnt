@@ -19,6 +19,10 @@ const FEATURE_LABELS: Record<string, string> = {
   'cover-letter-finalise':     'Cover letter — finalise',
   'cover-letter-build': 'Cover letter — build with me',
   'cover-letter-review': 'Cover letter — review',
+  'interview-prep-doc-analysis':         'Interview prep — analyse document',
+  'interview-prep-interviewer-analysis': 'Interview prep — analyse interviewer',
+  'interview-prep-bulk-analysis':        'Interview prep — analyse all documents',
+  'interview-prep-qa-generation':        'Interview prep — generate Q&A',
 }
 
 export function UsageLog({ stats }: { stats: UserUsageSummary }) {

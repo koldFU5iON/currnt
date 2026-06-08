@@ -29,11 +29,12 @@ model JobApplication {
   lastUpdated       DateTime  @updatedAt
   archivedAt        DateTime?
 
-  profile      Profile               @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  contacts     ApplicationContact[]
-  events       ApplicationEvent[]
-  cvDocuments  CVDocument[]
-  coverLetters CoverLetterDocument[]
+  profile             Profile               @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  contacts            ApplicationContact[]
+  events              ApplicationEvent[]
+  cvDocuments         CVDocument[]
+  coverLetters        CoverLetterDocument[]
+  interviewPrepSessions InterviewPrepSession[]
 
   @@index([profileId])
   @@index([status])
