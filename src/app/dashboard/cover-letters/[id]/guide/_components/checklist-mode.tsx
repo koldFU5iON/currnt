@@ -1,3 +1,5 @@
+'use client'
+
 import { CHECKLIST } from '@/modules/writing-guide/checklist'
 
 type Props = { onBack: () => void }
