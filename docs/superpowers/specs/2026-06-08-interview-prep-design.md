@@ -20,7 +20,7 @@ Three new Prisma models, all scoped to `profileId` for ownership.
 
 ### `InterviewPrepSession`
 
-The root entity. Stores session metadata and the entire block array for the left-pane notes editor.
+The root entity. Holds session metadata and owns all child records. Note content lives in `PrepNote` (see below) — the session itself has no `sections` column.
 
 ```prisma
 model InterviewPrepSession {
@@ -30,18 +30,39 @@ model InterviewPrepSession {
   company          String?
   jobTitle         String?
   jobApplicationId String?
-  sections         Json      @default("[]")   // ordered Block array
   status           String    @default("draft") // draft | active | archived
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
   profile        Profile              @relation(fields: [profileId], references: [id], onDelete: Cascade)
   jobApplication JobApplication?      @relation(fields: [jobApplicationId], references: [id])
+  notes          PrepNote[]
   documents      PrepDocument[]
   interviewers   PrepInterviewer[]
 
   @@index([profileId])
   @@index([jobApplicationId])
+}
+```
+
+### `PrepNote`
+
+One named prep document per interview stage or concern. Each has its own independent block array. A session starts with one default note ("Prep Notes") and the user can add more. Documents and interviewers are shared across all notes at the session level.
+
+```prisma
+model PrepNote {
+  id        String   @id @default(cuid())
+  sessionId String
+  profileId String
+  title     String   @default("Prep Notes")
+  sections  Json     @default("[]")  // ordered Block array (same schema as before)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  session InterviewPrepSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
 }
 ```
 
@@ -137,9 +158,9 @@ export const SectionsSchema = z.array(BlockSchema)
 
 ```
 src/modules/interview-prep/
-  schema.ts        — Zod schemas and TypeScript types (Block, Session, Document, Interviewer)
-  queries.ts       — read-only DB queries (getSession, listSessions, getDocuments, getInterviewers)
-  actions.ts       — Server Actions: CRUD for sessions, blocks, documents, interviewers; block reorder
+  schema.ts        — Zod schemas and TypeScript types (Block, Session, PrepNote, Document, Interviewer)
+  queries.ts       — read-only DB queries (getSession, listSessions, getNotes, getDocuments, getInterviewers)
+  actions.ts       — Server Actions: CRUD for sessions, notes, blocks, documents, interviewers; block + note reorder
   ai-actions.ts    — AI Server Actions (all optional): analyseDocument, analyseInterviewer, analyseAllDocuments
 ```
 
@@ -204,7 +225,8 @@ Full-height split panel, same viewport strategy as the cover letter workspace.
 
 ### Left pane — Notes editor
 
-- Narrow index sidebar (fixed, ~140px) listing block titles. Clicking scrolls to that block.
+- **Note doc switcher** — pill tabs across the top of the left pane showing each `PrepNote` by title. Active note is highlighted. `+ New doc` pill at the end creates a new `PrepNote`. Docs can be renamed or deleted via a long-press/right-click context menu.
+- Narrow index sidebar (fixed, ~140px) listing block titles for the active note. Clicking scrolls to that block.
 - Block list: each block shows its title (editable inline) and a markdown textarea for content.
 - Block header bar: title | ↑ up | ↓ down | ⋯ menu (rename, delete).
 - AI-analysis blocks are visually distinguished (accent left border, `✦` prefix in index, read-only by default). The ⋯ menu includes a "Convert to text block" option that strips the AI metadata and makes the content fully editable.
