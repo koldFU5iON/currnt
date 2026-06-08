@@ -5,6 +5,9 @@ import {
   QaBankBlockSchema,
   SectionsSchema,
   PrepSessionSchema,
+  PrepNoteSchema,
+  PrepDocumentSchema,
+  PrepInterviewerSchema,
   normalizeSections,
 } from './schema'
 
@@ -105,5 +108,88 @@ describe('PrepSessionSchema', () => {
     })
     expect(result.success).toBe(true)
     expect(result.data?.status).toBe('draft')
+  })
+
+  it('rejects an invalid status value', () => {
+    const result = PrepSessionSchema.safeParse({
+      id: 's1', profileId: 'p1', title: 'PM @ Acme',
+      status: 'unknown',
+      createdAt: new Date(), updatedAt: new Date(),
+    })
+    expect(result.success).toBe(false)
+  })
+})
+
+describe('PrepNoteSchema', () => {
+  it('parses a raw DB row with sections as a JSON array', () => {
+    const rawSections = [
+      { id: 'b1', type: 'text', title: 'Key Themes', content: '- point', order: 0 },
+    ]
+    const result = PrepNoteSchema.safeParse({
+      id: 'n1', sessionId: 's1', profileId: 'p1',
+      title: 'Research Notes',
+      sections: rawSections,
+      order: 0,
+      createdAt: new Date(), updatedAt: new Date(),
+    })
+    expect(result.success).toBe(true)
+    expect(result.data?.sections).toHaveLength(1)
+    expect(result.data?.sections[0].type).toBe('text')
+  })
+
+  it('returns empty sections array for invalid/null sections JSON', () => {
+    const result = PrepNoteSchema.safeParse({
+      id: 'n1', sessionId: 's1', profileId: 'p1',
+      title: 'Research Notes',
+      sections: null,
+      order: 0,
+      createdAt: new Date(), updatedAt: new Date(),
+    })
+    expect(result.success).toBe(true)
+    expect(result.data?.sections).toEqual([])
+  })
+})
+
+describe('PrepDocumentSchema', () => {
+  it('accepts a valid document with updatedAt', () => {
+    const result = PrepDocumentSchema.safeParse({
+      id: 'd1', sessionId: 's1', profileId: 'p1',
+      name: 'Job Description', docType: 'job-description',
+      content: 'We are looking for...',
+      createdAt: new Date(), updatedAt: new Date(),
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('defaults docType to other', () => {
+    const result = PrepDocumentSchema.safeParse({
+      id: 'd1', sessionId: 's1', profileId: 'p1',
+      name: 'Mystery Doc',
+      content: 'some content',
+      createdAt: new Date(), updatedAt: new Date(),
+    })
+    expect(result.success).toBe(true)
+    expect(result.data?.docType).toBe('other')
+  })
+})
+
+describe('PrepInterviewerSchema', () => {
+  it('accepts a valid interviewer with updatedAt', () => {
+    const result = PrepInterviewerSchema.safeParse({
+      id: 'i1', sessionId: 's1', profileId: 'p1',
+      name: 'Alice Chen', role: 'Engineering Manager',
+      linkedInText: null, notes: null,
+      createdAt: new Date(), updatedAt: new Date(),
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts an interviewer with minimal fields', () => {
+    const result = PrepInterviewerSchema.safeParse({
+      id: 'i1', sessionId: 's1', profileId: 'p1',
+      name: 'Bob Smith',
+      createdAt: new Date(), updatedAt: new Date(),
+    })
+    expect(result.success).toBe(true)
   })
 })

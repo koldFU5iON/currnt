@@ -52,7 +52,7 @@ export const PrepSessionSchema = z.object({
   company: z.string().nullable().optional(),
   jobTitle: z.string().nullable().optional(),
   jobApplicationId: z.string().nullable().optional(),
-  status: z.string().default('draft'),
+  status: z.enum(['draft', 'active', 'archived']).default('draft'),
   createdAt: z.date(),
   updatedAt: z.date(),
 })
@@ -64,7 +64,7 @@ export const PrepNoteSchema = z.object({
   sessionId: z.string(),
   profileId: z.string(),
   title: z.string(),
-  sections: SectionsSchema,
+  sections: z.unknown().transform(normalizeSections),
   order: z.number(),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -77,11 +77,12 @@ export const PrepDocumentSchema = z.object({
   sessionId: z.string(),
   profileId: z.string(),
   name: z.string(),
-  docType: z.string(),
+  docType: z.string().default('other'),
   content: z.string(),
   aiAnalysis: z.unknown().nullable().optional(),
   aiAnalysedAt: z.date().nullable().optional(),
   createdAt: z.date(),
+  updatedAt: z.date(),
 })
 
 export type PrepDocument = z.infer<typeof PrepDocumentSchema>
@@ -97,6 +98,7 @@ export const PrepInterviewerSchema = z.object({
   aiAnalysis: z.unknown().nullable().optional(),
   aiAnalysedAt: z.date().nullable().optional(),
   createdAt: z.date(),
+  updatedAt: z.date(),
 })
 
 export type PrepInterviewer = z.infer<typeof PrepInterviewerSchema>
