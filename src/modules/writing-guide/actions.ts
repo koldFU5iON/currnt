@@ -168,5 +168,41 @@ export async function buildWithMe(
 }
 
 export async function reviewLetter(letterId: string): Promise<ReviewResult> {
-  return { ok: false, error: 'not_found', message: 'not implemented' }
+  const { profile } = await requireProfile()
+
+  const inputs = await gatherInputs(profile.id, letterId)
+  if (!inputs) return { ok: false, error: 'not_found', message: 'Cover letter not found' }
+
+  if (!inputs.letter.content.trim()) {
+    return { ok: false, error: 'no_content', message: 'Write something first before requesting a review.' }
+  }
+
+  let userPrompt = `# Cover Letter to Review\n\n${inputs.letter.content}`
+  userPrompt += `\n\n# Candidate Profile\n\n${serializeProfileForLLM(inputs.snapshot)}`
+
+  const job = inputs.letter.jobApplication
+  const title = inputs.letter.jobTitle ?? job?.title
+  const company = inputs.letter.company ?? job?.company
+  if (title || company) {
+    userPrompt += `\n\n# Role\n\n**${title ?? 'Unknown role'}**${company ? ` at ${company}` : ''}`
+  }
+  if (job?.jobDescription) {
+    userPrompt += `\n\n## Job Description\n\n${job.jobDescription}`
+  }
+
+  const systemPrompt = await loadReviewPrompt()
+  const system = composeSystem(inputs.writingCtx.rules, inputs.writingCtx.brief ?? '', systemPrompt)
+
+  try {
+    const result = await completeStructured(profile.id, userPrompt, ReviewOutputSchema, {
+      system,
+      feature: 'cover-letter-review',
+      temperature: 0,
+      maxOutputTokens: 800,
+    })
+    return { ok: true, review: result.object }
+  } catch (err) {
+    if (err instanceof LLMError) return { ok: false, error: err.kind, message: err.message }
+    throw err
+  }
 }

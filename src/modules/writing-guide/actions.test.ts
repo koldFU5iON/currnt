@@ -31,13 +31,14 @@ vi.mock('@/modules/cv/schema', () => ({
   CVDocumentContentSchema: { safeParse: vi.fn().mockReturnValue({ success: true, data: {} }) },
 }))
 
-import { generateDraft, buildWithMe } from './actions'
+import { generateDraft, buildWithMe, reviewLetter } from './actions'
 import { prisma } from '@/lib/db'
-import { complete } from '@/modules/llm/client'
+import { complete, completeStructured } from '@/modules/llm/client'
 
 const mockLetterFind = vi.mocked(prisma.coverLetterDocument.findFirst)
 const mockCVFind = vi.mocked(prisma.cVDocument.findFirst)
 const mockComplete = vi.mocked(complete)
+const mockCompleteStructured = vi.mocked(completeStructured)
 
 describe('generateDraft', () => {
   beforeEach(() => vi.clearAllMocks())
@@ -104,6 +105,38 @@ describe('buildWithMe', () => {
       'profile-1',
       expect.any(String),
       expect.objectContaining({ feature: 'cover-letter-build' }),
+    )
+  })
+})
+
+describe('reviewLetter', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('returns not_found when letter missing', async () => {
+    mockLetterFind.mockResolvedValue(null)
+    const result = await reviewLetter('missing')
+    expect(result).toEqual({ ok: false, error: 'not_found', message: expect.any(String) })
+  })
+
+  it('returns no_content when letter is empty', async () => {
+    mockLetterFind.mockResolvedValue({ id: 'letter-1', content: '', jobApplicationId: null, jobTitle: null, company: null, jobApplication: null } as never)
+    const result = await reviewLetter('letter-1')
+    expect(result).toEqual({ ok: false, error: 'no_content', message: expect.any(String) })
+  })
+
+  it('calls completeStructured and returns review', async () => {
+    mockLetterFind.mockResolvedValue({ id: 'letter-1', content: 'Dear Hiring Manager,\n\nBody text.', jobApplicationId: null, jobTitle: null, company: null, jobApplication: null } as never)
+    mockCVFind.mockResolvedValue(null)
+    const review = { issues: [], strengths: ['Clear opening.'], summary: 'Good letter.' }
+    mockCompleteStructured.mockResolvedValue({ object: review } as never)
+
+    const result = await reviewLetter('letter-1')
+    expect(result).toEqual({ ok: true, review })
+    expect(mockCompleteStructured).toHaveBeenCalledWith(
+      'profile-1',
+      expect.any(String),
+      expect.anything(),
+      expect.objectContaining({ feature: 'cover-letter-review' }),
     )
   })
 })
