@@ -1,0 +1,13 @@
+import { notFound } from 'next/navigation'
+import { requireProfile } from '@/lib/session'
+import { getCoverLetter } from '@/modules/cover-letters/queries'
+import { CoverLetterWorkspace } from './_components/cover-letter-workspace'
+
+type Props = { params: Promise<{ id: string }> }
+
+export default async function CoverLetterPage({ params }: Props) {
+  const [{ id }, { profile }] = await Promise.all([params, requireProfile()])
+  const letter = await getCoverLetter(profile.id, id)
+  if (!letter) notFound()
+  return <CoverLetterWorkspace letter={letter} />
+}

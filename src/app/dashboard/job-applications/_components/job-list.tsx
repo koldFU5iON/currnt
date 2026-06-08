@@ -251,6 +251,10 @@ export function JobList({ jobs, hasLLMKey, openCreate, initialCreateUrl }: {
     router.push(`/dashboard/cv-builder/new?jobId=${id}`)
   }
 
+  function handleCreateCoverLetter(id: string) {
+    router.push(`/dashboard/cover-letters/new?jobId=${id}`)
+  }
+
   async function handleSingleArchive(id: string) {
     markBusy([id], 'Archiving…')
     try {
@@ -320,6 +324,7 @@ export function JobList({ jobs, hasLLMKey, openCreate, initialCreateUrl }: {
                 onEdit={setEditing}
                 onArchive={handleSingleArchive}
                 onGenerateCV={handleGenerateCV}
+                onCreateCoverLetter={handleCreateCoverLetter}
                 hasLLMKey={hasLLMKey}
                 isMobile
               />
@@ -346,6 +351,7 @@ export function JobList({ jobs, hasLLMKey, openCreate, initialCreateUrl }: {
                 onEdit={setEditing}
                 onArchive={handleSingleArchive}
                 onGenerateCV={handleGenerateCV}
+                onCreateCoverLetter={handleCreateCoverLetter}
                 hasLLMKey={hasLLMKey}
               />
             ))}

@@ -82,11 +82,17 @@ export async function getActiveJobs(): Promise<Job[]> {
         take: 1,
         orderBy: { createdAt: 'desc' },
       },
+      coverLetters: {
+        select: { id: true },
+        take: 1,
+        orderBy: { updatedAt: 'desc' },
+      },
     },
   })
   return jobs.map(j => ({
     ...j,
     cvDocumentId: j.cvDocuments[0]?.id ?? null,
+    coverLetterDocumentId: j.coverLetters[0]?.id ?? null,
   })) as Job[]
 }
 
@@ -109,10 +115,16 @@ export async function getArchivedJobs(): Promise<Job[]> {
         take: 1,
         orderBy: { createdAt: 'desc' },
       },
+      coverLetters: {
+        select: { id: true },
+        take: 1,
+        orderBy: { updatedAt: 'desc' },
+      },
     },
   })
   return jobs.map(j => ({
     ...j,
     cvDocumentId: j.cvDocuments[0]?.id ?? null,
+    coverLetterDocumentId: j.coverLetters[0]?.id ?? null,
   })) as Job[]
 }

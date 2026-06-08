@@ -27,10 +27,11 @@ type JobRowCardProps = {
   onEdit: (job: Job) => void
   onArchive: (id: string) => void
   onGenerateCV: (id: string) => void
+  onCreateCoverLetter: (id: string) => void
   hasLLMKey: boolean
 }
 
-export function JobRowCard({ job, selected, busyLabel, onToggleSelect, onEdit, onArchive, onGenerateCV, hasLLMKey }: JobRowCardProps) {
+export function JobRowCard({ job, selected, busyLabel, onToggleSelect, onEdit, onArchive, onGenerateCV, onCreateCoverLetter, hasLLMKey }: JobRowCardProps) {
   const {
     id, jobNumber, title, company, countries, url,
     dateApplied, datePublished, lastUpdated, status, progress,
@@ -111,7 +112,7 @@ export function JobRowCard({ job, selected, busyLabel, onToggleSelect, onEdit, o
             {jobNumber && <span className="font-mono"> · {jobNumber}</span>}
           </p>
         </div>
-        <AppControls id={id} onEdit={() => onEdit(job)} onArchive={() => onArchive(id)} onGenerateCV={() => onGenerateCV(id)} />
+        <AppControls id={id} cvDocumentId={job.cvDocumentId} coverLetterDocumentId={job.coverLetterDocumentId} onEdit={() => onEdit(job)} onArchive={() => onArchive(id)} onGenerateCV={() => onGenerateCV(id)} onCreateCoverLetter={() => onCreateCoverLetter(id)} />
       </div>
 
       {/* Row 2: status + progress */}
