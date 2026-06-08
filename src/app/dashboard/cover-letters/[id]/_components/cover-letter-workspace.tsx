@@ -294,7 +294,7 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
 
         {/* Review panel — desktop inline column */}
         {reviewPanelOpen && !isMobile && (
-          <div className="flex w-[380px] shrink-0 flex-col border-l bg-background overflow-hidden">
+          <div className="flex w-[440px] shrink-0 flex-col border-l bg-background overflow-hidden">
             <div className="flex shrink-0 items-center justify-between border-b px-4 py-2.5">
               <span className="text-sm font-semibold">✦ Review</span>
               <button
