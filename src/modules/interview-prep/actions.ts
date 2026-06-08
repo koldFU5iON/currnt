@@ -111,3 +111,58 @@ export async function deleteNote(noteId: string): Promise<void> {
     where: { id: noteId, profileId: profile.id },
   })
 }
+
+// ─── Documents ───────────────────────────────────────────────
+
+export async function addDocument(
+  sessionId: string,
+  input: { name: string; docType: string; content: string },
+): Promise<{ id: string }> {
+  const { profile } = await requireProfile()
+  const doc = await prisma.prepDocument.create({
+    data: { sessionId, profileId: profile.id, ...input },
+    select: { id: true },
+  })
+  revalidatePath(`/dashboard/interview-prep/${sessionId}`)
+  return { id: doc.id }
+}
+
+export async function deleteDocument(documentId: string): Promise<void> {
+  const { profile } = await requireProfile()
+  await prisma.prepDocument.deleteMany({
+    where: { id: documentId, profileId: profile.id },
+  })
+}
+
+// ─── Interviewers ────────────────────────────────────────────
+
+export async function addInterviewer(
+  sessionId: string,
+  input: { name: string; role?: string; linkedInText?: string; notes?: string },
+): Promise<{ id: string }> {
+  const { profile } = await requireProfile()
+  const interviewer = await prisma.prepInterviewer.create({
+    data: { sessionId, profileId: profile.id, ...input },
+    select: { id: true },
+  })
+  revalidatePath(`/dashboard/interview-prep/${sessionId}`)
+  return { id: interviewer.id }
+}
+
+export async function updateInterviewer(
+  interviewerId: string,
+  input: { name?: string; role?: string; linkedInText?: string; notes?: string },
+): Promise<void> {
+  const { profile } = await requireProfile()
+  await prisma.prepInterviewer.updateMany({
+    where: { id: interviewerId, profileId: profile.id },
+    data: input,
+  })
+}
+
+export async function deleteInterviewer(interviewerId: string): Promise<void> {
+  const { profile } = await requireProfile()
+  await prisma.prepInterviewer.deleteMany({
+    where: { id: interviewerId, profileId: profile.id },
+  })
+}

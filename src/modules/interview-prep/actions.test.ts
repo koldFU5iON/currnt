@@ -125,3 +125,86 @@ describe('deleteNote', () => {
     })
   })
 })
+
+import {
+  addDocument, deleteDocument,
+  addInterviewer, updateInterviewer, deleteInterviewer,
+} from './actions'
+
+const mockDocCreate = vi.mocked(prisma.prepDocument.create)
+const mockDocDelete = vi.mocked(prisma.prepDocument.deleteMany)
+const mockInterviewerCreate = vi.mocked(prisma.prepInterviewer.create)
+const mockInterviewerUpdate = vi.mocked(prisma.prepInterviewer.updateMany)
+const mockInterviewerDelete = vi.mocked(prisma.prepInterviewer.deleteMany)
+
+describe('addDocument', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('creates a document scoped to session and profile', async () => {
+    mockDocCreate.mockResolvedValue({ id: 'doc-1' } as never)
+    const result = await addDocument('sess-1', {
+      name: 'Interview Pack', docType: 'interview-pack', content: 'Lorem ipsum',
+    })
+    expect(mockDocCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          sessionId: 'sess-1', profileId: 'profile-1',
+          name: 'Interview Pack', docType: 'interview-pack', content: 'Lorem ipsum',
+        }),
+      })
+    )
+    expect(result).toEqual({ id: 'doc-1' })
+  })
+})
+
+describe('deleteDocument', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('deletes scoped to profileId', async () => {
+    mockDocDelete.mockResolvedValue({ count: 1 } as never)
+    await deleteDocument('doc-1')
+    expect(mockDocDelete).toHaveBeenCalledWith({
+      where: { id: 'doc-1', profileId: 'profile-1' },
+    })
+  })
+})
+
+describe('addInterviewer', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('creates an interviewer record', async () => {
+    mockInterviewerCreate.mockResolvedValue({ id: 'int-1' } as never)
+    const result = await addInterviewer('sess-1', { name: 'Sarah Chen', role: 'Head of Design' })
+    expect(mockInterviewerCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ sessionId: 'sess-1', profileId: 'profile-1', name: 'Sarah Chen' }),
+      })
+    )
+    expect(result).toEqual({ id: 'int-1' })
+  })
+})
+
+describe('updateInterviewer', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('updates scoped to profileId', async () => {
+    mockInterviewerUpdate.mockResolvedValue({ count: 1 } as never)
+    await updateInterviewer('int-1', { linkedInText: 'Sarah is...' })
+    expect(mockInterviewerUpdate).toHaveBeenCalledWith({
+      where: { id: 'int-1', profileId: 'profile-1' },
+      data: { linkedInText: 'Sarah is...' },
+    })
+  })
+})
+
+describe('deleteInterviewer', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('deletes scoped to profileId', async () => {
+    mockInterviewerDelete.mockResolvedValue({ count: 1 } as never)
+    await deleteInterviewer('int-1')
+    expect(mockInterviewerDelete).toHaveBeenCalledWith({
+      where: { id: 'int-1', profileId: 'profile-1' },
+    })
+  })
+})
