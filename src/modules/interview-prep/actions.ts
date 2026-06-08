@@ -141,9 +141,15 @@ export async function addDocument(
 
 export async function deleteDocument(documentId: string): Promise<void> {
   const { profile } = await requireProfile()
+  const doc = await prisma.prepDocument.findFirst({
+    where: { id: documentId, profileId: profile.id },
+    select: { sessionId: true },
+  })
+  if (!doc) return
   await prisma.prepDocument.deleteMany({
     where: { id: documentId, profileId: profile.id },
   })
+  revalidatePath(`/dashboard/interview-prep/${doc.sessionId}`)
 }
 
 // ─── Interviewers ────────────────────────────────────────────
@@ -179,9 +185,15 @@ export async function updateInterviewer(
 
 export async function deleteInterviewer(interviewerId: string): Promise<void> {
   const { profile } = await requireProfile()
+  const interviewer = await prisma.prepInterviewer.findFirst({
+    where: { id: interviewerId, profileId: profile.id },
+    select: { sessionId: true },
+  })
+  if (!interviewer) return
   await prisma.prepInterviewer.deleteMany({
     where: { id: interviewerId, profileId: profile.id },
   })
+  revalidatePath(`/dashboard/interview-prep/${interviewer.sessionId}`)
 }
 
 // ─── Block helpers (used only within this file) ───────────────

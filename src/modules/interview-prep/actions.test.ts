@@ -7,8 +7,8 @@ vi.mock('@/lib/db', () => ({
   prisma: {
     interviewPrepSession: { create: vi.fn(), update: vi.fn(), updateMany: vi.fn(), deleteMany: vi.fn(), findFirst: vi.fn() },
     prepNote: { create: vi.fn(), count: vi.fn(), updateMany: vi.fn(), deleteMany: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
-    prepDocument: { create: vi.fn(), deleteMany: vi.fn() },
-    prepInterviewer: { create: vi.fn(), updateMany: vi.fn(), deleteMany: vi.fn() },
+    prepDocument: { create: vi.fn(), findFirst: vi.fn(), deleteMany: vi.fn() },
+    prepInterviewer: { create: vi.fn(), findFirst: vi.fn(), updateMany: vi.fn(), deleteMany: vi.fn() },
     jobApplication: { findFirst: vi.fn() },
   },
 }))
@@ -134,8 +134,10 @@ import {
 } from './actions'
 
 const mockDocCreate = vi.mocked(prisma.prepDocument.create)
+const mockDocFindFirst = vi.mocked(prisma.prepDocument.findFirst)
 const mockDocDelete = vi.mocked(prisma.prepDocument.deleteMany)
 const mockInterviewerCreate = vi.mocked(prisma.prepInterviewer.create)
+const mockInterviewerFindFirst = vi.mocked(prisma.prepInterviewer.findFirst)
 const mockInterviewerUpdate = vi.mocked(prisma.prepInterviewer.updateMany)
 const mockInterviewerDelete = vi.mocked(prisma.prepInterviewer.deleteMany)
 
@@ -163,12 +165,22 @@ describe('addDocument', () => {
 describe('deleteDocument', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('deletes scoped to profileId', async () => {
+  it('deletes scoped to profileId and revalidates session path', async () => {
+    mockDocFindFirst.mockResolvedValue({ sessionId: 'sess-1' } as never)
     mockDocDelete.mockResolvedValue({ count: 1 } as never)
     await deleteDocument('doc-1')
+    expect(mockDocFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'doc-1', profileId: 'profile-1' } })
+    )
     expect(mockDocDelete).toHaveBeenCalledWith({
       where: { id: 'doc-1', profileId: 'profile-1' },
     })
+  })
+
+  it('does nothing if document not found', async () => {
+    mockDocFindFirst.mockResolvedValue(null)
+    await deleteDocument('doc-missing')
+    expect(mockDocDelete).not.toHaveBeenCalled()
   })
 })
 
@@ -204,12 +216,22 @@ describe('updateInterviewer', () => {
 describe('deleteInterviewer', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('deletes scoped to profileId', async () => {
+  it('deletes scoped to profileId and revalidates session path', async () => {
+    mockInterviewerFindFirst.mockResolvedValue({ sessionId: 'sess-1' } as never)
     mockInterviewerDelete.mockResolvedValue({ count: 1 } as never)
     await deleteInterviewer('int-1')
+    expect(mockInterviewerFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'int-1', profileId: 'profile-1' } })
+    )
     expect(mockInterviewerDelete).toHaveBeenCalledWith({
       where: { id: 'int-1', profileId: 'profile-1' },
     })
+  })
+
+  it('does nothing if interviewer not found', async () => {
+    mockInterviewerFindFirst.mockResolvedValue(null)
+    await deleteInterviewer('int-missing')
+    expect(mockInterviewerDelete).not.toHaveBeenCalled()
   })
 })
 
@@ -300,5 +322,88 @@ describe('moveBlockUp', () => {
     mockNoteFind.mockResolvedValue({ id: 'note-1', sessionId: 'sess-1', sections } as never)
     await moveBlockUp('note-1', 'b1')
     expect(mockNoteUpdate).not.toHaveBeenCalled()
+  })
+})
+
+describe('moveBlockDown', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('swaps a block with the one below it', async () => {
+    const sections = [
+      { id: 'b1', type: 'text', title: 'A', content: '', order: 0 },
+      { id: 'b2', type: 'text', title: 'B', content: '', order: 1 },
+    ]
+    mockNoteFind.mockResolvedValue({ id: 'note-1', sessionId: 'sess-1', sections } as never)
+    mockNoteUpdate.mockResolvedValue({} as never)
+
+    await moveBlockDown('note-1', 'b1')
+
+    const updateCall = mockNoteUpdate.mock.calls[0][0]
+    const updated = (updateCall.data as { sections: unknown }).sections as Array<{ id: string; order: number }>
+    const sorted = [...updated].sort((a, b) => a.order - b.order)
+    expect(sorted[0].id).toBe('b2')
+    expect(sorted[1].id).toBe('b1')
+  })
+
+  it('does nothing if block is already last', async () => {
+    const sections = [{ id: 'b1', type: 'text', title: 'A', content: '', order: 0 }]
+    mockNoteFind.mockResolvedValue({ id: 'note-1', sessionId: 'sess-1', sections } as never)
+    await moveBlockDown('note-1', 'b1')
+    expect(mockNoteUpdate).not.toHaveBeenCalled()
+  })
+})
+
+describe('convertAiBlockToText', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('converts an ai-analysis block to text type', async () => {
+    const sections = [
+      { id: 'b1', type: 'ai-analysis', title: 'AI Block', content: 'AI content', sourceDocIds: [], sourceInterviewerIds: [], order: 0 },
+    ]
+    mockNoteFind.mockResolvedValue({ id: 'note-1', sessionId: 'sess-1', sections } as never)
+    mockNoteUpdate.mockResolvedValue({} as never)
+
+    await convertAiBlockToText('note-1', 'b1')
+
+    const updateCall = mockNoteUpdate.mock.calls[0][0]
+    const updated = (updateCall.data as { sections: unknown }).sections as Array<{ id: string; type: string }>
+    expect(updated[0].type).toBe('text')
+  })
+
+  it('does not change a text block', async () => {
+    const sections = [
+      { id: 'b1', type: 'text', title: 'Text Block', content: 'content', order: 0 },
+    ]
+    mockNoteFind.mockResolvedValue({ id: 'note-1', sessionId: 'sess-1', sections } as never)
+    mockNoteUpdate.mockResolvedValue({} as never)
+
+    await convertAiBlockToText('note-1', 'b1')
+
+    const updateCall = mockNoteUpdate.mock.calls[0][0]
+    const updated = (updateCall.data as { sections: unknown }).sections as Array<{ id: string; type: string }>
+    expect(updated[0].type).toBe('text')
+  })
+})
+
+describe('insertAiBlock', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('inserts an ai-analysis block at end with source ids', async () => {
+    const sections: never[] = []
+    mockNoteFind.mockResolvedValue({ id: 'note-1', sessionId: 'sess-1', sections } as never)
+    mockNoteUpdate.mockResolvedValue({} as never)
+
+    await insertAiBlock('note-1', {
+      title: '✦ Interview Pack',
+      content: 'AI insights here',
+      sourceDocIds: ['doc-1'],
+      sourceInterviewerIds: [],
+    })
+
+    const updateCall = mockNoteUpdate.mock.calls[0][0]
+    const updated = (updateCall.data as { sections: unknown }).sections as Array<{ type: string; title: string; sourceDocIds: string[] }>
+    expect(updated[0].type).toBe('ai-analysis')
+    expect(updated[0].title).toBe('✦ Interview Pack')
+    expect(updated[0].sourceDocIds).toEqual(['doc-1'])
   })
 })
