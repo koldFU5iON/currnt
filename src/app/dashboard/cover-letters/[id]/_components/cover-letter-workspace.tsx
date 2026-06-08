@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 import { updateCoverLetterContent } from '@/modules/cover-letters/actions'
 import { JobAnalysisSchema } from '@/modules/jobs/schema'
 import type { CoverLetterWithJob } from '@/modules/cover-letters/queries'
+import { ReviewDrawer } from './review-drawer'
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
@@ -19,6 +20,7 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [panelOpen, setPanelOpen] = useState(false)
   const [showExport, setShowExport] = useState(false)
+  const [reviewOpen, setReviewOpen] = useState(false)
   const [showEditor, setShowEditor] = useState(letter.content !== '')
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -148,19 +150,19 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
           >
             ✦ Writing Guide
           </Link>
-          <Link
-            href={content.trim() ? `/dashboard/cover-letters/${letter.id}/review` : '#'}
-            aria-disabled={!content.trim()}
+          <button
+            disabled={!content.trim()}
             title={!content.trim() ? 'Write something first' : undefined}
+            onClick={() => setReviewOpen(true)}
             className={cn(
               'flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs',
               content.trim()
                 ? 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                : 'pointer-events-none opacity-40'
+                : 'opacity-40 cursor-not-allowed'
             )}
           >
             ✦ Review
-          </Link>
+          </button>
           <div className="relative">
             <Button
               variant="outline"
@@ -335,6 +337,12 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
           </div>
         )}
       </div>
+
+      <ReviewDrawer
+        letterId={letter.id}
+        open={reviewOpen}
+        onOpenChange={setReviewOpen}
+      />
     </div>
   )
 }
