@@ -66,8 +66,12 @@ async function gatherInputs(profileId: string, letterId: string) {
       select: { generatedContent: true },
     })
     if (cv) {
-      const parsed = CVDocumentContentSchema.safeParse(JSON.parse(cv.generatedContent))
-      if (parsed.success) cvMarkdown = toMarkdown(parsed.data)
+      try {
+        const parsed = CVDocumentContentSchema.safeParse(JSON.parse(cv.generatedContent))
+        if (parsed.success) cvMarkdown = toMarkdown(parsed.data)
+      } catch {
+        // malformed JSON — skip CV content
+      }
     }
   }
 
@@ -106,10 +110,8 @@ export async function generateDraft(letterId: string): Promise<GenerateResult> {
   const inputs = await gatherInputs(profile.id, letterId)
   if (!inputs) return { ok: false, error: 'not_found', message: 'Cover letter not found' }
 
-  const [systemPrompt, userPrompt] = await Promise.all([
-    loadGeneratePrompt(),
-    Promise.resolve(buildGeneratePrompt(inputs)),
-  ])
+  const systemPrompt = await loadGeneratePrompt()
+  const userPrompt = buildGeneratePrompt(inputs)
   const system = composeSystem(inputs.writingCtx.rules, inputs.writingCtx.brief ?? '', systemPrompt)
 
   try {
