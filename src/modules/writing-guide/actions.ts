@@ -10,8 +10,8 @@ import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { CVDocumentContentSchema } from '@/modules/cv/schema'
 import { toMarkdown } from '@/modules/cv/export'
-import { ReviewOutputSchema } from './schema'
-import type { BuildWithMeInputs, ReviewOutput } from './schema'
+import { ReviewOutputSchema, Stage1BriefSchema, Stage2ArchitectureSchema, Stage4IssuesSchema } from './schema'
+import type { BuildWithMeInputs, ReviewOutput, Stage1Brief, Stage2Architecture, Stage4Issues } from './schema'
 
 type GenerateResult =
   | { ok: true; content: string }
@@ -36,6 +36,30 @@ async function loadReviewPrompt(): Promise<string> {
     'utf-8',
   )
 }
+
+async function loadPrompt(filename: string): Promise<string> {
+  return readFile(path.join(process.cwd(), `src/lib/prompts/${filename}`), 'utf-8')
+}
+
+type Stage1Result =
+  | { ok: true; brief: Stage1Brief }
+  | { ok: false; error: 'not_found'; message: string }
+  | { ok: false; error: LLMErrorKind; message: string }
+
+type Stage2Result =
+  | { ok: true; architecture: Stage2Architecture }
+  | { ok: false; error: 'not_found'; message: string }
+  | { ok: false; error: LLMErrorKind; message: string }
+
+type Stage3Result =
+  | { ok: true; draft: string }
+  | { ok: false; error: 'not_found'; message: string }
+  | { ok: false; error: LLMErrorKind; message: string }
+
+type Stage4Result =
+  | { ok: true; issues: Stage4Issues }
+  | { ok: false; error: 'not_found'; message: string }
+  | { ok: false; error: LLMErrorKind; message: string }
 
 async function gatherInputs(profileId: string, letterId: string) {
   const letter = await prisma.coverLetterDocument.findFirst({
@@ -104,21 +128,155 @@ function buildGeneratePrompt(inputs: GatherInputsResult): string {
   return prompt
 }
 
-export async function generateDraft(letterId: string): Promise<GenerateResult> {
+export async function analyseRole(letterId: string): Promise<Stage1Result> {
   const { profile } = await requireProfile()
-
   const inputs = await gatherInputs(profile.id, letterId)
   if (!inputs) return { ok: false, error: 'not_found', message: 'Cover letter not found' }
 
-  const systemPrompt = await loadGeneratePrompt()
+  const { writingCtx } = inputs
   const userPrompt = buildGeneratePrompt(inputs)
-  const system = composeSystem(inputs.writingCtx.rules, inputs.writingCtx.brief ?? '', systemPrompt)
+
+  const stagePrompt = await loadPrompt('cl-stage1-analyse.md')
+  const system = composeSystem(writingCtx.rules, writingCtx.brief ?? '', stagePrompt)
+
+  try {
+    const result = await completeStructured(profile.id, userPrompt, Stage1BriefSchema, {
+      system,
+      feature: 'cover-letter-analyse',
+      temperature: 0,
+      maxOutputTokens: 600,
+    })
+    return { ok: true, brief: result.object }
+  } catch (err) {
+    if (err instanceof LLMError) return { ok: false, error: err.kind, message: err.message }
+    throw err
+  }
+}
+
+export async function buildLetterArchitecture(
+  letterId: string,
+  brief: Stage1Brief,
+): Promise<Stage2Result> {
+  const { profile } = await requireProfile()
+  const inputs = await gatherInputs(profile.id, letterId)
+  if (!inputs) return { ok: false, error: 'not_found', message: 'Cover letter not found' }
+
+  const userPrompt = `# Stage 1 Brief\n\n${JSON.stringify(brief, null, 2)}`
+  const stagePrompt = await loadPrompt('cl-stage2-architecture.md')
+  const system = composeSystem(inputs.writingCtx.rules, inputs.writingCtx.brief ?? '', stagePrompt)
+
+  try {
+    const result = await completeStructured(profile.id, userPrompt, Stage2ArchitectureSchema, {
+      system,
+      feature: 'cover-letter-architect',
+      temperature: 0.3,
+      maxOutputTokens: 600,
+    })
+    return { ok: true, architecture: result.object }
+  } catch (err) {
+    if (err instanceof LLMError) return { ok: false, error: err.kind, message: err.message }
+    throw err
+  }
+}
+
+export async function draftFromArchitecture(
+  letterId: string,
+  architecture: Stage2Architecture,
+): Promise<Stage3Result> {
+  const { profile } = await requireProfile()
+  const inputs = await gatherInputs(profile.id, letterId)
+  if (!inputs) return { ok: false, error: 'not_found', message: 'Cover letter not found' }
+
+  const { snapshot, writingCtx } = inputs
+  const userPrompt = [
+    `# Message Architecture\n\n${JSON.stringify(architecture, null, 2)}`,
+    `\n\n# Candidate Details\n\n${serializeProfileForLLM(snapshot)}`,
+  ].join('')
+
+  const stagePrompt = await loadPrompt('cl-stage3-draft.md')
+  const system = composeSystem(writingCtx.rules, writingCtx.brief ?? '', stagePrompt)
 
   try {
     const result = await complete(profile.id, userPrompt, {
       system,
-      feature: 'cover-letter-generate',
-      temperature: 0.7,
+      feature: 'cover-letter-draft',
+      temperature: 0.5,
+      maxOutputTokens: 1200,
+    })
+    return { ok: true, draft: result.text }
+  } catch (err) {
+    if (err instanceof LLMError) return { ok: false, error: err.kind, message: err.message }
+    throw err
+  }
+}
+
+export async function reviewDraftPass(
+  letterId: string,
+  draft: string,
+  brief: Stage1Brief,
+): Promise<Stage4Result> {
+  const { profile } = await requireProfile()
+  const inputs = await gatherInputs(profile.id, letterId)
+  if (!inputs) return { ok: false, error: 'not_found', message: 'Cover letter not found' }
+
+  const { snapshot, writingCtx } = inputs
+  const userPrompt = [
+    `# Cover Letter Draft\n\n${draft}`,
+    `\n\n# Stage 1 Checklist`,
+    `\n\nTop 3 requirements:\n${brief.topRequirements.map(r => `- ${r}`).join('\n')}`,
+    brief.screenerCriteria.length > 0
+      ? `\n\nScreener criteria: ${brief.screenerCriteria.join(', ')}`
+      : '',
+    `\n\n# Candidate Profile (screener cross-check)\n\n${serializeProfileForLLM(snapshot)}`,
+  ].join('')
+
+  const stagePrompt = await loadPrompt('cl-stage4-review.md')
+  const system = composeSystem(writingCtx.rules, writingCtx.brief ?? '', stagePrompt)
+
+  try {
+    const result = await completeStructured(profile.id, userPrompt, Stage4IssuesSchema, {
+      system,
+      feature: 'cover-letter-review-pass',
+      temperature: 0,
+      maxOutputTokens: 800,
+    })
+    return { ok: true, issues: result.object }
+  } catch (err) {
+    if (err instanceof LLMError) return { ok: false, error: err.kind, message: err.message }
+    throw err
+  }
+}
+
+export async function finaliseFromReview(
+  letterId: string,
+  draft: string,
+  issues: Stage4Issues,
+): Promise<GenerateResult> {
+  const { profile } = await requireProfile()
+  const inputs = await gatherInputs(profile.id, letterId)
+  if (!inputs) return { ok: false, error: 'not_found', message: 'Cover letter not found' }
+
+  const mustFixLines = issues.mustFix.length > 0
+    ? issues.mustFix.map(i => `- ${i.description}\n  → ${i.suggestedFix}`).join('\n\n')
+    : 'None.'
+  const considerLines = issues.consider.length > 0
+    ? issues.consider.map(i => `- ${i.description}`).join('\n')
+    : 'None.'
+
+  const userPrompt = [
+    `# Cover Letter Draft\n\n${draft}`,
+    `\n\n# Must Fix\n\n${mustFixLines}`,
+    `\n\n# Consider (apply voice violations only)\n\n${considerLines}`,
+  ].join('')
+
+  const stagePrompt = await loadPrompt('cl-stage5-final.md')
+  const system = composeSystem(inputs.writingCtx.rules, inputs.writingCtx.brief ?? '', stagePrompt)
+
+  try {
+    const result = await complete(profile.id, userPrompt, {
+      system,
+      feature: 'cover-letter-finalise',
+      temperature: 0.2,
       maxOutputTokens: 1200,
     })
     return { ok: true, content: result.text }
