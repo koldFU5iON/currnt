@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { X } from 'lucide-react'
+import { Download, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { updateCoverLetterContent } from '@/modules/cover-letters/actions'
@@ -17,6 +17,7 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
   const [mode, setMode] = useState<'markdown' | 'preview'>('markdown')
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [panelOpen, setPanelOpen] = useState(false)
+  const [showExport, setShowExport] = useState(false)
   const [showEditor, setShowEditor] = useState(letter.content !== '')
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -66,6 +67,23 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
     saveState === 'saved' ? 'Saved' :
     saveState === 'error' ? 'Save failed' :
     ''
+
+  const safe = (s: string) => s.replace(/[^A-Za-z0-9._-]+/g, '-')
+  const fileSlug = title && company
+    ? `Cover-Letter-${safe(title)}_${safe(company)}`
+    : title
+      ? `Cover-Letter-${safe(title)}`
+      : 'Cover-Letter'
+
+  function downloadMarkdown() {
+    const blob = new Blob([content], { type: 'text/markdown' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${fileSlug}.md`
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(url), 100)
+  }
 
   return (
     <div className="flex h-full flex-col">
@@ -123,14 +141,42 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
               {saveLabel}
             </span>
           )}
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs"
-            onClick={() => navigator.clipboard.writeText(content).catch(() => {})}
-          >
-            Copy
-          </Button>
+          <div className="relative">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => setShowExport(v => !v)}
+            >
+              <Download className="size-3 mr-1" />
+              Export
+            </Button>
+            {showExport && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setShowExport(false)} />
+                <div className="absolute right-0 top-full z-20 mt-1 w-44 rounded-md border border-border bg-background py-1 shadow-md">
+                  <button
+                    onClick={() => { window.open(`/api/cover-letters/${letter.id}/pdf`, '_blank'); setShowExport(false) }}
+                    className="block w-full px-3 py-1.5 text-left text-sm hover:bg-muted"
+                  >
+                    Download PDF
+                  </button>
+                  <button
+                    onClick={() => { downloadMarkdown(); setShowExport(false) }}
+                    className="block w-full px-3 py-1.5 text-left text-sm hover:bg-muted"
+                  >
+                    Download Markdown
+                  </button>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(content).catch(() => {}); setShowExport(false) }}
+                    className="block w-full px-3 py-1.5 text-left text-sm hover:bg-muted"
+                  >
+                    Copy to clipboard
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
           {letter.jobApplicationId && (
             <Button
               variant="outline"
