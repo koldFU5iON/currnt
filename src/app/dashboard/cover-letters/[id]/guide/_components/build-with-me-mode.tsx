@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
@@ -36,19 +36,18 @@ const QUESTIONS: { field: keyof BuildWithMeInputs; label: string; placeholder: s
 ]
 
 export function BuildWithMeMode({ letter, onBack }: Props) {
-  const [answers, setAnswers] = useState<BuildWithMeInputs>({})
+  const storageKey = STORAGE_KEY(letter.id)
+  const [answers, setAnswers] = useState<BuildWithMeInputs>(() => {
+    try {
+      const saved = localStorage.getItem(storageKey)
+      if (saved) return JSON.parse(saved) as BuildWithMeInputs
+    } catch {}
+    return {}
+  })
   const [isPending, setIsPending] = useState(false)
   const [pendingContent, setPendingContent] = useState<string | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const router = useRouter()
-  const storageKey = STORAGE_KEY(letter.id)
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(storageKey)
-      if (saved) setAnswers(JSON.parse(saved))
-    } catch {}
-  }, [storageKey])
 
   function handleChange(field: keyof BuildWithMeInputs, value: string) {
     const updated = { ...answers, [field]: value }
