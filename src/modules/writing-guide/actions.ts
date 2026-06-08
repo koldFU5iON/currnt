@@ -123,25 +123,15 @@ export async function analyseRole(letterId: string): Promise<Stage1Result> {
   const inputs = await gatherInputs(profile.id, letterId)
   if (!inputs) return { ok: false, error: 'not_found', message: 'Cover letter not found' }
 
-  const { letter, snapshot, writingCtx, cvMarkdown } = inputs
-  const job = letter.jobApplication
-  const title = letter.jobTitle ?? job?.title
-  const company = letter.company ?? job?.company
-
-  let userPrompt = `# Candidate Profile\n\n${serializeProfileForLLM(snapshot)}`
-  if (cvMarkdown) userPrompt += `\n\n# Tailored CV\n\n${cvMarkdown}`
-  if (title || company) {
-    userPrompt += `\n\n# Role\n\n**${title ?? 'Unknown role'}**${company ? ` at ${company}` : ''}`
-  }
-  if (job?.jobDescription) {
-    userPrompt += `\n\n# Job Description\n\n${job.jobDescription}`
-  }
+  const { writingCtx } = inputs
+  const userPrompt = buildGeneratePrompt(inputs)
 
   const stagePrompt = await loadPrompt('cl-stage1-analyse.md')
   const system = composeSystem(writingCtx.rules, writingCtx.brief ?? '', stagePrompt)
 
   try {
     const result = await completeStructured(profile.id, userPrompt, Stage1BriefSchema, {
+      system,
       feature: 'cover-letter-analyse',
       temperature: 0,
       maxOutputTokens: 600,
@@ -167,6 +157,7 @@ export async function buildLetterArchitecture(
 
   try {
     const result = await completeStructured(profile.id, userPrompt, Stage2ArchitectureSchema, {
+      system,
       feature: 'cover-letter-architect',
       temperature: 0.3,
       maxOutputTokens: 600,

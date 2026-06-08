@@ -174,7 +174,7 @@ describe('analyseRole', () => {
       'profile-1',
       expect.any(String),
       expect.anything(),
-      expect.objectContaining({ feature: 'cover-letter-analyse', temperature: 0 }),
+      expect.objectContaining({ system: expect.any(String), feature: 'cover-letter-analyse', temperature: 0 }),
     )
   })
 
@@ -225,7 +225,7 @@ describe('buildLetterArchitecture', () => {
       'profile-1',
       expect.stringContaining('Drive product strategy'),
       expect.anything(),
-      expect.objectContaining({ feature: 'cover-letter-architect' }),
+      expect.objectContaining({ system: expect.any(String), feature: 'cover-letter-architect' }),
     )
   })
 })
