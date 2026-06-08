@@ -13,7 +13,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { generateDraft } from '@/modules/writing-guide/actions'
+import {
+  analyseRole,
+  buildLetterArchitecture,
+  draftFromArchitecture,
+  reviewDraftPass,
+  finaliseFromReview,
+} from '@/modules/writing-guide/actions'
 import { updateCoverLetterContent } from '@/modules/cover-letters/actions'
 
 type Props = {
@@ -26,28 +32,63 @@ type Props = {
 }
 
 export function GenerateMode({ letter, onBack }: Props) {
-  const [isPending, setIsPending] = useState(false)
+  const [progressLabel, setProgressLabel] = useState<string | null>(null)
   const [pendingContent, setPendingContent] = useState<string | null>(null)
   const router = useRouter()
 
-  async function handleGenerate() {
-    setIsPending(true)
-    const result = await generateDraft(letter.id)
-    setIsPending(false)
+  const isPending = progressLabel !== null
 
-    if (!result.ok) {
-      toast.error(result.message, {
-        action: result.error === 'not_configured'
+  async function handleGenerate() {
+    setProgressLabel('Analysing role…')
+
+    const briefResult = await analyseRole(letter.id)
+    if (!briefResult.ok) {
+      setProgressLabel(null)
+      toast.error(briefResult.message, {
+        action: briefResult.error === 'not_configured'
           ? { label: 'Set up →', onClick: () => router.push('/dashboard/settings/llm') }
           : undefined,
       })
       return
     }
 
+    setProgressLabel('Building message…')
+    const archResult = await buildLetterArchitecture(letter.id, briefResult.brief)
+    if (!archResult.ok) {
+      setProgressLabel(null)
+      toast.error(archResult.message)
+      return
+    }
+
+    setProgressLabel('Writing draft…')
+    const draftResult = await draftFromArchitecture(letter.id, archResult.architecture)
+    if (!draftResult.ok) {
+      setProgressLabel(null)
+      toast.error(draftResult.message)
+      return
+    }
+
+    setProgressLabel('Reviewing…')
+    const reviewResult = await reviewDraftPass(letter.id, draftResult.draft, briefResult.brief)
+    if (!reviewResult.ok) {
+      setProgressLabel(null)
+      toast.error(reviewResult.message)
+      return
+    }
+
+    setProgressLabel('Finalising…')
+    const finalResult = await finaliseFromReview(letter.id, draftResult.draft, reviewResult.issues)
+    setProgressLabel(null)
+
+    if (!finalResult.ok) {
+      toast.error(finalResult.message)
+      return
+    }
+
     if (letter.content.trim() !== '') {
-      setPendingContent(result.content)
+      setPendingContent(finalResult.content)
     } else {
-      await applyContent(result.content)
+      await applyContent(finalResult.content)
     }
   }
 
@@ -64,7 +105,7 @@ export function GenerateMode({ letter, onBack }: Props) {
 
       <h2 className="text-lg font-semibold">Generate a draft</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        AI writes a full first draft using your profile, CV, and the job description. Takes about 10–20 seconds.
+        AI analyses the role, builds a message structure, writes a draft, reviews it, then finalises. Takes about 30–60 seconds.
       </p>
 
       {!letter.jobApplication?.jobDescription && (
@@ -81,7 +122,7 @@ export function GenerateMode({ letter, onBack }: Props) {
         {isPending ? (
           <>
             <Loader2 className="mr-2 size-4 animate-spin" />
-            Generating…
+            {progressLabel}
           </>
         ) : (
           <>
