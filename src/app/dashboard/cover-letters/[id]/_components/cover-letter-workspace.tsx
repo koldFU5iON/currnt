@@ -1,16 +1,27 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
+import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Download, X } from 'lucide-react'
+import { Download, Loader2, RefreshCw, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { cn } from '@/lib/utils'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { updateCoverLetterContent } from '@/modules/cover-letters/actions'
+import { reviewLetter } from '@/modules/writing-guide/actions'
 import { JobAnalysisSchema } from '@/modules/jobs/schema'
 import type { CoverLetterWithJob } from '@/modules/cover-letters/queries'
+import type { ReviewOutput } from '@/modules/writing-guide/schema'
+import { ReviewResults } from '@/app/dashboard/cover-letters/[id]/review/_components/review-results'
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error'
+type ReviewState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'done'; review: ReviewOutput }
+  | { status: 'error'; message: string }
 
 export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob }) {
   const [content, setContent] = useState(letter.content)
@@ -18,7 +29,10 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [panelOpen, setPanelOpen] = useState(false)
   const [showExport, setShowExport] = useState(false)
+  const [reviewPanelOpen, setReviewPanelOpen] = useState(false)
+  const [reviewState, setReviewState] = useState<ReviewState>({ status: 'idle' })
   const [showEditor, setShowEditor] = useState(letter.content !== '')
+  const isMobile = useIsMobile()
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const mountedRef = useRef(true)
@@ -85,6 +99,21 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
     setTimeout(() => URL.revokeObjectURL(url), 100)
   }
 
+  async function runReview() {
+    setReviewState({ status: 'loading' })
+    const result = await reviewLetter(letter.id)
+    if (result.ok) {
+      setReviewState({ status: 'done', review: result.review })
+    } else {
+      setReviewState({ status: 'error', message: result.message })
+    }
+  }
+
+  function openReview() {
+    setReviewPanelOpen(true)
+    if (reviewState.status === 'idle') runReview()
+  }
+
   return (
     <div className="flex h-full flex-col">
       {/* Toolbar */}
@@ -141,6 +170,27 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
               {saveLabel}
             </span>
           )}
+          <Link
+            href={`/dashboard/cover-letters/${letter.id}/guide`}
+            className="flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            ✦ Writing Guide
+          </Link>
+          <button
+            disabled={!content.trim()}
+            title={!content.trim() ? 'Write something first' : undefined}
+            onClick={() => reviewPanelOpen ? setReviewPanelOpen(false) : openReview()}
+            className={cn(
+              'flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs',
+              content.trim()
+                ? reviewPanelOpen
+                  ? 'bg-foreground text-background border-foreground'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                : 'opacity-40 cursor-not-allowed'
+            )}
+          >
+            ✦ Review
+          </button>
           <div className="relative">
             <Button
               variant="outline"
@@ -195,7 +245,7 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
         {/* Editor / preview area */}
         <div
           className={cn(
-            'flex flex-1 justify-center overflow-y-auto bg-secondary p-5 transition-opacity',
+            'flex flex-1 min-w-0 justify-center overflow-y-auto bg-secondary p-5 transition-opacity',
             panelOpen && 'opacity-50'
           )}
         >
@@ -241,6 +291,49 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
             )}
           </div>
         </div>
+
+        {/* Review panel — desktop inline column */}
+        {reviewPanelOpen && !isMobile && (
+          <div className="flex w-[440px] shrink-0 flex-col border-l bg-background overflow-hidden">
+            <div className="flex shrink-0 items-center justify-between border-b px-4 py-2.5">
+              <span className="text-sm font-semibold">✦ Review</span>
+              <button
+                type="button"
+                onClick={() => setReviewPanelOpen(false)}
+                className="text-muted-foreground hover:text-foreground"
+                aria-label="Close review panel"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto">
+              {reviewState.status === 'loading' && (
+                <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
+                  <Loader2 className="size-4 animate-spin" />
+                  Reviewing…
+                </div>
+              )}
+              {reviewState.status === 'error' && (
+                <p className="px-4 py-8 text-sm text-destructive">{reviewState.message}</p>
+              )}
+              {reviewState.status === 'done' && (
+                <ReviewResults review={reviewState.review} />
+              )}
+            </div>
+
+            <div className="shrink-0 border-t px-4 py-3">
+              <button
+                onClick={runReview}
+                disabled={reviewState.status === 'loading'}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-40"
+              >
+                <RefreshCw className="size-3" />
+                Re-review
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Job context panel */}
         {panelOpen && job && (
@@ -315,6 +408,46 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
           </div>
         )}
       </div>
+
+      {/* Mobile review drawer — persistent state, re-review button at bottom */}
+      {isMobile && (
+        <Drawer open={reviewPanelOpen} onOpenChange={setReviewPanelOpen}>
+          <DrawerContent className="flex max-h-[85vh] flex-col">
+            <DrawerHeader className="shrink-0">
+              <DrawerTitle>✦ Review</DrawerTitle>
+            </DrawerHeader>
+
+            <div className="flex-1 overflow-y-auto px-4 pb-2">
+              {reviewState.status === 'loading' && (
+                <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
+                  <Loader2 className="size-4 animate-spin" />
+                  Reviewing…
+                </div>
+              )}
+              {reviewState.status === 'idle' && (
+                <p className="py-8 text-center text-sm text-muted-foreground">No review yet.</p>
+              )}
+              {reviewState.status === 'error' && (
+                <p className="py-8 text-center text-sm text-destructive">{reviewState.message}</p>
+              )}
+              {reviewState.status === 'done' && (
+                <ReviewResults review={reviewState.review} />
+              )}
+            </div>
+
+            <div className="shrink-0 border-t px-4 py-3">
+              <button
+                onClick={runReview}
+                disabled={reviewState.status === 'loading'}
+                className="flex w-full items-center justify-center gap-1.5 rounded-md border border-border py-2 text-sm text-muted-foreground hover:bg-muted disabled:opacity-40"
+              >
+                <RefreshCw className="size-3.5" />
+                {reviewState.status === 'loading' ? 'Reviewing…' : 'Re-review'}
+              </button>
+            </div>
+          </DrawerContent>
+        </Drawer>
+      )}
     </div>
   )
 }

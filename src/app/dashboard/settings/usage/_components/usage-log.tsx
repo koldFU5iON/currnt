@@ -12,6 +12,9 @@ const FEATURE_LABELS: Record<string, string> = {
   'cv-evidence-score': 'Evidence scoring',
   'cv-recruiter-scan': 'Recruiter scan',
   'cv-generate': 'CV generation',
+  'cover-letter-generate': 'Cover letter — generate draft',
+  'cover-letter-build': 'Cover letter — build with me',
+  'cover-letter-review': 'Cover letter — review',
 }
 
 export function UsageLog({ stats }: { stats: UserUsageSummary }) {
