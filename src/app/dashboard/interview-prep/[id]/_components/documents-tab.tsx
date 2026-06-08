@@ -11,10 +11,12 @@ type Props = {
   documents: PrepDocumentRow[]
 }
 
-export function DocumentsTab({ sessionId, activeNoteId: _activeNoteId, documents }: Props) {
+export function DocumentsTab({ sessionId, activeNoteId, documents }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [isAnalysing, startAnalyse] = useTransition()
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [aiError, setAiError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const [pasteMode, setPasteMode] = useState(false)
   const [pasteName, setPasteName] = useState('')
@@ -89,6 +91,20 @@ export function DocumentsTab({ sessionId, activeNoteId: _activeNoteId, documents
                   className="rounded px-2 py-0.5 text-[10px] border hover:bg-accent"
                 >
                   {expandedId === doc.id ? 'Hide' : 'View'}
+                </button>
+                <button
+                  onClick={() => {
+                    setAiError(null)
+                    startAnalyse(async () => {
+                      const { analyseDocument } = await import('@/modules/interview-prep/ai-actions')
+                      const result = await analyseDocument(doc.id, activeNoteId)
+                      if (!result.ok) setAiError(result.message)
+                    })
+                  }}
+                  disabled={isAnalysing || !activeNoteId}
+                  className="rounded px-2 py-0.5 text-[10px] border border-primary/40 text-primary hover:bg-primary/10 disabled:opacity-40"
+                >
+                  {isAnalysing ? '…' : '✦'}
                 </button>
                 <button
                   onClick={() => handleDelete(doc.id)}
@@ -166,6 +182,21 @@ export function DocumentsTab({ sessionId, activeNoteId: _activeNoteId, documents
             Paste text
           </button>
         </div>
+        <button
+          onClick={() => {
+            setAiError(null)
+            startAnalyse(async () => {
+              const { analyseAllDocuments } = await import('@/modules/interview-prep/ai-actions')
+              const result = await analyseAllDocuments(sessionId, activeNoteId)
+              if (!result.ok) setAiError(result.message)
+            })
+          }}
+          disabled={isAnalysing || !activeNoteId || documents.length === 0}
+          className="w-full rounded border border-primary/40 px-3 py-1.5 text-xs text-primary hover:bg-primary/10 disabled:opacity-40"
+        >
+          {isAnalysing ? 'Analysing…' : '✦ Analyse all documents'}
+        </button>
+        {aiError && <p className="text-[10px] text-destructive">{aiError}</p>}
       </div>
     </div>
   )
