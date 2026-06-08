@@ -14,7 +14,7 @@ model InterviewPrepSession {
   updatedAt        DateTime  @updatedAt
 
   profile        Profile              @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  jobApplication JobApplication?      @relation(fields: [jobApplicationId], references: [id])
+  jobApplication JobApplication?      @relation(fields: [jobApplicationId], references: [id], onDelete: SetNull)
   notes          PrepNote[]
   documents      PrepDocument[]
   interviewers   PrepInterviewer[]
@@ -48,6 +48,7 @@ model PrepDocument {
   aiAnalysis   Json?
   aiAnalysedAt DateTime?
   createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   session InterviewPrepSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
@@ -65,6 +66,7 @@ model PrepInterviewer {
   aiAnalysis   Json?
   aiAnalysedAt DateTime?
   createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   session InterviewPrepSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
