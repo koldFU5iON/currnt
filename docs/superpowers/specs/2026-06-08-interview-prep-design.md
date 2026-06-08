@@ -288,6 +288,7 @@ Job link can also be added or changed later from the workspace header menu (`⋯
 
 ## Out of Scope (v1)
 
+- `[[wiki-links]]` between prep notes, interviewer profiles, and documents — v2 rendering layer, no schema change required (PrepNote titles are the natural link targets)
 - Drag-and-drop block reordering (v2)
 - File blob storage — documents stored as extracted text only (v2 can add Vercel Blob)
 - Export to PDF
