@@ -94,6 +94,39 @@ async function resolveConfig(profileId: string): Promise<ResolvedConfig> {
   return { provider, model: settings.llmModel, apiKey }
 }
 
+export async function resolveModelForChat(profileId: string): Promise<LanguageModel> {
+  const settings = await prisma.userSettings.findUnique({
+    where: { profileId },
+    select: { llmProvider: true, llmModel: true, chatModel: true, llmApiKey: true },
+  })
+
+  if (!settings?.llmApiKey) {
+    throw new LLMError(
+      'No LLM API key configured. Add one at /dashboard/settings/llm.',
+      'not_configured',
+    )
+  }
+
+  const provider = settings.llmProvider
+  if (!PROVIDERS[provider]) {
+    throw new LLMError(
+      `Unsupported LLM provider "${provider}". Supported: ${SUPPORTED_PROVIDERS.join(', ')}.`,
+      'config',
+    )
+  }
+
+  const apiKey = decrypt(settings.llmApiKey)
+  if (!apiKey) {
+    throw new LLMError(
+      'Stored API key could not be decrypted. Re-enter your key in settings.',
+      'config',
+    )
+  }
+
+  const modelId = settings.chatModel ?? settings.llmModel
+  return PROVIDERS[provider](apiKey, modelId)
+}
+
 export type CompleteOptions = {
   /** Override the user's default model for this call (e.g. switch to a stronger model). */
   model?: string
