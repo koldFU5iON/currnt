@@ -241,5 +241,25 @@ export function createChatTools(profileId: string) {
         }),
       ),
     }),
+
+    submit_feedback: tool({
+      description:
+        "Submit a bug report or feature idea on behalf of the user. Use when the user describes a problem with the app or suggests a new feature or improvement. Gather a clear title and description from the conversation, then call this tool to present a confirmation before submitting.",
+      inputSchema: zodSchema(
+        z.object({
+          type: z
+            .enum(['bug', 'idea'])
+            .describe("'bug' for problems, errors, or broken behaviour. 'idea' for feature requests or improvements."),
+          title: z.string().max(200).describe('Short, clear title — one sentence.'),
+          description: z
+            .string()
+            .max(2000)
+            .describe(
+              'Detailed description. For bugs: what happened and what was expected. For ideas: what it is and why it helps.',
+            ),
+        }),
+      ),
+      // No execute — confirmation card handles submission client-side
+    }),
   }
 }

@@ -14,6 +14,7 @@ const TOOL_LABELS: Record<string, string> = {
   propose_profile_update: 'Update profile field',
   propose_cv_update: 'Update CV section',
   propose_prep_note_update: 'Update prep note',
+  submit_feedback: 'Submit feedback',
 }
 
 export function ToolConfirmationCard({ toolName, args, onAccept, onReject }: Props) {
