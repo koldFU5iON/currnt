@@ -33,6 +33,7 @@ model Profile {
   apiTokens           ApiToken[]
   usageLogs           LlmUsageLog[]
   interviewPrepSessions InterviewPrepSession[]
+  chatMemories          ChatMemory[]
 }
 
 model Skill {
