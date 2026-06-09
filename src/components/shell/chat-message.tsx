@@ -109,6 +109,19 @@ export function ChatMessage({ message, onToolOutput }: ChatMessageProps) {
               )
             }
 
+            if (state === 'output-available' && toolName === 'submit_feedback') {
+              const output = part.output as { status: string } | null
+              return (
+                <div
+                  key={part.toolCallId}
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground"
+                >
+                  <ChevronRight className="size-3" />
+                  {output?.status === 'submitted' ? 'Feedback submitted' : 'Feedback cancelled'}
+                </div>
+              )
+            }
+
             if (state === 'output-available' && isWriteTool) {
               const output = part.output as { status: string } | null
               return (
