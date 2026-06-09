@@ -10,16 +10,13 @@ vi.mock('@/modules/llm/client', () => ({
   complete: vi.fn().mockResolvedValue({ text: '• Discussed gap year' }),
 }))
 
-vi.mock('@prisma/client', () => ({
-  Prisma: {},
-}))
-
 import { loadMemorySummaries, applyDecay } from './memory'
 import { prisma } from '@/lib/db'
 
 const now = new Date('2026-06-09T12:00:00Z').getTime()
 
 beforeEach(() => {
+  vi.clearAllMocks()
   vi.setSystemTime(now)
 })
 
@@ -46,7 +43,7 @@ describe('applyDecay', () => {
 
 describe('loadMemorySummaries', () => {
   it('returns full summary for recent entries (< 7 days)', async () => {
-    const mockFindMany = vi.mocked(prisma.chatMemory.findMany as any)
+    const mockFindMany = vi.mocked(prisma.chatMemory.findMany)
     mockFindMany.mockResolvedValue([
       { summary: 'Recent memory. With two sentences.', createdAt: daysAgo(3) },
     ])
@@ -56,7 +53,7 @@ describe('loadMemorySummaries', () => {
   })
 
   it('trims summary for entries 7-30 days old', async () => {
-    const mockFindMany = vi.mocked(prisma.chatMemory.findMany as any)
+    const mockFindMany = vi.mocked(prisma.chatMemory.findMany)
     mockFindMany.mockResolvedValue([
       { summary: 'Older memory sentence one. Older memory sentence two. This should be cut.', createdAt: daysAgo(14) },
     ])
@@ -65,7 +62,7 @@ describe('loadMemorySummaries', () => {
   })
 
   it('returns first sentence only for entries 30-60 days old', async () => {
-    const mockFindMany = vi.mocked(prisma.chatMemory.findMany as any)
+    const mockFindMany = vi.mocked(prisma.chatMemory.findMany)
     mockFindMany.mockResolvedValue([
       { summary: 'Old memory first. Old memory second.', createdAt: daysAgo(45) },
     ])
@@ -74,7 +71,7 @@ describe('loadMemorySummaries', () => {
   })
 
   it('excludes entries older than 60 days', async () => {
-    const mockFindMany = vi.mocked(prisma.chatMemory.findMany as any)
+    const mockFindMany = vi.mocked(prisma.chatMemory.findMany)
     mockFindMany.mockResolvedValue([
       { summary: 'Very old memory.', createdAt: daysAgo(90) },
     ])
