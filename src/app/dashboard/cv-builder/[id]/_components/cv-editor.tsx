@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { RotateCcw, Download, MessageSquare, Loader2 } from 'lucide-react'
+import { usePageContext, useWorkspaceContext } from '@/lib/context/page-context'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -45,6 +46,14 @@ export function CvEditor({ cv }: Props) {
   const [isPending, startTransition] = useTransition()
   const [showConfirm, setShowConfirm] = useState(false)
   const [showExport, setShowExport] = useState(false)
+
+  const { openPanel } = usePageContext()
+  useWorkspaceContext({
+    type: 'cv',
+    cvId: cv.id,
+    title: cv.jobTitle ?? 'CV',
+    company: cv.company ?? undefined,
+  })
 
   const displayTitle = cv.jobTitle && cv.company
     ? `${cv.jobTitle} · ${cv.company}`
@@ -196,7 +205,10 @@ export function CvEditor({ cv }: Props) {
                 </>
               )}
             </div>
-            <button disabled title="Coming soon" className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground opacity-50">
+            <button
+              onClick={openPanel}
+              className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
+            >
               <MessageSquare className="size-3.5" />
               Discuss
             </button>

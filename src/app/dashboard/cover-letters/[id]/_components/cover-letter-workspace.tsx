@@ -4,8 +4,9 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Download, Loader2, RefreshCw, X } from 'lucide-react'
+import { Download, Loader2, RefreshCw, Sparkles, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { usePageContext, useWorkspaceContext } from '@/lib/context/page-context'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { cn } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/use-mobile'
@@ -75,6 +76,13 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
     : null
   const title = letter.jobTitle ?? job?.title ?? null
   const company = letter.company ?? job?.company ?? null
+
+  const { openPanel } = usePageContext()
+  useWorkspaceContext({
+    type: 'cover_letter',
+    letterId: letter.id,
+    company: company ?? undefined,
+  })
 
   const saveLabel =
     saveState === 'saving' ? 'Saving…' :
@@ -227,6 +235,10 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
               </>
             )}
           </div>
+          <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs" onClick={openPanel}>
+            <Sparkles className="size-3.5" />
+            Ask coach
+          </Button>
           {letter.jobApplicationId && (
             <Button
               variant="outline"

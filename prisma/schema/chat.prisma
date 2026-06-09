@@ -1,0 +1,14 @@
+// ------------------------------------------------------------
+// CHAT
+// ------------------------------------------------------------
+
+model ChatMemory {
+  id        String   @id @default(cuid())
+  profileId String
+  summary   String   // compact session summary, ≤150 tokens
+  createdAt DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}

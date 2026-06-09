@@ -9,6 +9,8 @@ pattern from scratch.
 > with its UI trigger in `src/app/dashboard/job-applications/_components/job-fit.tsx`.
 > When in doubt, copy that shape.
 
+> **Streaming / conversational features** use a different pattern — see [`docs/chat-assistant.md`](./chat-assistant.md). The five-step pipeline below applies to batch features (job-fit, CV generation, cover letters) that generate output once and persist it.
+
 ---
 
 ## The five-step pipeline

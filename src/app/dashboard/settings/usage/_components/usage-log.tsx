@@ -23,6 +23,8 @@ const FEATURE_LABELS: Record<string, string> = {
   'interview-prep-interviewer-analysis': 'Interview prep — analyse interviewer',
   'interview-prep-bulk-analysis':        'Interview prep — analyse all documents',
   'interview-prep-qa-generation':        'Interview prep — generate Q&A',
+  'chat-turn':      'Chat — career coach',
+  'chat-summarize': 'Chat — session summary',
 }
 
 export function UsageLog({ stats }: { stats: UserUsageSummary }) {

@@ -29,6 +29,8 @@ export function JobStatsGrid({ job, hasLLMKey }: Props) {
           jobFit={job.jobFit ?? null}
           canAssess={!!job.jobDescription?.trim()}
           hasLLMKey={hasLLMKey}
+          company={job.company ?? undefined}
+          jdSnippet={job.jobDescription ? job.jobDescription.slice(0, 800) : undefined}
         />
       </MetaCell>
     </div>
