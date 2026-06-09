@@ -2,8 +2,11 @@
 
 import { isTextUIPart, isToolUIPart, getToolName, type UIMessage } from 'ai'
 import { Bot, User, Loader2, ChevronRight } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { cn } from '@/lib/utils'
 import { ToolConfirmationCard } from './tool-confirmation-card'
+import { FeedbackSubmissionCard } from './feedback-submission-card'
 
 type ChatMessageProps = {
   message: UIMessage
@@ -28,17 +31,38 @@ export function ChatMessage({ message, onToolOutput }: ChatMessageProps) {
         {message.parts?.map((part, i) => {
           if (isTextUIPart(part)) {
             return (
-              <p
+              <div
                 key={`text-${i}`}
                 className={cn(
-                  'rounded-2xl px-3.5 py-2 text-sm leading-relaxed whitespace-pre-wrap',
+                  'rounded-2xl px-3.5 py-2 text-sm leading-relaxed',
                   isUser
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted text-foreground',
                 )}
               >
-                {part.text}
-              </p>
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    p: ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
+                    ul: ({ children }) => <ul className="mb-1 ml-4 list-disc last:mb-0">{children}</ul>,
+                    ol: ({ children }) => <ol className="mb-1 ml-4 list-decimal last:mb-0">{children}</ol>,
+                    li: ({ children }) => <li className="mb-0.5">{children}</li>,
+                    strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                    code: ({ children }) => (
+                      <code className="rounded bg-black/10 px-1 py-0.5 text-xs font-mono dark:bg-white/10">
+                        {children}
+                      </code>
+                    ),
+                    pre: ({ children }) => (
+                      <pre className="my-2 overflow-x-auto rounded-md bg-black/10 p-2 text-xs dark:bg-white/10">
+                        {children}
+                      </pre>
+                    ),
+                  }}
+                >
+                  {part.text}
+                </ReactMarkdown>
+              </div>
             )
           }
 
@@ -46,6 +70,20 @@ export function ChatMessage({ message, onToolOutput }: ChatMessageProps) {
             const toolName = getToolName(part)
             const isWriteTool = toolName.startsWith('propose_')
             const { state } = part
+
+            if (state === 'input-available' && toolName === 'submit_feedback') {
+              const input = part.input as { type: 'bug' | 'idea'; title: string; description: string }
+              return (
+                <FeedbackSubmissionCard
+                  key={part.toolCallId}
+                  toolCallId={part.toolCallId}
+                  type={input.type}
+                  title={input.title}
+                  description={input.description}
+                  onResult={(toolCallId, output) => onToolOutput(toolCallId, 'submit_feedback', output)}
+                />
+              )
+            }
 
             if (state === 'input-available' && isWriteTool) {
               return (
@@ -67,6 +105,19 @@ export function ChatMessage({ message, onToolOutput }: ChatMessageProps) {
                 >
                   <Loader2 className="size-3 animate-spin" />
                   Looking up {toolName.replace(/_/g, ' ')}…
+                </div>
+              )
+            }
+
+            if (state === 'output-available' && toolName === 'submit_feedback') {
+              const output = part.output as { status: string } | null
+              return (
+                <div
+                  key={part.toolCallId}
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground"
+                >
+                  <ChevronRight className="size-3" />
+                  {output?.status === 'submitted' ? 'Feedback submitted' : 'Feedback cancelled'}
                 </div>
               )
             }

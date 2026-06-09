@@ -163,6 +163,25 @@ export function createChatTools(profileId: string) {
       },
     }),
 
+    list_interview_prep_sessions: tool({
+      description:
+        "List all of the user's interview prep sessions with their IDs, companies, and roles. Use this when the user mentions a prep session by name or company but you don't have the session ID from page context.",
+      inputSchema: zodSchema(z.object({})),
+      execute: async () => {
+        const sessions = await prisma.interviewPrepSession.findMany({
+          where: { profileId },
+          select: { id: true, company: true, jobTitle: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+        })
+        return sessions.map(s => ({
+          sessionId: s.id,
+          company: s.company ?? null,
+          role: s.jobTitle ?? null,
+          createdAt: s.createdAt,
+        }))
+      },
+    }),
+
     get_interview_prep: tool({
       description: 'Fetch an interview prep session including notes, documents, and interviewers.',
       inputSchema: zodSchema(z.object({ sessionId: z.string() })),
@@ -240,6 +259,26 @@ export function createChatTools(profileId: string) {
           rationale: z.string().describe('Why this change improves the prep note'),
         }),
       ),
+    }),
+
+    submit_feedback: tool({
+      description:
+        "Submit a bug report or feature idea on behalf of the user. Use when the user describes a problem with the app or suggests a new feature or improvement. Gather a clear title and description from the conversation, then call this tool to present a confirmation before submitting.",
+      inputSchema: zodSchema(
+        z.object({
+          type: z
+            .enum(['bug', 'idea'])
+            .describe("'bug' for problems, errors, or broken behaviour. 'idea' for feature requests or improvements."),
+          title: z.string().max(200).describe('Short, clear title — one sentence.'),
+          description: z
+            .string()
+            .max(2000)
+            .describe(
+              'Detailed description. For bugs: what happened and what was expected. For ideas: what it is and why it helps.',
+            ),
+        }),
+      ),
+      // No execute — confirmation card handles submission client-side
     }),
   }
 }
