@@ -9,7 +9,7 @@ export default async function CoverLettersPage() {
   const letters = await listCoverLetters(profile.id)
 
   return (
-    <div className="container max-w-2xl py-8">
+    <div className="mx-auto w-full max-w-2xl px-4 py-6 md:px-6">
       <div className="mb-6 flex items-start justify-between">
         <div>
           <h1 className="text-xl font-semibold">Cover Letters</h1>

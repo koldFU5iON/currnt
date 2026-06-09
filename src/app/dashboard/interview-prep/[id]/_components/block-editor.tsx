@@ -1,7 +1,8 @@
-// src/app/dashboard/interview-prep/[id]/_components/block-editor.tsx
 'use client'
 
 import { useState, useTransition, useRef, useEffect } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { cn } from '@/lib/utils'
 import type { Block } from '@/modules/interview-prep/schema'
 import {
@@ -19,6 +20,7 @@ export function BlockEditor({ noteId, block, isFirst, isLast }: Props) {
   const [title, setTitle] = useState(block.title)
   const [content, setContent] = useState(block.content)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [contentFocused, setContentFocused] = useState(false)
   const [isPending, startTransition] = useTransition()
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -26,12 +28,16 @@ export function BlockEditor({ noteId, block, isFirst, isLast }: Props) {
   const isQA = block.type === 'qa-bank'
   const isReadOnly = isAI || isQA
 
+  // Flush pending save immediately (used on blur so we don't lose edits)
+  function flushSave(updates: { title?: string; content?: string }) {
+    if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = null }
+    startTransition(async () => { await updateBlock(noteId, block.id, updates) })
+  }
+
   function scheduleSave(updates: { title?: string; content?: string }) {
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
-      startTransition(async () => {
-        await updateBlock(noteId, block.id, updates)
-      })
+      startTransition(async () => { await updateBlock(noteId, block.id, updates) })
     }, 800)
   }
 
@@ -42,9 +48,18 @@ export function BlockEditor({ noteId, block, isFirst, isLast }: Props) {
     scheduleSave({ title: val })
   }
 
+  function handleTitleBlur() {
+    if (title !== block.title) flushSave({ title })
+  }
+
   function handleContentChange(val: string) {
     setContent(val)
     scheduleSave({ content: val })
+  }
+
+  function handleContentBlur() {
+    setContentFocused(false)
+    if (content !== block.content) flushSave({ content })
   }
 
   function handleMoveUp() {
@@ -65,6 +80,8 @@ export function BlockEditor({ noteId, block, isFirst, isLast }: Props) {
     startTransition(async () => { await convertAiBlockToText(noteId, block.id) })
   }
 
+  const showPreview = !contentFocused && content.trim().length > 0
+
   return (
     <div className={cn(
       'relative rounded-lg border overflow-hidden',
@@ -76,8 +93,9 @@ export function BlockEditor({ noteId, block, isFirst, isLast }: Props) {
         <input
           value={title}
           onChange={e => handleTitleChange(e.target.value)}
-          className="flex-1 bg-transparent text-xs font-medium outline-none placeholder:text-muted-foreground"
-          placeholder="Block title"
+          onBlur={handleTitleBlur}
+          className="flex-1 bg-transparent text-xs font-medium outline-none placeholder:text-muted-foreground hover:border-b hover:border-muted-foreground/30 focus:border-b focus:border-primary/60 transition-colors pb-px"
+          placeholder="Untitled block"
         />
         <div className="flex items-center gap-1">
           <button
@@ -120,18 +138,30 @@ export function BlockEditor({ noteId, block, isFirst, isLast }: Props) {
         </div>
       </div>
 
-      {/* Block content */}
-      <textarea
-        value={content}
-        onChange={e => handleContentChange(e.target.value)}
-        readOnly={isReadOnly}
-        rows={Math.max(4, content.split('\n').length + 1)}
-        className={cn(
-          'w-full resize-none bg-transparent p-3 font-mono text-sm outline-none',
-          isReadOnly && 'cursor-default text-muted-foreground',
-        )}
-        placeholder={isReadOnly ? '' : 'Write your notes here (Markdown)…'}
-      />
+      {/* Block content — rendered preview or editable textarea */}
+      {isReadOnly || showPreview ? (
+        <div
+          onClick={() => { if (!isReadOnly) setContentFocused(true) }}
+          className={cn(
+            'min-h-16 p-3 text-sm prose prose-sm max-w-none',
+            !isReadOnly && 'cursor-text hover:bg-muted/20 transition-colors',
+            isReadOnly && 'text-muted-foreground',
+          )}
+        >
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+        </div>
+      ) : (
+        <textarea
+          value={content}
+          onChange={e => handleContentChange(e.target.value)}
+          onFocus={() => setContentFocused(true)}
+          onBlur={handleContentBlur}
+          autoFocus={contentFocused}
+          rows={Math.max(4, content.split('\n').length + 1)}
+          className="w-full resize-none bg-transparent p-3 font-mono text-sm outline-none"
+          placeholder="Write your notes here (Markdown)…"
+        />
+      )}
     </div>
   )
 }

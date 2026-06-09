@@ -7,15 +7,26 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-export default async function NewInterviewPrepPage() {
-  const { profile } = await requireProfile()
+type Props = { searchParams: Promise<{ jobId?: string }> }
+
+export default async function NewInterviewPrepPage({ searchParams }: Props) {
+  const [{ jobId }, { profile }] = await Promise.all([searchParams, requireProfile()])
 
   const jobs = await prisma.jobApplication.findMany({
-    where: { profileId: profile.id, archivedAt: null },
+    where: {
+      profileId: profile.id,
+      archivedAt: null,
+      status: { in: ['applied', 'interviewing'] },
+    },
     orderBy: { lastUpdated: 'desc' },
-    select: { id: true, title: true, company: true },
+    select: { id: true, title: true, company: true, status: true },
     take: 50,
   })
+
+  const preselectedJob = jobId ? jobs.find(j => j.id === jobId) : undefined
+  const defaultTitle = preselectedJob
+    ? `${preselectedJob.title}${preselectedJob.company ? ` @ ${preselectedJob.company}` : ''}`
+    : ''
 
   async function handleCreate(formData: FormData) {
     'use server'
@@ -27,7 +38,7 @@ export default async function NewInterviewPrepPage() {
   }
 
   return (
-    <div className="container max-w-lg py-8">
+    <div className="mx-auto w-full max-w-lg px-4 py-6 md:px-6">
       <h1 className="mb-6 text-xl font-semibold">New Prep Session</h1>
       <form action={handleCreate} className="space-y-4">
         <div className="space-y-1.5">
@@ -36,6 +47,7 @@ export default async function NewInterviewPrepPage() {
             id="title"
             name="title"
             placeholder="e.g. Senior Product Designer @ Acme"
+            defaultValue={defaultTitle}
             required
             autoFocus
           />
@@ -47,6 +59,7 @@ export default async function NewInterviewPrepPage() {
             <select
               id="jobApplicationId"
               name="jobApplicationId"
+              defaultValue={preselectedJob?.id ?? ''}
               className="w-full rounded-md border bg-background px-3 py-2 text-sm"
             >
               <option value="">— None —</option>
@@ -57,7 +70,7 @@ export default async function NewInterviewPrepPage() {
               ))}
             </select>
             <p className="text-xs text-muted-foreground">
-              Auto-fills company and job title from the linked application.
+              Only showing jobs marked as Applied or Interviewing.
             </p>
           </div>
         )}

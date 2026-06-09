@@ -1,6 +1,6 @@
 import Link from "next/link"
-import { type Job } from "@/app/types/job-application"
-import { ArrowLeft, SquareArrowOutUpRight } from "lucide-react"
+import { type Job, ApplicationStatus } from "@/app/types/job-application"
+import { ArrowLeft, ClipboardList, SquareArrowOutUpRight } from "lucide-react"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -21,17 +21,28 @@ export function JobDetailHeader({ job }: { job: Job }) {
           <p className="text-base text-muted-foreground">{job.company}</p>
         </div>
 
-        {job.url && (
-          <a
-            href={job.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "shrink-0 gap-1.5")}
-          >
-            <SquareArrowOutUpRight size={14} />
-            View listing
-          </a>
-        )}
+        <div className="flex shrink-0 gap-2">
+          {(job.status === ApplicationStatus.Applied || job.status === ApplicationStatus.Interviewing) && (
+            <Link
+              href={`/dashboard/interview-prep/new?jobId=${job.id}`}
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1.5")}
+            >
+              <ClipboardList size={14} />
+              Prep interview
+            </Link>
+          )}
+          {job.url && (
+            <a
+              href={job.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1.5")}
+            >
+              <SquareArrowOutUpRight size={14} />
+              View listing
+            </a>
+          )}
+        </div>
       </div>
     </div>
   )
