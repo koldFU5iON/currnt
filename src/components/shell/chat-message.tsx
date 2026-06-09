@@ -79,7 +79,7 @@ export function ChatMessage({ message, onToolOutput }: ChatMessageProps) {
                   className="flex items-center gap-1.5 text-xs text-muted-foreground"
                 >
                   <ChevronRight className="size-3" />
-                  {output?.status === 'accepted' ? 'Change applied' : 'Change declined'}
+                  {output?.status === 'accepted' ? 'Change accepted' : 'Change declined'}
                 </div>
               )
             }
