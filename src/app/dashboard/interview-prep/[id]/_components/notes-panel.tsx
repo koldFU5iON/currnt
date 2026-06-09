@@ -67,6 +67,8 @@ export function NotesPanel({ sessionId, notes, activeNoteId, onNoteChange, activ
     startTransition(async () => { await addTextBlock(activeNote.id) })
   }
 
+  const [mobileIndexOpen, setMobileIndexOpen] = useState(false)
+
   return (
     <div className="flex flex-1 flex-col overflow-hidden border-r">
       {/* Note doc switcher */}
@@ -125,11 +127,41 @@ export function NotesPanel({ sessionId, notes, activeNoteId, onNoteChange, activ
             + New doc
           </button>
         )}
+
+        {/* Mobile index toggle */}
+        <button
+          onClick={() => setMobileIndexOpen(v => !v)}
+          className="ml-auto shrink-0 rounded border px-2 py-1 text-[10px] text-muted-foreground hover:bg-accent sm:hidden"
+          title="Toggle block index"
+        >
+          ≡
+        </button>
       </div>
 
       {/* Index + blocks */}
-      <div className="flex flex-1 overflow-hidden">
-        <BlockIndex blocks={sorted} onScrollTo={scrollToBlock} />
+      <div className="relative flex flex-1 overflow-hidden">
+        {/* Desktop sidebar — hidden on mobile */}
+        <div className="hidden sm:block">
+          <BlockIndex blocks={sorted} onScrollTo={scrollToBlock} />
+        </div>
+
+        {/* Mobile overlay */}
+        {mobileIndexOpen && (
+          <div
+            className="absolute inset-0 z-20 bg-black/20 sm:hidden"
+            onClick={() => setMobileIndexOpen(false)}
+          >
+            <div
+              className="h-full"
+              onClick={e => e.stopPropagation()}
+            >
+              <BlockIndex
+                blocks={sorted}
+                onScrollTo={id => { scrollToBlock(id); setMobileIndexOpen(false) }}
+              />
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-1 flex-col overflow-y-auto">
           <div className="flex flex-1 flex-col gap-3 p-4">
@@ -143,14 +175,12 @@ export function NotesPanel({ sessionId, notes, activeNoteId, onNoteChange, activ
                 />
               </div>
             ))}
-          </div>
 
-          {/* Add block footer */}
-          <div className="flex gap-2 border-t bg-muted/30 p-3">
+            {/* Inline add block — lives in the writing flow, not a footer */}
             <button
               onClick={handleAddTextBlock}
               disabled={isPending || !activeNote}
-              className="rounded border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent disabled:opacity-50"
+              className="rounded border border-dashed px-3 py-2 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
             >
               + Text block
             </button>

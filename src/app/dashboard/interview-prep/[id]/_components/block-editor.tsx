@@ -143,7 +143,7 @@ export function BlockEditor({ noteId, block, isFirst, isLast }: Props) {
         <div
           onClick={() => { if (!isReadOnly) setContentFocused(true) }}
           className={cn(
-            'min-h-16 p-3 text-sm prose prose-sm max-w-none',
+            'min-h-16 p-3 text-sm prose prose-sm max-w-none dark:prose-invert',
             !isReadOnly && 'cursor-text hover:bg-muted/20 transition-colors',
             isReadOnly && 'text-muted-foreground',
           )}
