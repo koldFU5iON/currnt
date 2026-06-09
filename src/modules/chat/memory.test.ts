@@ -45,7 +45,7 @@ describe('loadMemorySummaries', () => {
   it('returns full summary for recent entries (< 7 days)', async () => {
     const mockFindMany = vi.mocked(prisma.chatMemory.findMany)
     mockFindMany.mockResolvedValue([
-      { summary: 'Recent memory. With two sentences.', createdAt: daysAgo(3) },
+      { id: 'mem-1', profileId: 'profile-1', summary: 'Recent memory. With two sentences.', createdAt: daysAgo(3) },
     ])
     const results = await loadMemorySummaries('profile-1')
     expect(results).toHaveLength(1)
@@ -55,7 +55,7 @@ describe('loadMemorySummaries', () => {
   it('trims summary for entries 7-30 days old', async () => {
     const mockFindMany = vi.mocked(prisma.chatMemory.findMany)
     mockFindMany.mockResolvedValue([
-      { summary: 'Older memory sentence one. Older memory sentence two. This should be cut.', createdAt: daysAgo(14) },
+      { id: 'mem-2', profileId: 'profile-1', summary: 'Older memory sentence one. Older memory sentence two. This should be cut.', createdAt: daysAgo(14) },
     ])
     const results = await loadMemorySummaries('profile-1')
     expect(results[0]).toBe('Older memory sentence one. Older memory sentence two.')
@@ -64,7 +64,7 @@ describe('loadMemorySummaries', () => {
   it('returns first sentence only for entries 30-60 days old', async () => {
     const mockFindMany = vi.mocked(prisma.chatMemory.findMany)
     mockFindMany.mockResolvedValue([
-      { summary: 'Old memory first. Old memory second.', createdAt: daysAgo(45) },
+      { id: 'mem-3', profileId: 'profile-1', summary: 'Old memory first. Old memory second.', createdAt: daysAgo(45) },
     ])
     const results = await loadMemorySummaries('profile-1')
     expect(results[0]).toBe('Old memory first.')
@@ -73,7 +73,7 @@ describe('loadMemorySummaries', () => {
   it('excludes entries older than 60 days', async () => {
     const mockFindMany = vi.mocked(prisma.chatMemory.findMany)
     mockFindMany.mockResolvedValue([
-      { summary: 'Very old memory.', createdAt: daysAgo(90) },
+      { id: 'mem-4', profileId: 'profile-1', summary: 'Very old memory.', createdAt: daysAgo(90) },
     ])
     const results = await loadMemorySummaries('profile-1')
     expect(results).toHaveLength(0)
