@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useRef, useState, useTransition } from 'react'
+import React, { useEffect, useRef, useState, useTransition } from 'react'
 import { useChat } from '@ai-sdk/react'
-import { DefaultChatTransport, isTextUIPart } from 'ai'
-import { Sparkles, X, Send, Bot, SquarePen, Maximize2, Minimize2 } from 'lucide-react'
+import { DefaultChatTransport, isTextUIPart, type UIMessage } from 'ai'
+import { Sparkles, X, Send, Bot, SquarePen, Maximize2, Minimize2, FileText, Briefcase, Mail, ClipboardList } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { usePageContext } from '@/lib/context/page-context'
+import type { PageContext } from '@/modules/chat/schema'
 import { getChatSettings, saveChatModel } from '@/modules/llm/actions'
 import { ChatMessage } from './chat-message'
 import { toast } from 'sonner'
@@ -27,6 +28,68 @@ type ChatSettings = {
 }
 
 const IDLE_TIMEOUT_MS = 10 * 60 * 1000
+const SESSION_STORAGE_KEY = 'chat-session-messages'
+
+type SavedMessage = { id: string; role: 'user' | 'assistant'; text: string }
+
+function persistMessages(messages: UIMessage[]) {
+  try {
+    const saved: SavedMessage[] = messages
+      .filter(m => m.role === 'user' || m.role === 'assistant')
+      .map(m => ({
+        id: m.id,
+        role: m.role as 'user' | 'assistant',
+        text: m.parts?.filter(isTextUIPart).map(p => p.text).join('\n') ?? '',
+      }))
+      .filter(m => m.text && !m.text.startsWith('[navigated to '))
+    if (saved.length > 0) {
+      sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(saved))
+    } else {
+      sessionStorage.removeItem(SESSION_STORAGE_KEY)
+    }
+  } catch { /* sessionStorage unavailable */ }
+}
+
+function restoreMessages(): UIMessage[] {
+  try {
+    const raw = sessionStorage.getItem(SESSION_STORAGE_KEY)
+    if (!raw) return []
+    const saved = JSON.parse(raw) as SavedMessage[]
+    return saved.map(m => ({
+      id: m.id,
+      role: m.role,
+      content: m.text,
+      parts: [{ type: 'text' as const, text: m.text }],
+      createdAt: new Date(),
+    }))
+  } catch {
+    return []
+  }
+}
+
+const CONTEXT_META: Record<
+  string,
+  { icon: React.ComponentType<{ className?: string }>; label: (ctx: PageContext) => string }
+> = {
+  cv: {
+    icon: FileText,
+    label: (ctx) => `CV${ctx.type === 'cv' && ctx.company ? ` · ${ctx.company}` : ''}`,
+  },
+  job_fit: {
+    icon: Briefcase,
+    label: (ctx) => `Job fit${ctx.type === 'job_fit' && ctx.company ? ` · ${ctx.company}` : ''}`,
+  },
+  cover_letter: {
+    icon: Mail,
+    label: (ctx) =>
+      `Cover letter${ctx.type === 'cover_letter' && ctx.company ? ` · ${ctx.company}` : ''}`,
+  },
+  interview_prep: {
+    icon: ClipboardList,
+    label: (ctx) =>
+      `Interview prep${ctx.type === 'interview_prep' && ctx.company ? ` · ${ctx.company}` : ''}`,
+  },
+}
 
 type ChatPanelProps = {
   open: boolean
@@ -35,6 +98,10 @@ type ChatPanelProps = {
 
 export function ChatPanel({ open, onClose }: ChatPanelProps) {
   const { context } = usePageContext()
+  const contextRef = useRef(context)
+  const prevContextRef = useRef(context)
+  useEffect(() => { contextRef.current = context }, [context])
+
   const [settings, setSettings] = useState<ChatSettings | null>(null)
   const [input, setInput] = useState('')
   const [expanded, setExpanded] = useState(false)
@@ -42,13 +109,21 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Restore prior session lazily (client-only — avoids SSR issues)
+  const [initialMessages] = useState<UIMessage[]>(() => restoreMessages())
+
   const { messages, sendMessage, status, addToolOutput, setMessages } = useChat({
     transport: new DefaultChatTransport({
       api: '/api/chat/stream',
-      body: { pageContext: context },
+      // body is called fresh on every send — always captures the latest context
+      body: () => ({ pageContext: contextRef.current }),
     }),
+    messages: initialMessages,
     onError: () => toast.error('Something went wrong. Try again.'),
   })
+
+  // Persist messages to sessionStorage on every update
+  useEffect(() => { persistMessages(messages) }, [messages])
 
   useEffect(() => {
     if (open && !settings) {
@@ -61,6 +136,33 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // When the user navigates to a new page mid-conversation, inject a brief navigation
+  // marker so the LLM has an explicit in-history signal (system prompt alone is invisible
+  // to the conversation thread).
+  useEffect(() => {
+    const prev = prevContextRef.current
+    prevContextRef.current = context
+    if (!context) return
+    if (JSON.stringify(prev) === JSON.stringify(context)) return
+    // Only inject if a conversation is already in progress — no need to pollute a fresh chat
+    setMessages(msgs => {
+      if (msgs.length === 0) return msgs
+      const meta = CONTEXT_META[context.type]
+      const label = meta?.label(context) ?? context.type
+      return [
+        ...msgs,
+        {
+          id: `nav-${Date.now()}`,
+          role: 'user' as const,
+          content: `[navigated to ${label}]`,
+          parts: [{ type: 'text' as const, text: `[navigated to ${label}]` }],
+          createdAt: new Date(),
+        },
+      ]
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [context])
 
   useEffect(() => {
     return () => {
@@ -90,7 +192,10 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: body }),
     })
-      .then(() => setMessages([]))
+      .then(() => {
+        sessionStorage.removeItem(SESSION_STORAGE_KEY)
+        setMessages([])
+      })
       .catch(() => {})
   }
 
@@ -100,6 +205,7 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
   }
 
   function handleNewChat() {
+    sessionStorage.removeItem(SESSION_STORAGE_KEY)
     triggerSummarize()
     if (messages.length < 2) setMessages([])
   }
@@ -186,6 +292,21 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
           </Button>
         </div>
       </header>
+
+      {context && (() => {
+        const meta = CONTEXT_META[context.type]
+        const Icon = meta?.icon
+        const label = meta?.label(context) ?? context.type
+        return (
+          <div
+            key={JSON.stringify(context)}
+            className="flex shrink-0 items-center gap-1.5 border-b bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground animate-in fade-in slide-in-from-top-1 duration-200"
+          >
+            {Icon && <Icon className="size-3 shrink-0" />}
+            <span className="truncate">{label}</span>
+          </div>
+        )
+      })()}
 
       <div className="flex flex-1 flex-col overflow-y-auto">
         {messages.length === 0 ? (
