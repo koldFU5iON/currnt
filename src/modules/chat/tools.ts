@@ -91,12 +91,33 @@ export function createChatTools(profileId: string) {
                 })),
               )
           case 'education':
-            return prisma.education.findMany({ where: { profileId }, orderBy: { startDate: 'desc' } })
+            return prisma.education
+              .findMany({ where: { profileId }, orderBy: { startDate: 'desc' } })
+              .then(rows =>
+                rows.map(e => ({
+                  institution: e.institution,
+                  qualification: e.qualification,
+                  field: e.field,
+                  startDate: e.startDate,
+                  endDate: e.endDate,
+                  grade: e.grade,
+                  notes: e.notes,
+                  tags: parseJsonField<string[]>(e.tags, []),
+                })),
+              )
           case 'certifications':
-            return prisma.certification.findMany({
-              where: { profileId },
-              orderBy: { issueDate: 'desc' },
-            })
+            return prisma.certification
+              .findMany({ where: { profileId }, orderBy: { issueDate: 'desc' } })
+              .then(rows =>
+                rows.map(c => ({
+                  name: c.name,
+                  issuer: c.issuer,
+                  issueDate: c.issueDate,
+                  expiryDate: c.expiryDate,
+                  credentialUrl: c.credentialUrl,
+                  tags: parseJsonField<string[]>(c.tags, []),
+                })),
+              )
         }
       },
     }),
@@ -105,16 +126,16 @@ export function createChatTools(profileId: string) {
       description: 'Fetch a job application including full job description, fit score, and notes.',
       inputSchema: zodSchema(z.object({ jobId: z.string() })),
       execute: async ({ jobId }) => {
-        await assertOwnership('jobApplication', jobId, profileId)
         const job = await prisma.jobApplication.findUnique({ where: { id: jobId } })
-        if (!job) throw new Error('Job application not found')
+        if (!job || job.profileId !== profileId) throw new Error('Resource not found or access denied')
         return {
           company: job.company,
           jobTitle: job.title,
           status: job.status,
           jobDescription: job.jobDescription,
           notes: job.notes,
-          jobFit: job.jobFit,
+          fitScore: (job.jobFit as any)?.rating ?? null,
+          fitSummary: (job.jobFit as any)?.summary ?? null,
         }
       },
     }),
@@ -124,9 +145,8 @@ export function createChatTools(profileId: string) {
         "Fetch the full JSON content of a CV document. Use when the user wants to discuss or modify their CV.",
       inputSchema: zodSchema(z.object({ cvId: z.string() })),
       execute: async ({ cvId }) => {
-        await assertOwnership('cVDocument', cvId, profileId)
         const cv = await prisma.cVDocument.findUnique({ where: { id: cvId } })
-        if (!cv) throw new Error('CV document not found')
+        if (!cv || cv.profileId !== profileId) throw new Error('Resource not found or access denied')
         return { id: cv.id, jobTitle: cv.jobTitle, company: cv.company, content: cv.generatedContent }
       },
     }),
@@ -136,7 +156,7 @@ export function createChatTools(profileId: string) {
       inputSchema: zodSchema(z.object({ sessionId: z.string() })),
       execute: async ({ sessionId }) => {
         await assertOwnership('interviewPrepSession', sessionId, profileId)
-        return prisma.interviewPrepSession.findUnique({
+        const session = await prisma.interviewPrepSession.findUnique({
           where: { id: sessionId },
           include: {
             notes: { orderBy: { order: 'asc' } },
@@ -144,10 +164,31 @@ export function createChatTools(profileId: string) {
             interviewers: true,
           },
         })
+        if (!session) throw new Error('Interview prep session not found')
+        return session
+      },
+    }),
+
+    get_cover_letter: tool({
+      description: 'Fetch the content of a cover letter document.',
+      inputSchema: zodSchema(z.object({ letterId: z.string() })),
+      execute: async ({ letterId }) => {
+        await assertOwnership('coverLetterDocument', letterId, profileId)
+        const letter = await prisma.coverLetterDocument.findUnique({ where: { id: letterId } })
+        if (!letter) throw new Error('Cover letter not found')
+        return {
+          id: letter.id,
+          company: letter.company,
+          jobTitle: letter.jobTitle,
+          content: letter.content,
+        }
       },
     }),
 
     // Write tools — no execute → client handles with confirmation card.
+    // SECURITY: the PATCH route called on acceptance MUST independently verify
+    // ownership (assertOwnership or equivalent). It cannot trust cvId/sessionId
+    // values that originated from the LLM.
     propose_profile_update: tool({
       description:
         "Propose an update to a field on the user's profile. The user must confirm before it is applied.",
