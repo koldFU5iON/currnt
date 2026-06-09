@@ -29,7 +29,7 @@ export function ChatMessage({ message, onToolOutput }: ChatMessageProps) {
           if (isTextUIPart(part)) {
             return (
               <p
-                key={i}
+                key={`text-${i}`}
                 className={cn(
                   'rounded-2xl px-3.5 py-2 text-sm leading-relaxed whitespace-pre-wrap',
                   isUser

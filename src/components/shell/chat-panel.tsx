@@ -51,13 +51,21 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
 
   useEffect(() => {
     if (open && !settings) {
-      getChatSettings().then(setSettings).catch(() => {})
+      getChatSettings()
+        .then(setSettings)
+        .catch(() => toast.error('Failed to load chat settings'))
     }
   }, [open, settings])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  useEffect(() => {
+    return () => {
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
+    }
+  }, [])
 
   function resetIdleTimer() {
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
@@ -80,8 +88,9 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: body }),
-    }).catch(() => {})
-    setMessages([])
+    })
+      .then(() => setMessages([]))
+      .catch(() => {})
   }
 
   function handleClose() {
