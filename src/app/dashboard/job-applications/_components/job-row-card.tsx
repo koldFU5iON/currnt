@@ -128,7 +128,7 @@ export function JobRowCard({ job, selected, busyLabel, onToggleSelect, onEdit, o
         {salaryBand && (
           <span className="text-xs text-muted-foreground">{salaryBand}</span>
         )}
-        <JobFit jobId={id} jobFit={jobFit ?? null} canAssess={!!jobDescription?.trim()} hasLLMKey={hasLLMKey} />
+        <JobFit jobId={id} jobFit={jobFit ?? null} canAssess={!!jobDescription?.trim()} hasLLMKey={hasLLMKey} company={company ?? undefined} jdSnippet={jobDescription ? jobDescription.slice(0, 800) : undefined} />
         {dateApplied && (
           <span className="text-xs text-muted-foreground">{formatShortDate(dateApplied)}</span>
         )}

@@ -148,7 +148,7 @@ export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArc
 
       {/* Job fit */}
       <div className="py-2">
-        <JobFit jobId={id} jobFit={jobFit ?? null} canAssess={!!jobDescription?.trim()} hasLLMKey={hasLLMKey} />
+        <JobFit jobId={id} jobFit={jobFit ?? null} canAssess={!!jobDescription?.trim()} hasLLMKey={hasLLMKey} company={company ?? undefined} jdSnippet={jobDescription ? jobDescription.slice(0, 800) : undefined} />
       </div>
 
       {/* Applied date */}

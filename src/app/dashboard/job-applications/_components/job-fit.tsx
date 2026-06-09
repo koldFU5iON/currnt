@@ -1,24 +1,28 @@
 'use client'
 
 import { useState, useTransition } from "react"
-import { Flame, Info, Loader2, Puzzle, StickyNote } from "lucide-react"
+import { Flame, Info, Loader2, Puzzle, Sparkles, StickyNote } from "lucide-react"
 import Link from "next/link"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer"
 import { Separator } from "@/components/ui/separator"
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
+import { Button } from "@/components/ui/button"
 import { MarkdownProse } from "@/app/dashboard/job-applications/view/[id]/_components/markdown-prose"
 import type { JobFit as JobFitType } from "@/app/types/job-application"
 import { assessJobFit } from "@/modules/jobs/job-fit"
 import { notifyUsageUpdated } from "@/lib/usage-events"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { usePageContext } from "@/lib/context/page-context"
 
 type JobFitProps = {
   jobId?: string
   jobFit: JobFitType | null
   canAssess?: boolean
   hasLLMKey?: boolean
+  company?: string
+  jdSnippet?: string
 }
 
 const FLAME_STYLES: Record<JobFitType['label'], string> = {
@@ -37,7 +41,7 @@ const PILL_TEXT_STYLES: Record<JobFitType['label'], string> = {
   excellent: 'text-red-600',
 }
 
-export function JobFit({ jobId, jobFit, canAssess = true, hasLLMKey = true }: JobFitProps) {
+export function JobFit({ jobId, jobFit, canAssess = true, hasLLMKey = true, company, jdSnippet }: JobFitProps) {
   const [isPending, startTransition] = useTransition()
   const [popoverOpen, setPopoverOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -123,6 +127,9 @@ export function JobFit({ jobId, jobFit, canAssess = true, hasLLMKey = true }: Jo
               hasLLMKey={hasLLMKey}
               canAssess={canAssess}
               onReassess={handleAssess}
+              jobId={jobId}
+              company={company}
+              jdSnippet={jdSnippet}
             />
           </PopoverContent>
         </Popover>
@@ -147,6 +154,9 @@ export function JobFit({ jobId, jobFit, canAssess = true, hasLLMKey = true }: Jo
                 hasLLMKey={hasLLMKey}
                 canAssess={canAssess}
                 onReassess={handleAssess}
+                jobId={jobId}
+                company={company}
+                jdSnippet={jdSnippet}
               />
             </div>
           </DrawerContent>
@@ -161,9 +171,25 @@ type FitDetailProps = {
   hasLLMKey: boolean
   canAssess: boolean
   onReassess: () => void
+  jobId?: string
+  company?: string
+  jdSnippet?: string
 }
 
-function FitDetail({ jobFit, hasLLMKey, canAssess, onReassess }: FitDetailProps) {
+function FitDetail({ jobFit, hasLLMKey, canAssess, onReassess, jobId, company, jdSnippet }: FitDetailProps) {
+  const { openPanel, setContext } = usePageContext()
+
+  function handleAskQuestion() {
+    if (!jobId) return
+    setContext({
+      type: 'job_fit',
+      jobId,
+      company: company ?? '',
+      fitScore: jobFit.rating,
+      jdSnippet: jdSnippet ?? '',
+    })
+    openPanel()
+  }
   return (
     <div className="space-y-3">
       <div>
@@ -246,6 +272,18 @@ function FitDetail({ jobFit, hasLLMKey, canAssess, onReassess }: FitDetailProps)
           </button>
         </div>
       </div>
+
+      {jobId && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mt-2 w-full justify-start gap-1.5 text-xs"
+          onClick={handleAskQuestion}
+        >
+          <Sparkles className="size-3" />
+          Ask a question
+        </Button>
+      )}
     </div>
   )
 }
