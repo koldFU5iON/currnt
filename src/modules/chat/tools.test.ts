@@ -29,18 +29,20 @@ beforeEach(() => {
 
 describe('assertOwnership', () => {
   it('passes when resource belongs to profileId', async () => {
-    vi.mocked(prisma.jobApplication.findUnique).mockResolvedValue({
-      profileId: 'profile-1',
-    } as any)
+    vi.mocked(prisma.jobApplication.findUnique).mockResolvedValue(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      { profileId: 'profile-1' } as any,
+    )
     await expect(
       assertOwnership('jobApplication', 'job-1', 'profile-1'),
     ).resolves.toBeUndefined()
   })
 
   it('throws when resource belongs to a different profileId', async () => {
-    vi.mocked(prisma.jobApplication.findUnique).mockResolvedValue({
-      profileId: 'profile-2',
-    } as any)
+    vi.mocked(prisma.jobApplication.findUnique).mockResolvedValue(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      { profileId: 'profile-2' } as any,
+    )
     await expect(
       assertOwnership('jobApplication', 'job-1', 'profile-1'),
     ).rejects.toThrow('Resource not found or access denied')

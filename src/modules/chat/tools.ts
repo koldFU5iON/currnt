@@ -17,10 +17,22 @@ export async function assertOwnership(
   id: string,
   profileId: string,
 ): Promise<void> {
-  const row = await (prisma[table] as any).findUnique({
-    where: { id },
-    select: { profileId: true },
-  })
+  const q = { where: { id }, select: { profileId: true } } as const
+  let row: { profileId: string } | null = null
+  switch (table) {
+    case 'cVDocument':
+      row = await prisma.cVDocument.findUnique(q)
+      break
+    case 'jobApplication':
+      row = await prisma.jobApplication.findUnique(q)
+      break
+    case 'interviewPrepSession':
+      row = await prisma.interviewPrepSession.findUnique(q)
+      break
+    case 'coverLetterDocument':
+      row = await prisma.coverLetterDocument.findUnique(q)
+      break
+  }
   if (!row || row.profileId !== profileId) {
     throw new Error('Resource not found or access denied')
   }
@@ -134,8 +146,8 @@ export function createChatTools(profileId: string) {
           status: job.status,
           jobDescription: job.jobDescription,
           notes: job.notes,
-          fitScore: (job.jobFit as any)?.rating ?? null,
-          fitSummary: (job.jobFit as any)?.summary ?? null,
+          fitScore: (job.jobFit as { rating?: number } | null)?.rating ?? null,
+          fitSummary: (job.jobFit as { summary?: string } | null)?.summary ?? null,
         }
       },
     }),
