@@ -163,6 +163,25 @@ export function createChatTools(profileId: string) {
       },
     }),
 
+    list_interview_prep_sessions: tool({
+      description:
+        "List all of the user's interview prep sessions with their IDs, companies, and roles. Use this when the user mentions a prep session by name or company but you don't have the session ID from page context.",
+      inputSchema: zodSchema(z.object({})),
+      execute: async () => {
+        const sessions = await prisma.interviewPrepSession.findMany({
+          where: { profileId },
+          select: { id: true, company: true, jobTitle: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+        })
+        return sessions.map(s => ({
+          sessionId: s.id,
+          company: s.company ?? null,
+          role: s.jobTitle ?? null,
+          createdAt: s.createdAt,
+        }))
+      },
+    }),
+
     get_interview_prep: tool({
       description: 'Fetch an interview prep session including notes, documents, and interviewers.',
       inputSchema: zodSchema(z.object({ sessionId: z.string() })),

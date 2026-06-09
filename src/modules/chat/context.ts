@@ -124,19 +124,27 @@ async function buildBreadcrumbs(profileId: string): Promise<string | null> {
 function formatPageContext(ctx: PageContext): string {
   switch (ctx.type) {
     case 'cv':
-      return `User is reviewing CV: "${ctx.title}"${ctx.company ? ` (for ${ctx.company})` : ''}`
+      return (
+        `User is reviewing CV: "${ctx.title}"${ctx.company ? ` (for ${ctx.company})` : ''}\n` +
+        `CV ID: ${ctx.cvId} — use this with get_cv_document to fetch full content`
+      )
     case 'job_fit':
       return (
         `User is viewing job fit assessment for ${ctx.company} — Score: ${ctx.fitScore}/10\n` +
+        `Job ID: ${ctx.jobId} — use this with get_job_application if you need the full JD\n` +
         `<job_description_snippet>${ctx.jdSnippet}</job_description_snippet>`
       )
     case 'cover_letter':
-      return `User is working on a cover letter${ctx.company ? ` for ${ctx.company}` : ''}`
+      return (
+        `User is working on a cover letter${ctx.company ? ` for ${ctx.company}` : ''}\n` +
+        `Letter ID: ${ctx.letterId} — use this with get_cover_letter to fetch full content`
+      )
     case 'interview_prep':
       return (
         `User is in an interview prep session` +
         `${ctx.company ? ` for ${ctx.company}` : ''}` +
-        `${ctx.role ? ` — ${ctx.role}` : ''}`
+        `${ctx.role ? ` — ${ctx.role}` : ''}\n` +
+        `Session ID: ${ctx.sessionId} — use this with get_interview_prep to fetch notes, documents, and interviewers`
       )
   }
 }

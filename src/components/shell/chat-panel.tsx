@@ -136,7 +136,7 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
     <aside
       className={cn(
         'flex h-full w-full flex-col border-l bg-background',
-        'fixed inset-y-0 right-0 z-40 max-w-sm shadow-lg md:static md:z-auto md:w-[22rem] md:max-w-none md:shadow-none lg:w-[26rem]',
+        'fixed inset-y-0 right-0 z-40 max-w-sm shadow-lg md:static md:z-auto md:w-[28rem] md:max-w-none md:shadow-none lg:w-[36rem] xl:w-[44rem]',
       )}
       aria-label="Career coach assistant"
     >
