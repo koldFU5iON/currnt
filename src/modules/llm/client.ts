@@ -94,7 +94,7 @@ async function resolveConfig(profileId: string): Promise<ResolvedConfig> {
   return { provider, model: settings.llmModel, apiKey }
 }
 
-export async function resolveModelForChat(profileId: string): Promise<LanguageModel> {
+export async function resolveModelForChat(profileId: string): Promise<{ languageModel: LanguageModel; provider: string; model: string }> {
   const settings = await prisma.userSettings.findUnique({
     where: { profileId },
     select: { llmProvider: true, llmModel: true, chatModel: true, llmApiKey: true },
@@ -124,7 +124,11 @@ export async function resolveModelForChat(profileId: string): Promise<LanguageMo
   }
 
   const modelId = settings.chatModel ?? settings.llmModel
-  return PROVIDERS[provider](apiKey, modelId)
+  return {
+    languageModel: PROVIDERS[provider](apiKey, modelId),
+    provider,
+    model: modelId,
+  }
 }
 
 export type CompleteOptions = {

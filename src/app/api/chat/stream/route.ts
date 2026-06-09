@@ -1,4 +1,4 @@
-import { streamText, stepCountIs, type ModelMessage } from 'ai'
+import { streamText, stepCountIs, type LanguageModel, type ModelMessage } from 'ai'
 import { after } from 'next/server'
 import { requireProfile } from '@/lib/session'
 import { prisma } from '@/lib/db'
@@ -27,9 +27,9 @@ export async function POST(request: Request) {
 
   const { messages, pageContext } = parsed.data
 
-  let model
+  let resolvedChat: { languageModel: LanguageModel; provider: string; model: string }
   try {
-    model = await resolveModelForChat(profileId)
+    resolvedChat = await resolveModelForChat(profileId)
   } catch (err) {
     const llmErr = err instanceof LLMError ? err : null
     if (llmErr?.kind === 'not_configured') {
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
   const systemPrompt = await buildSystemPrompt(profileId, pageContext)
 
   const result = streamText({
-    model,
+    model: resolvedChat.languageModel,
     system: systemPrompt,
     messages: messages as ModelMessage[],
     tools: createChatTools(profileId),
@@ -56,8 +56,8 @@ export async function POST(request: Request) {
           .create({
             data: {
               profileId,
-              provider: 'chat',
-              model: 'chat',
+              provider: resolvedChat.provider,
+              model: resolvedChat.model,
               feature: 'chat-turn',
               promptTokens: totalUsage.inputTokens ?? 0,
               completionTokens: totalUsage.outputTokens ?? 0,
