@@ -97,6 +97,34 @@ export async function clearLLMApiKey(): Promise<void> {
   revalidatePath('/dashboard/settings/llm')
 }
 
+export async function saveChatModel(model: string): Promise<void> {
+  const { profile } = await requireProfile()
+  if (!model.trim()) throw new Error('Model is required')
+  await prisma.userSettings.update({
+    where: { profileId: profile.id },
+    data: { chatModel: model.trim() },
+  })
+}
+
+export async function getChatSettings(): Promise<{
+  chatModel: string | null
+  llmModel: string
+  availableModels: { id: string; name: string }[] | null
+  configured: boolean
+}> {
+  const { profile } = await requireProfile()
+  const settings = await prisma.userSettings.findUnique({
+    where: { profileId: profile.id },
+    select: { chatModel: true, llmModel: true, availableModels: true, llmApiKey: true },
+  })
+  return {
+    chatModel: settings?.chatModel ?? null,
+    llmModel: settings?.llmModel ?? 'claude-sonnet-4-5-20251001',
+    availableModels: (settings?.availableModels as { id: string; name: string }[] | null) ?? null,
+    configured: !!settings?.llmApiKey,
+  }
+}
+
 const WRITING_BRIEF_MAX_LENGTH = 2000
 
 export async function updateWritingBrief(brief: string): Promise<void> {

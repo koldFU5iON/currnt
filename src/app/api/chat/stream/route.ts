@@ -1,4 +1,4 @@
-import { streamText, stepCountIs, type LanguageModel, type ModelMessage } from 'ai'
+import { streamText, stepCountIs, convertToModelMessages, type LanguageModel, type UIMessage } from 'ai'
 import { after } from 'next/server'
 import { requireProfile } from '@/lib/session'
 import { prisma } from '@/lib/db'
@@ -6,7 +6,7 @@ import { resolveModelForChat } from '@/modules/llm/client'
 import { LLMError } from '@/modules/llm/errors'
 import { buildSystemPrompt } from '@/modules/chat/context'
 import { createChatTools } from '@/modules/chat/tools'
-import { ChatRequestSchema } from '@/modules/chat/schema'
+import { PageContextSchema } from '@/modules/chat/schema'
 
 export const maxDuration = 60
 
@@ -20,12 +20,13 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json()
-  const parsed = ChatRequestSchema.safeParse(body)
-  if (!parsed.success) {
-    return Response.json({ error: parsed.error.flatten() }, { status: 400 })
-  }
+  const messages = body.messages as UIMessage[]
+  const pageContext = body.pageContext ?? null
 
-  const { messages, pageContext } = parsed.data
+  const ctxParsed = PageContextSchema.nullable().safeParse(pageContext)
+  if (!ctxParsed.success) {
+    return Response.json({ error: ctxParsed.error.flatten() }, { status: 400 })
+  }
 
   let resolvedChat: { languageModel: LanguageModel; provider: string; model: string }
   try {
@@ -41,12 +42,14 @@ export async function POST(request: Request) {
     )
   }
 
-  const systemPrompt = await buildSystemPrompt(profileId, pageContext)
+  const systemPrompt = await buildSystemPrompt(profileId, ctxParsed.data)
+
+  const modelMessages = await convertToModelMessages(messages)
 
   const result = streamText({
     model: resolvedChat.languageModel,
     system: systemPrompt,
-    messages: messages as ModelMessage[],
+    messages: modelMessages,
     tools: createChatTools(profileId),
     stopWhen: stepCountIs(5),
     maxOutputTokens: 2048,
