@@ -38,6 +38,31 @@ export async function createCoverLetter(jobApplicationId?: string): Promise<{ id
   return { id: letter.id }
 }
 
+export async function linkJobToCoverLetter(
+  id: string,
+  jobApplicationId: string,
+): Promise<{ jobTitle: string | null; company: string | null }> {
+  const { profile } = await requireProfile()
+
+  const job = await prisma.jobApplication.findFirst({
+    where: { id: jobApplicationId, profileId: profile.id },
+    select: { title: true, company: true },
+  })
+  if (!job) throw new Error('Job not found')
+
+  const jobTitle = job.title
+  const company = job.company ?? null
+
+  const updated = await prisma.coverLetterDocument.updateMany({
+    where: { id, profileId: profile.id },
+    data: { jobApplicationId, jobTitle, company },
+  })
+  if (updated.count === 0) throw new Error('Cover letter not found')
+
+  revalidatePath(`/dashboard/cover-letters/${id}`)
+  return { jobTitle, company }
+}
+
 export async function updateCoverLetterContent(id: string, content: string): Promise<void> {
   const { profile } = await requireProfile()
 
