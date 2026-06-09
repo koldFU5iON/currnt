@@ -51,15 +51,24 @@ async function buildProfileOverview(profileId: string): Promise<string> {
   const profile = await prisma.profile.findUnique({
     where: { id: profileId },
     include: {
-      skills: { orderBy: [{ level: 'asc' }], take: 10 },
-      experiences: { orderBy: { startDate: 'desc' }, take: 1 },
+      skills: {
+        where: { level: { in: ['expert', 'advanced'] } },
+        orderBy: [{ level: 'desc' }],
+        take: 10,
+        select: { name: true, level: true },
+      },
+      experiences: {
+        orderBy: { startDate: 'desc' },
+        take: 1,
+        select: { role: true, company: true },
+      },
       settings: { select: { onboardingContext: true } },
     },
   })
   if (!profile) return 'Profile not found.'
 
   const topSkills = profile.skills
-    .filter(s => s.level === 'expert' || s.level === 'proficient')
+    .filter(s => s.level === 'expert' || s.level === 'advanced')
     .slice(0, 5)
     .map(s => `${s.name} (${s.level})`)
     .join(', ')
@@ -88,7 +97,7 @@ async function buildProfileOverview(profileId: string): Promise<string> {
 async function buildBreadcrumbs(profileId: string): Promise<string | null> {
   const [activeApps, activePrepSessions] = await Promise.all([
     prisma.jobApplication.findMany({
-      where: { profileId, status: { in: ['interviewing', 'screening'] } },
+      where: { profileId, status: { in: ['interviewing', 'screening'] }, archivedAt: null },
       select: { title: true, company: true, status: true },
       take: 3,
     }),
@@ -102,7 +111,7 @@ async function buildBreadcrumbs(profileId: string): Promise<string | null> {
   const lines: string[] = []
   for (const app of activeApps) {
     const stage = app.status === 'interviewing' ? 'Interviewing' : 'Screening'
-    lines.push(`${stage} at ${app.company} — ${app.title}`)
+    lines.push(`${stage} at ${app.company ?? 'Unknown company'} — ${app.title}`)
   }
   for (const prep of activePrepSessions) {
     lines.push(

@@ -12,7 +12,7 @@ export const PageContextSchema = z.discriminatedUnion('type', [
     jobId: z.string(),
     company: z.string(),
     fitScore: z.number(),
-    jdSnippet: z.string(),
+    jdSnippet: z.string().max(800),
   }),
   z.object({
     type: z.literal('cover_letter'),
