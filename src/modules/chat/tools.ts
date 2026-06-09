@@ -2,6 +2,7 @@ import { tool, zodSchema } from 'ai'
 import { z } from 'zod'
 import { prisma } from '@/lib/db'
 import { parseJsonField } from '@/lib/utils'
+import { normalizeSections } from '@/modules/interview-prep/schema'
 
 type OwnershipTable =
   | 'cVDocument'
@@ -163,6 +164,64 @@ export function createChatTools(profileId: string) {
       },
     }),
 
+    list_job_applications: tool({
+      description:
+        "List all of the user's job applications with their IDs, company, role, and status. Use when the user asks about a specific job but you don't have the job ID from page context, or to summarise their pipeline.",
+      inputSchema: zodSchema(z.object({})),
+      execute: async () => {
+        const jobs = await prisma.jobApplication.findMany({
+          where: { profileId, archivedAt: null },
+          select: { id: true, company: true, title: true, status: true, dateApplied: true },
+          orderBy: { lastUpdated: 'desc' },
+        })
+        return jobs.map(j => ({
+          jobId: j.id,
+          company: j.company ?? null,
+          role: j.title ?? null,
+          status: j.status,
+          dateApplied: j.dateApplied ?? null,
+        }))
+      },
+    }),
+
+    list_cv_documents: tool({
+      description:
+        "List all of the user's CV documents with their IDs, job titles, and companies. Use when the user references a CV by name but you don't have the cvId from page context.",
+      inputSchema: zodSchema(z.object({})),
+      execute: async () => {
+        const cvs = await prisma.cVDocument.findMany({
+          where: { profileId },
+          select: { id: true, jobTitle: true, company: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+        })
+        return cvs.map(c => ({
+          cvId: c.id,
+          jobTitle: c.jobTitle ?? null,
+          company: c.company ?? null,
+          createdAt: c.createdAt,
+        }))
+      },
+    }),
+
+    list_cover_letters: tool({
+      description:
+        "List all of the user's cover letter documents with their IDs, job titles, and companies. Use when the user references a cover letter but you don't have the letterId from page context.",
+      inputSchema: zodSchema(z.object({})),
+      execute: async () => {
+        const letters = await prisma.coverLetterDocument.findMany({
+          where: { profileId },
+          select: { id: true, jobTitle: true, company: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+        })
+        return letters.map(l => ({
+          letterId: l.id,
+          jobTitle: l.jobTitle ?? null,
+          company: l.company ?? null,
+          createdAt: l.createdAt,
+        }))
+      },
+    }),
+
     list_interview_prep_sessions: tool({
       description:
         "List all of the user's interview prep sessions with their IDs, companies, and roles. Use this when the user mentions a prep session by name or company but you don't have the session ID from page context.",
@@ -183,7 +242,8 @@ export function createChatTools(profileId: string) {
     }),
 
     get_interview_prep: tool({
-      description: 'Fetch an interview prep session including notes, documents, and interviewers.',
+      description:
+        'Fetch an interview prep session including notes (with their blocks), documents, and interviewers. Each block in a note has a blockId — use it with propose_prep_note_update to suggest changes.',
       inputSchema: zodSchema(z.object({ sessionId: z.string() })),
       execute: async ({ sessionId }) => {
         await assertOwnership('interviewPrepSession', sessionId, profileId)
@@ -191,12 +251,40 @@ export function createChatTools(profileId: string) {
           where: { id: sessionId },
           include: {
             notes: { orderBy: { order: 'asc' } },
-            documents: true,
-            interviewers: true,
+            documents: { orderBy: { createdAt: 'asc' } },
+            interviewers: { orderBy: { createdAt: 'asc' } },
           },
         })
         if (!session) throw new Error('Interview prep session not found')
-        return session
+        return {
+          sessionId: session.id,
+          company: session.company,
+          role: session.jobTitle,
+          status: session.status,
+          notes: session.notes.map(n => ({
+            noteId: n.id,
+            title: n.title,
+            blocks: normalizeSections(n.sections).map(b => ({
+              blockId: b.id,
+              type: b.type,
+              title: b.title,
+              content: b.content,
+            })),
+          })),
+          documents: session.documents.map(d => ({
+            documentId: d.id,
+            name: d.name,
+            docType: d.docType,
+            content: d.content,
+          })),
+          interviewers: session.interviewers.map(i => ({
+            interviewerId: i.id,
+            name: i.name,
+            role: i.role,
+            notes: i.notes,
+            aiAnalysis: i.aiAnalysis,
+          })),
+        }
       },
     }),
 
@@ -249,12 +337,13 @@ export function createChatTools(profileId: string) {
 
     propose_prep_note_update: tool({
       description:
-        'Propose an update to a block in an interview prep note. The user must confirm before it is applied.',
+        'Propose an update to a block in an interview prep note. The user must confirm before it is applied. Call get_interview_prep first to get the noteId and blockId.',
       inputSchema: zodSchema(
         z.object({
           sessionId: z.string(),
           noteId: z.string(),
           blockId: z.string(),
+          currentContent: z.string().describe('The current content of the block — shown to the user as the "before" state'),
           proposedContent: z.string().describe('The proposed new content for the block'),
           rationale: z.string().describe('Why this change improves the prep note'),
         }),

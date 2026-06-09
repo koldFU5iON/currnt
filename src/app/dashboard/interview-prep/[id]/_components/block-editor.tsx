@@ -28,6 +28,15 @@ export function BlockEditor({ noteId, block, isFirst, isLast }: Props) {
   const isQA = block.type === 'qa-bank'
   const isReadOnly = isAI || isQA
 
+  // Sync local state when the server writes to this block externally (e.g., AI-proposed update).
+  // Guard on saveTimer so we don't clobber an in-progress user edit.
+  useEffect(() => {
+    if (!saveTimer.current) setContent(block.content)
+  }, [block.content])
+  useEffect(() => {
+    if (!saveTimer.current) setTitle(block.title)
+  }, [block.title])
+
   // Flush pending save immediately (used on blur so we don't lose edits)
   function flushSave(updates: { title?: string; content?: string }) {
     if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = null }

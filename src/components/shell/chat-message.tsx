@@ -5,8 +5,32 @@ import { Bot, User, Loader2, ChevronRight } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { cn } from '@/lib/utils'
+import { patchCVSectionData } from '@/modules/cv/actions'
+import { patchProfileField } from '@/modules/profile/actions'
+import { updateBlock } from '@/modules/interview-prep/actions'
 import { ToolConfirmationCard } from './tool-confirmation-card'
 import { FeedbackSubmissionCard } from './feedback-submission-card'
+
+function buildWriteAction(toolName: string, args: Record<string, unknown>): (() => Promise<void>) | undefined {
+  if (toolName === 'propose_cv_update') {
+    return () => patchCVSectionData(
+      args.cvId as string,
+      args.sectionId as string,
+      args.proposedData as Record<string, unknown>,
+    )
+  }
+  if (toolName === 'propose_profile_update') {
+    return () => patchProfileField(args.field as string, args.proposedValue as string)
+  }
+  if (toolName === 'propose_prep_note_update') {
+    return () => updateBlock(
+      args.noteId as string,
+      args.blockId as string,
+      { content: args.proposedContent as string },
+    )
+  }
+  return undefined
+}
 
 type ChatMessageProps = {
   message: UIMessage
@@ -15,6 +39,20 @@ type ChatMessageProps = {
 
 export function ChatMessage({ message, onToolOutput }: ChatMessageProps) {
   const isUser = message.role === 'user'
+
+  // Navigation breadcrumbs are injected as user messages with a [navigated to ...] prefix.
+  // Render them as a subtle centred pill rather than a chat bubble.
+  const navText = message.parts?.find(p => isTextUIPart(p))?.text ?? ''
+  const navMatch = navText.match(/^\[navigated to (.+)\]$/)
+  if (navMatch) {
+    return (
+      <div className="flex items-center gap-2 px-4 py-2">
+        <div className="h-px flex-1 bg-border" />
+        <span className="shrink-0 text-[10px] text-muted-foreground">{navMatch[1]}</span>
+        <div className="h-px flex-1 bg-border" />
+      </div>
+    )
+  }
 
   return (
     <div className={cn('flex gap-2.5 px-4 py-3', isUser && 'flex-row-reverse')}>
@@ -86,11 +124,13 @@ export function ChatMessage({ message, onToolOutput }: ChatMessageProps) {
             }
 
             if (state === 'input-available' && isWriteTool) {
+              const toolArgs = part.input as Record<string, unknown>
               return (
                 <ToolConfirmationCard
                   key={part.toolCallId}
                   toolName={toolName}
-                  args={part.input as Record<string, unknown>}
+                  args={toolArgs}
+                  writeAction={buildWriteAction(toolName, toolArgs)}
                   onAccept={() => onToolOutput(part.toolCallId, toolName, { status: 'accepted' })}
                   onReject={() => onToolOutput(part.toolCallId, toolName, { status: 'rejected' })}
                 />

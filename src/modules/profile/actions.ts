@@ -24,6 +24,17 @@ export async function updateProfileSummary(summary: string) {
   revalidatePath('/dashboard/profile')
 }
 
+const CONTACT_FIELDS: ContactField[] = ['name', 'email', 'phone', 'location', 'website', 'linkedIn', 'headline']
+
+// Used by the AI chat assistant when applying a proposed profile field update.
+export async function patchProfileField(field: string, value: string): Promise<void> {
+  if (field === 'summary') return updateProfileSummary(value)
+  if ((CONTACT_FIELDS as string[]).includes(field)) {
+    return updateContactField(field as ContactField, value)
+  }
+  throw new Error(`Unknown profile field: ${field}`)
+}
+
 // ── Activities ────────────────────────────────────────────────────────────────
 
 type ActivityData = { kind: string; description: string; impact?: string }

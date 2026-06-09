@@ -100,6 +100,34 @@ export async function updateSection(cvId: string, section: CVSection): Promise<v
   revalidatePath(`/dashboard/cv-builder/${cvId}`)
 }
 
+// Used by the AI chat assistant when applying a proposed section update.
+// Fetches the current section, merges only the data field, preserves visible/id/type.
+export async function patchCVSectionData(
+  cvId: string,
+  sectionId: string,
+  data: Record<string, unknown>,
+): Promise<void> {
+  const { profile } = await requireProfile()
+  const doc = await prisma.cVDocument.findFirst({
+    where: { id: cvId, profileId: profile.id },
+    select: { id: true, generatedContent: true },
+  })
+  if (!doc) throw new Error('CV not found')
+
+  const content = parseCVContent(doc.generatedContent)
+  const idx = content.sections.findIndex(s => s.id === sectionId)
+  if (idx === -1) throw new Error('Section not found')
+
+  // Merge only the data field — preserves id, type, visible from the existing section
+  content.sections[idx] = { ...content.sections[idx], data } as CVSection
+
+  await prisma.cVDocument.update({
+    where: { id: cvId },
+    data: { generatedContent: JSON.stringify(content) },
+  })
+  revalidatePath(`/dashboard/cv-builder/${cvId}`)
+}
+
 export async function toggleVisibility(cvId: string, sectionId: string): Promise<void> {
   const { profile } = await requireProfile()
   const doc = await prisma.cVDocument.findFirst({
