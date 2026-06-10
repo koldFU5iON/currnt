@@ -35,7 +35,7 @@ model DiscoveredJob {
   fitLabel         String?
   fitJustification String?
   status           String    @default("new")
-  importedJobId    String?
+  importedJobId    String?   // soft-link to JobApplication.id — no FK, intentional (avoids back-relation on JobApplication)
   createdAt        DateTime  @default(now())
 
   watch   CompanyWatch @relation(fields: [watchId], references: [id], onDelete: Cascade)
