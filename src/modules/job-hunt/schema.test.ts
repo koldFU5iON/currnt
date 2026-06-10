@@ -2,9 +2,12 @@
 import { describe, it, expect } from 'vitest'
 import {
   ATS_PROVIDERS,
+  COMPANY_WATCH_STATUSES,
   DISCOVERED_JOB_STATUSES,
   JobListingSchema,
   AtsDiscoveryResultSchema,
+  AddCompanyInputSchema,
+  AtsHintSchema,
   ScanResultSchema,
 } from './schema'
 
@@ -76,6 +79,77 @@ describe('AtsDiscoveryResultSchema', () => {
       provider: 'workday',
       confidence: 0.5,
       reasoning: 'test',
+    })
+    expect(r.success).toBe(false)
+  })
+})
+
+describe('COMPANY_WATCH_STATUSES', () => {
+  it('contains all expected statuses', () => {
+    expect(COMPANY_WATCH_STATUSES).toContain('active')
+    expect(COMPANY_WATCH_STATUSES).toContain('paused')
+    expect(COMPANY_WATCH_STATUSES).toContain('discovery_failed')
+  })
+})
+
+describe('AddCompanyInputSchema', () => {
+  it('accepts valid name and website', () => {
+    const r = AddCompanyInputSchema.safeParse({
+      name: 'Acme Corp',
+      website: 'https://acme.com',
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it('rejects missing name', () => {
+    const r = AddCompanyInputSchema.safeParse({
+      website: 'https://acme.com',
+    })
+    expect(r.success).toBe(false)
+  })
+
+  it('rejects invalid URL', () => {
+    const r = AddCompanyInputSchema.safeParse({
+      name: 'Acme Corp',
+      website: 'not-a-url',
+    })
+    expect(r.success).toBe(false)
+  })
+})
+
+describe('AtsHintSchema', () => {
+  it('accepts greenhouse provider', () => {
+    const r = AtsHintSchema.safeParse({
+      provider: 'greenhouse',
+      boardSlug: 'acme',
+      name: 'Acme Corp',
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it('accepts lever provider', () => {
+    const r = AtsHintSchema.safeParse({
+      provider: 'lever',
+      boardSlug: 'acme',
+      name: 'Acme Corp',
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it('accepts ashby provider', () => {
+    const r = AtsHintSchema.safeParse({
+      provider: 'ashby',
+      boardSlug: 'acme',
+      name: 'Acme Corp',
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it('rejects unknown provider', () => {
+    const r = AtsHintSchema.safeParse({
+      provider: 'unknown',
+      boardSlug: 'acme',
+      name: 'Acme Corp',
     })
     expect(r.success).toBe(false)
   })
