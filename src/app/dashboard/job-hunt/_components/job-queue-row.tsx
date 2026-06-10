@@ -18,7 +18,7 @@ const FIT_BADGE_STYLES: Record<string, string> = {
   unlikely:  'bg-red-100 text-red-800 border-red-200',
 }
 
-type DiscoveredJobWithWatch = {
+export type DiscoveredJobWithWatch = {
   id: string
   title: string
   company: string
@@ -64,8 +64,12 @@ export function JobQueueRow({ job }: { job: DiscoveredJobWithWatch }) {
 
   function handleIgnore() {
     startIgnore(async () => {
-      await ignoreJob(job.id)
-      router.refresh()
+      try {
+        await ignoreJob(job.id)
+        router.refresh()
+      } catch {
+        toast.error('Failed to ignore role')
+      }
     })
   }
 

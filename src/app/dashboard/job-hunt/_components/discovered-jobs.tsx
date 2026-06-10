@@ -3,22 +3,9 @@
 import { useState } from 'react'
 import type { CompanyWatch } from '@prisma/client'
 import { JobQueueRow } from './job-queue-row'
+import type { DiscoveredJobWithWatch as BaseJob } from './job-queue-row'
 
-type DiscoveredJobWithWatch = {
-  id: string
-  watchId: string
-  title: string
-  company: string
-  location: string | null
-  url: string | null
-  postedAt: Date | null
-  createdAt: Date
-  fitLabel: string | null
-  fitScore: number | null
-  status: string
-  importedJobId: string | null
-  watch: { name: string; atsProvider: string }
-}
+type DiscoveredJobWithWatch = BaseJob & { watchId: string }
 
 type Props = {
   jobs: DiscoveredJobWithWatch[]
