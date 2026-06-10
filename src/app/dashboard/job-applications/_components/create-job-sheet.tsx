@@ -29,6 +29,7 @@ import { JobFormFields } from './job-form-fields'
 import { DuplicateWarning } from './duplicate-warning'
 import { createJobSchema } from '@/modules/jobs/schema'
 import { createJobApplication } from '@/modules/jobs/mutations'
+import { getAtsHintFromUrl, addCompanyFromHint } from '@/modules/job-hunt/actions'
 import { extractJobFromUrl } from '@/modules/jobs/extract'
 import { applyExtractedData } from '@/modules/jobs/form-utils'
 import { findPotentialDuplicates } from '@/modules/jobs/dedup'
@@ -115,6 +116,19 @@ export function CreateJobSheet({ open, onOpenChange, initialUrl }: CreateJobShee
       toast.success('Job application created')
       onOpenChange(false)
       router.refresh()
+
+      if (data.url && data.company) {
+        const hint = await getAtsHintFromUrl(data.url, data.company)
+        if (hint) {
+          toast(`Watch ${data.company} for new roles?`, {
+            description: `Detected ${hint.provider.charAt(0).toUpperCase() + hint.provider.slice(1)} ATS`,
+            action: {
+              label: 'Watch',
+              onClick: () => { addCompanyFromHint(hint).catch(() => null) },
+            },
+          })
+        }
+      }
     } catch {
       toast.error('Failed to create job application')
     }
