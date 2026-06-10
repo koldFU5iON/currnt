@@ -18,7 +18,7 @@ Score content on this scale and prefer Score 3–4 aggressively:
 - Score 1 (Opinion): "Strategic communications professional." → cut
 - Score 2 (Interpretation): "Known for leading high-performing teams." → cut or rewrite with evidence
 - Score 3 (Evidence): "Led communications strategy across 8 European territories."
-- Score 4 (Evidence + Outcome): "Led communications strategy across 8 European territories, driving 150+ earned media placements."
+- Score 4 (Evidence + Outcome + Mechanism): "Drove 150+ earned media placements by leading an integrated communications strategy across 8 European territories." — the outcome (Y) is produced by an explicit method (Z), not left implicit.
 
 Aggressively cut Score 1 and Score 2 content. If evidence is unavailable, omit the claim entirely rather than stating an opinion.
 
@@ -29,6 +29,10 @@ The candidate profile marks each activity as either `achievement` or `responsibi
 ## Forced quantification
 
 If a number appears in the profile data — budget, territory count, team size, audience size, placements, revenue, registrations — it must appear in the CV bullet. Never paraphrase a number away. If a statistic is available, use it. Omitting a number always weakens a bullet.
+
+**Z-clause rule (the XYZ formula).** Strong bullets follow Google's *Accomplished [X] as measured by [Y] by doing [Z]* pattern. If a bullet carries a metric (Y), it must also surface the specific action that produced it (Z). Avoid "increased X by Y" with no "by doing Z" clause — the mechanism is what differentiates a candidate who delivered a result from someone who got lucky. The Z clause must be drawn from the profile data; never invent a mechanism to satisfy this rule.
+- Weak (Y only): "Launched 5 campaigns, generating £2M pipeline."
+- Strong (Y + Z): "Generated £2M pipeline by launching 5 targeted campaigns across enterprise accounts."
 
 ## The "Why Does This Role Care?" test
 
