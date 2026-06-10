@@ -21,6 +21,7 @@ type Props = {
   letter: {
     id: string
     content: string
+    jobApplication?: { jobDescription?: string | null } | null
   }
   onBack: () => void
 }
@@ -97,6 +98,12 @@ export function BuildWithMeMode({ letter, onBack }: Props) {
       <p className="mt-1 text-sm text-muted-foreground">
         Answer as many questions as you like — all are optional. Your answers are saved automatically.
       </p>
+
+      {!letter.jobApplication?.jobDescription && (
+        <div className="mt-4 rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+          No job description found. The draft will be based on your profile and answers alone — adding a job description gives better results.
+        </div>
+      )}
 
       <div className="mt-6 space-y-5">
         {QUESTIONS.map(({ field, label, placeholder }) => (
