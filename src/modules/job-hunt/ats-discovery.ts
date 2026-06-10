@@ -8,14 +8,38 @@ const FAILED_DISCOVERY: AtsDiscoveryResult = {
   reasoning: 'Could not fetch careers page',
 }
 
+function isSafePublicUrl(rawUrl: string): boolean {
+  let parsed: URL
+  try {
+    parsed = new URL(rawUrl)
+  } catch {
+    return false
+  }
+  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return false
+  const host = parsed.hostname.toLowerCase()
+  // Reject bare IPv4/IPv6 literals
+  if (/^\d+\.\d+\.\d+\.\d+$/.test(host)) return false
+  if (host.startsWith('[')) return false
+  // Reject localhost and common internal hostnames
+  if (
+    host === 'localhost' ||
+    host.endsWith('.local') ||
+    host.endsWith('.internal') ||
+    host.endsWith('.localhost')
+  ) return false
+  return true
+}
+
 export async function discoverAts(profileId: string, website: string): Promise<AtsDiscoveryResult> {
   const base = website.replace(/\/$/, '')
   const candidates = [`${base}/careers`, `${base}/jobs`]
 
   let html = ''
   for (const url of candidates) {
+    if (!isSafePublicUrl(url)) continue
     try {
       const res = await fetch(url, {
+        redirect: 'manual',
         signal: AbortSignal.timeout(10_000),
         headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)' },
       })

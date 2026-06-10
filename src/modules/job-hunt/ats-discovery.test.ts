@@ -58,3 +58,24 @@ describe('discoverAts', () => {
     expect(result.provider).toBe('unknown')
   })
 })
+
+describe('SSRF protection', () => {
+  it('does not fetch internal metadata endpoints', async () => {
+    const result = await discoverAts('profile-1', 'http://169.254.169.254')
+    expect(result.provider).toBe('unknown')
+    expect(result.confidence).toBe(0)
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  it('does not fetch localhost URLs', async () => {
+    const result = await discoverAts('profile-1', 'http://localhost/admin')
+    expect(result.provider).toBe('unknown')
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  it('does not fetch bare IP addresses', async () => {
+    const result = await discoverAts('profile-1', 'http://192.168.1.1')
+    expect(result.provider).toBe('unknown')
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+})
