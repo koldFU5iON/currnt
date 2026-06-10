@@ -34,6 +34,8 @@ model Profile {
   usageLogs           LlmUsageLog[]
   interviewPrepSessions InterviewPrepSession[]
   chatMemories          ChatMemory[]
+  companyWatches CompanyWatch[]
+  discoveredJobs DiscoveredJob[]
 }
 
 model Skill {
