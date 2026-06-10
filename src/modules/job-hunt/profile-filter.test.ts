@@ -52,6 +52,23 @@ describe('buildKeywords', () => {
     const unique = new Set(kw)
     expect(unique.size).toBe(kw.length)
   })
+
+  it('handles slash-separated skills without merging tokens', () => {
+    const kw = buildKeywords({ ...baseProfile, skillNames: ['Node.js/Express'] })
+    // Slash becomes a space separator: keyword is 'node.js express', not 'node.jsexpress'
+    expect(kw).toContain('node.js express')
+    expect(kw.some(k => k.includes('node.jsexpress'))).toBe(false)
+  })
+
+  it('expands seniority for Sr. abbreviation with dot', () => {
+    const kw = buildKeywords({ ...baseProfile, targetRole: 'Sr. Software Engineer' })
+    expect(kw.some(k => k.includes('senior') && k.includes('software'))).toBe(true)
+  })
+
+  it('synonym expansion does not corrupt engineering → developering', () => {
+    const kw = buildKeywords({ ...baseProfile, targetRole: 'Senior Engineering Manager' })
+    expect(kw.some(k => k.includes('developering'))).toBe(false)
+  })
 })
 
 describe('matchesProfile', () => {

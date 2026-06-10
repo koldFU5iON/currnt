@@ -10,10 +10,10 @@ export type ProfileFilterData = {
 const SENIORITY_LEVELS: readonly string[][] = [
   ['intern'],
   ['graduate'],
-  ['junior', 'jr'],
+  ['junior', 'jr', 'jr.'],
   ['associate'],
   ['mid'],
-  ['senior', 'sr'],
+  ['senior', 'sr', 'sr.'],
   ['staff'],
   ['lead'],
   ['principal'],
@@ -40,7 +40,7 @@ const ROLE_SYNONYMS: Record<string, string[]> = {
 const STOP_WORDS = new Set(['of', 'and', 'the', 'a', 'an', 'in', 'at', 'for', 'to'])
 
 function normalize(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9.\s-]/g, '').trim()
+  return s.toLowerCase().replace(/[^a-z0-9.\s-]/g, ' ').trim().replace(/\s+/g, ' ')
 }
 
 function significantTokens(phrase: string): string[] {
@@ -74,7 +74,7 @@ function expandSynonyms(phrase: string): string[] {
     const synonyms = ROLE_SYNONYMS[token]
     if (synonyms) {
       for (const syn of synonyms) {
-        results.push(phrase.replace(token, syn))
+        results.push(phrase.replace(new RegExp(`\\b${token}\\b`, 'g'), syn))
       }
     }
   }
