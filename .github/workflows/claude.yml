@@ -6,7 +6,7 @@ on:
   pull_request_review_comment:
     types: [created]
   issues:
-    types: [opened, assigned]
+    types: [opened, assigned, labeled]
   pull_request_review:
     types: [submitted]
 
@@ -47,4 +47,35 @@ jobs:
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
           # claude_args: '--allowed-tools Bash(gh pr *)'
+
+  fix-bug:
+    # Gate on trusted actors only — prevents prompt injection via malicious issue content
+    if: |
+      github.event_name == 'issues' &&
+      github.event.action == 'labeled' &&
+      github.event.label.name == 'bug' &&
+      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.sender.author_association)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code on bug issue
+        uses: anthropics/claude-code-action@b2532c6eeaeae7a645f37943ed5a7e51870d1d90  # v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            A GitHub issue has just been labeled 'bug'. Read the issue details from the
+            GitHub context (title, body, comments). Investigate the codebase to find the
+            root cause and open a PR with a fix. If the issue is too vague to act on,
+            post a comment on the issue asking for the specific steps to reproduce.
+            Do not make sweeping changes — scope your fix narrowly to the reported bug.
 
