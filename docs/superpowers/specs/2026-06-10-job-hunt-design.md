@@ -135,7 +135,11 @@ Descriptions are NOT fetched at listing time — only titles and metadata. Full 
 
 ### Flow 2 — Add company from job capture (zero-friction path)
 
-When `quickCaptureJob` or the job create form detects a known ATS from the URL (via existing `extract-ats.ts` logic), surface a "Watch [Company] for new roles?" prompt after capture. Pre-populate `name`, `boardSlug`, `atsProvider` from the detection result. No AI cost — the board slug is already known from the job URL. User clicks Confirm → `CompanyWatch` is created.
+When `quickCaptureJob` or the job create form detects a known ATS from the URL (via existing `extract-ats.ts` logic), surface a toast after successful capture:
+
+> **"Watch [Company] for new roles?"**  [Watch] [Dismiss]
+
+Pre-populated with `name`, `boardSlug`, `atsProvider` from the detection result. User clicks Watch → `CompanyWatch` is created. Dismiss → nothing happens. No AI cost — board slug is already known from the URL. Consistent with the existing site toast pattern.
 
 ### Flow 3 — Scan
 
@@ -178,35 +182,86 @@ User clicks "Ignore". Sets `DiscoveredJob.status = 'ignored'`. Ignored jobs are 
 
 ## Profile Filter
 
-`profile-filter.ts` builds a keyword set from existing profile data. No new user input required.
+`profile-filter.ts` builds an expanded keyword set from existing profile data using seniority-chain expansion and role synonym normalisation. No new user input required.
 
-**Sources (in priority order):**
-1. `UserSettings.onboardingContext.targetRole` — primary keyword, highest weight
+### Keyword sources (in priority order)
+
+1. `UserSettings.onboardingContext.targetRole` — primary phrase, drives seniority expansion
 2. `Profile.headline` — split into meaningful tokens
 3. All `ProfileExperience.title` values — past job titles reveal relevant role families
 4. `ProfileSkill.name` values — technology stack keywords
 
-**Normalization:** lowercase, strip punctuation, deduplicate.
+### Seniority ladder expansion
 
-**Match rule:** a job title matches if it contains any keyword (case-insensitive substring). This is intentionally loose — false positives are cheap; false negatives (missed relevant roles) are costly.
+A defined seniority ladder is applied to any derived keyword that contains a seniority word. When a match is found, the keyword is expanded to include adjacent levels (±2 steps on the ladder):
 
-**Example:**
-```
-targetRole: "Engineering Manager"
-headline: "Senior Software Engineer"
-experience titles: ["Senior Software Engineer", "Software Engineer II"]
-skills: ["TypeScript", "Node.js", "React"]
-
-→ keyword set:
-  ["engineering manager", "senior software engineer", "software engineer",
-   "typescript", "node.js", "react"]
-
-→ "Senior Engineering Manager, Platform" ✓ (matches "engineering manager")
-→ "Internship — Frontend" ✗
-→ "Staff Software Engineer" ✗ (no match — "staff" is not in keyword set)
+```ts
+const SENIORITY_LADDER = [
+  'intern', 'graduate', 'junior', 'jr', 'associate',
+  'mid', 'engineer', 'developer',
+  'senior', 'sr',
+  'staff', 'lead',
+  'principal', 'distinguished', 'fellow',
+]
 ```
 
-Note: "Staff Software Engineer" would be missed with this approach. If users find the filter too narrow, a future iteration can add seniority-level expansion (junior → engineer → senior → staff → principal chain).
+Example: targetRole `"Senior Software Engineer"` → seniority word is `"senior"` (index 8). Expand ±2: also generate `"mid software engineer"`, `"staff software engineer"`, `"lead software engineer"`.
+
+The expansion is applied to the role-name component (e.g., `"software engineer"`) with each adjacent seniority prefix, producing a richer match surface.
+
+### Role synonym map
+
+Common equivalent terms are normalised before matching:
+
+```ts
+const ROLE_SYNONYMS: Record<string, string[]> = {
+  engineer:    ['developer', 'swe', 'sde', 'programmer'],
+  engineering: ['development', 'software'],
+  manager:     ['mgr', 'lead', 'head of', 'director of'],
+  product:     ['pm', 'pdm'],
+  design:      ['ux', 'ui', 'designer'],
+  data:        ['analytics', 'ml', 'machine learning', 'ai'],
+}
+```
+
+Each token in a derived keyword is expanded through the synonym map, generating additional match candidates.
+
+### Token-based matching
+
+After expansion, each candidate keyword is split into significant tokens (stop words like "of", "and", "the" removed). A job title matches if **all significant tokens** from a candidate appear in the title (order-independent, case-insensitive).
+
+This is stricter than simple substring matching — `"product"` alone won't match `"Senior Product Designer"` unless `"product"` is the whole derived keyword. Multi-word phrases like `"engineering manager"` must have both tokens present.
+
+### Worked example
+
+```
+targetRole: "Senior Software Engineer"
+headline:   "Senior Software Engineer"
+skills:     ["TypeScript", "Node.js"]
+
+→ base keyword: "senior software engineer"
+→ seniority expansion (±2 from "senior"):
+    "mid software engineer"
+    "associate software engineer"
+    "staff software engineer"
+    "lead software engineer"
+→ synonym expansion ("engineer" → "developer", "sde", "swe"):
+    "senior software developer"
+    "senior sde"
+    "staff software developer"
+    ... (all combinations)
+→ tech keywords: ["typescript", "node.js"]
+
+Matches:
+  "Senior Software Engineer, Platform"  ✓ (direct)
+  "Staff Software Engineer"             ✓ (seniority expansion)
+  "Senior Software Developer"           ✓ (synonym expansion)
+  "Senior SDE II"                       ✓ (synonym expansion)
+  "TypeScript Engineer"                 ✓ (tech keyword)
+  "Graduate Software Engineer"          ✓ (seniority expansion)
+  "Internship — Frontend"               ✗
+  "Senior Product Manager"              ✗ (no token overlap)
+```
 
 ---
 
