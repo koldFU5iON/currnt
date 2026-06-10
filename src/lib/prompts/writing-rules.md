@@ -14,13 +14,13 @@ These are examples of the right register. Use them as a positive target, not jus
 
 | Weak (cut) | Strong (use) |
 |------------|--------------|
-| "Significantly scaled the program." | "Took a global creator program from 40 to 5,000+ active relationships in 18 months." |
+| "Significantly scaled the program." | "Grew a global creator program from 40 to 5,000+ active relationships in 18 months by standardising outreach and automating onboarding." |
 | "Gained internal buy-in through demonstrated value." | "Adopted with no mandate." |
 | "Led a high-profile pan-European event." | "Owned end-to-end delivery across 8 territories: event planning, budget distribution, talent prep, and media strategy." |
 | "Supported commercial conversations." | "Embedded alongside the sales team to surface upsell opportunities with high-value studio accounts." |
 | "Worked cross-functionally with legal and brand teams." | "Built cross-functional alignment with Legal and Brand on asset and consent workflows, cutting turnaround from weeks to days." |
 
-The pattern: short declarative, metric-led, no hedge. Name the specific scope. Let the outcome speak.
+The pattern: short declarative, metric-led, no hedge. Name the specific scope. Where a bullet carries a metric (Y), name the mechanism that produced it (Z) too — *accomplished X, as measured by Y, by doing Z*. Let the outcome speak.
 
 ## Accuracy
 - Never invent experience, skills, or outcomes not present in the provided profile data
