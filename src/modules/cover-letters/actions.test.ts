@@ -27,7 +27,7 @@ vi.mock('@/lib/db', () => ({
 }))
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 
-import { createCoverLetter, updateCoverLetterContent, deleteCoverLetter } from './actions'
+import { createCoverLetter, updateCoverLetterContent, deleteCoverLetter, linkJobToCoverLetter } from './actions'
 import { prisma } from '@/lib/db'
 
 const mockCreate = vi.mocked(prisma.coverLetterDocument.create)
@@ -104,6 +104,37 @@ describe('updateCoverLetterContent', () => {
   it('throws when cover letter not found for this profile', async () => {
     mockUpdateMany.mockResolvedValue({ count: 0 })
     await expect(updateCoverLetterContent('cl-none', 'text')).rejects.toThrow('Cover letter not found')
+  })
+})
+
+describe('linkJobToCoverLetter', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('links job and copies title/company with auth guards', async () => {
+    mockJobFind.mockResolvedValue({ title: 'Staff Engineer', company: 'Acme' } as never)
+    mockUpdateMany.mockResolvedValue({ count: 1 })
+    const result = await linkJobToCoverLetter('cl-1', 'job-1')
+    expect(mockJobFind).toHaveBeenCalledWith({
+      where: { id: 'job-1', profileId: 'profile-1' },
+      select: { title: true, company: true },
+    })
+    expect(mockUpdateMany).toHaveBeenCalledWith({
+      where: { id: 'cl-1', profileId: 'profile-1' },
+      data: { jobApplicationId: 'job-1', jobTitle: 'Staff Engineer', company: 'Acme' },
+    })
+    expect(result).toEqual({ jobTitle: 'Staff Engineer', company: 'Acme' })
+  })
+
+  it('throws when the job does not belong to this profile', async () => {
+    mockJobFind.mockResolvedValue(null)
+    await expect(linkJobToCoverLetter('cl-1', 'job-x')).rejects.toThrow('Job not found')
+    expect(mockUpdateMany).not.toHaveBeenCalled()
+  })
+
+  it('throws when the cover letter is not found for this profile', async () => {
+    mockJobFind.mockResolvedValue({ title: 'PM', company: null } as never)
+    mockUpdateMany.mockResolvedValue({ count: 0 })
+    await expect(linkJobToCoverLetter('cl-none', 'job-1')).rejects.toThrow('Cover letter not found')
   })
 })
 

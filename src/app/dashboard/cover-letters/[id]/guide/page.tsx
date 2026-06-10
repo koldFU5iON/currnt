@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { requireProfile } from '@/lib/session'
 import { getCoverLetter } from '@/modules/cover-letters/queries'
+import { listActiveJobsForPicker } from '@/modules/jobs/queries'
 import { getLLMConfigStatus } from '@/modules/llm/client'
 import { GuideClient } from './_components/guide-client'
 
@@ -9,9 +10,10 @@ type Props = { params: Promise<{ id: string }> }
 
 export default async function GuidePage({ params }: Props) {
   const [{ id }, { profile }] = await Promise.all([params, requireProfile()])
-  const [letter, llmStatus] = await Promise.all([
+  const [letter, llmStatus, activeJobs] = await Promise.all([
     getCoverLetter(profile.id, id),
     getLLMConfigStatus(profile.id),
+    listActiveJobsForPicker(profile.id),
   ])
   if (!letter) notFound()
 
@@ -33,7 +35,7 @@ export default async function GuidePage({ params }: Props) {
         )}
       </div>
       <div className="flex-1 overflow-y-auto">
-        <GuideClient letter={letter} llmConfigured={llmStatus.configured} />
+        <GuideClient letter={letter} llmConfigured={llmStatus.configured} activeJobs={activeJobs} />
       </div>
     </div>
   )

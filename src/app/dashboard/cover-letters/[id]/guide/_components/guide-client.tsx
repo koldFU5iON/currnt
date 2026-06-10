@@ -6,6 +6,9 @@ import { toast } from 'sonner'
 import { ChecklistMode } from './checklist-mode'
 import { GenerateMode } from './generate-mode'
 import { BuildWithMeMode } from './build-with-me-mode'
+import { JobPickerDialog } from './job-picker-dialog'
+import { linkJobToCoverLetter } from '@/modules/cover-letters/actions'
+import type { JobPickerOption } from '@/modules/jobs/queries'
 
 type Mode = null | 'checklist' | 'generate' | 'build'
 
@@ -13,6 +16,7 @@ type Props = {
   letter: {
     id: string
     content: string
+    jobApplicationId?: string | null
     jobTitle?: string | null
     company?: string | null
     jobApplication?: {
@@ -22,10 +26,14 @@ type Props = {
     } | null
   }
   llmConfigured: boolean
+  activeJobs: JobPickerOption[]
 }
 
-export function GuideClient({ letter, llmConfigured }: Props) {
+export function GuideClient({ letter, llmConfigured, activeJobs }: Props) {
   const [mode, setMode] = useState<Mode>(null)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [pendingMode, setPendingMode] = useState<'generate' | 'build' | null>(null)
+  const [linking, setLinking] = useState(false)
   const router = useRouter()
 
   function handleAICardClick(target: 'generate' | 'build') {
@@ -35,7 +43,32 @@ export function GuideClient({ letter, llmConfigured }: Props) {
       })
       return
     }
+    // The AI guide writes a targeted letter — it needs a linked job for the
+    // role, company, and job description. Gate on that before generating.
+    if (!letter.jobApplicationId) {
+      setPendingMode(target)
+      setPickerOpen(true)
+      return
+    }
     setMode(target)
+  }
+
+  async function handleJobSelected(jobId: string) {
+    setLinking(true)
+    try {
+      await linkJobToCoverLetter(letter.id, jobId)
+    } catch {
+      setLinking(false)
+      toast.error('Could not link that job. Please try again.')
+      return
+    }
+    setLinking(false)
+    setPickerOpen(false)
+    // Refresh server props so the linked job is reflected in the page, then
+    // continue into the mode the user originally chose.
+    router.refresh()
+    if (pendingMode) setMode(pendingMode)
+    setPendingMode(null)
   }
 
   if (mode === 'checklist') return <ChecklistMode onBack={() => setMode(null)} />
@@ -92,6 +125,17 @@ export function GuideClient({ letter, llmConfigured }: Props) {
           </a>
         </div>
       )}
+
+      <JobPickerDialog
+        open={pickerOpen}
+        onOpenChange={open => {
+          setPickerOpen(open)
+          if (!open) setPendingMode(null)
+        }}
+        jobs={activeJobs}
+        onSelect={handleJobSelected}
+        isPending={linking}
+      />
     </div>
   )
 }
