@@ -47,6 +47,7 @@ jobs:
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
           # claude_args: '--allowed-tools Bash(gh pr *)'
+          claude_args: '--model claude-sonnet-4-6'
 
   fix-bug:
     # Gate on trusted actors only — prevents prompt injection via malicious issue content
@@ -72,6 +73,7 @@ jobs:
         uses: anthropics/claude-code-action@b2532c6eeaeae7a645f37943ed5a7e51870d1d90  # v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_args: '--model claude-sonnet-4-6'
           prompt: |
             A GitHub issue has just been labeled 'bug'. Read the issue details from the
             GitHub context (title, body, comments). Investigate the codebase to find the
