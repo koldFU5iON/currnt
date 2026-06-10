@@ -50,7 +50,7 @@ vi.mock('@/modules/onboarding/schema', () => ({
   }),
 }))
 
-import { addCompany, scanCompany, importJob, ignoreJob } from './actions'
+import { addCompany, scanCompany, importJob, ignoreJob, addCompanyFromHint, getAtsHintFromUrl, removeWatch } from './actions'
 import { prisma } from '@/lib/db'
 import { discoverAts } from './ats-discovery'
 import { getAdapter } from './adapters/index'
@@ -182,6 +182,61 @@ describe('ignoreJob', () => {
     expect(vi.mocked(prisma.discoveredJob.updateMany)).toHaveBeenCalledWith({
       where: { id: 'dj-1', profileId: 'profile-1' },
       data: { status: 'ignored' },
+    })
+  })
+})
+
+describe('addCompanyFromHint', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  it('creates CompanyWatch with confidence 1 and active status', async () => {
+    vi.mocked(prisma.companyWatch.create).mockResolvedValueOnce({ id: 'watch-3' } as never)
+
+    const result = await addCompanyFromHint({
+      provider: 'greenhouse',
+      boardSlug: 'acme',
+      name: 'Acme Corp',
+    })
+
+    expect(result.ok).toBe(true)
+    expect(vi.mocked(prisma.companyWatch.create)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          atsProvider: 'greenhouse',
+          boardSlug: 'acme',
+          confidence: 1,
+          status: 'active',
+        }),
+      }),
+    )
+  })
+})
+
+describe('getAtsHintFromUrl', () => {
+  it('detects Greenhouse from URL', async () => {
+    const hint = await getAtsHintFromUrl(
+      'https://boards.greenhouse.io/acme/jobs/123',
+      'Acme',
+    )
+    expect(hint).not.toBeNull()
+    expect(hint?.provider).toBe('greenhouse')
+    expect(hint?.name).toBe('Acme')
+  })
+
+  it('returns null for non-ATS URLs', async () => {
+    const hint = await getAtsHintFromUrl('https://acme.com/jobs/engineer', 'Acme')
+    expect(hint).toBeNull()
+  })
+})
+
+describe('removeWatch', () => {
+  it('calls deleteMany with profileId guard', async () => {
+    vi.mocked(prisma.companyWatch.deleteMany).mockResolvedValueOnce({ count: 1 })
+
+    await removeWatch('watch-1')
+
+    expect(vi.mocked(prisma.companyWatch.deleteMany)).toHaveBeenCalledWith({
+      where: { id: 'watch-1', profileId: 'profile-1' },
     })
   })
 })

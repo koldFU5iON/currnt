@@ -172,7 +172,7 @@ export async function scanCompany(watchId: string): Promise<ScanResult> {
   )
 
   const existing = await prisma.discoveredJob.findMany({
-    where: { watchId },
+    where: { watchId, profileId: profile.id },
     select: { externalId: true },
   })
   const existingIds = new Set(existing.map((e) => e.externalId))
@@ -266,8 +266,8 @@ Be honest and concrete. Calibrate the rating against real-world hiring bars:
     throw err
   }
 
-  await prisma.discoveredJob.update({
-    where: { id: jobId },
+  await prisma.discoveredJob.updateMany({
+    where: { id: jobId, profileId: profile.id },
     data: {
       fitScore: fit.rating,
       fitLabel: fit.label,
