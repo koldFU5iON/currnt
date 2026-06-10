@@ -1,9 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+vi.mock('@/modules/jobs/extract-ats', () => ({
+  extractLever: vi.fn(),
+}))
+
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
 import { fetchJobList } from './lever'
+import { extractLever } from '@/modules/jobs/extract-ats'
+const mockExtract = vi.mocked(extractLever)
 
 beforeEach(() => { mockFetch.mockReset() })
 
@@ -46,5 +52,21 @@ describe('fetchJobList (Lever)', () => {
   it('throws on non-ok response', async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 403 })
     await expect(fetchJobList('acme')).rejects.toThrow('Lever returned 403')
+  })
+})
+
+describe('fetchDescription (Lever)', () => {
+  it('returns job description on success', async () => {
+    mockExtract.mockResolvedValueOnce({ ok: true, data: { jobDescription: 'Join our team...' } } as never)
+    const { fetchDescription } = await import('./lever')
+    const result = await fetchDescription('acme', 'abc-123')
+    expect(result).toBe('Join our team...')
+  })
+
+  it('returns null when extraction fails', async () => {
+    mockExtract.mockResolvedValueOnce({ ok: false, error: 'not found' } as never)
+    const { fetchDescription } = await import('./lever')
+    const result = await fetchDescription('acme', 'bad-id')
+    expect(result).toBeNull()
   })
 })

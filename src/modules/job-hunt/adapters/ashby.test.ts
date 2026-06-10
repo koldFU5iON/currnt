@@ -1,9 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+vi.mock('@/modules/jobs/extract-ats', () => ({
+  extractAshby: vi.fn(),
+}))
+
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
 import { fetchJobList } from './ashby'
+import { extractAshby } from '@/modules/jobs/extract-ats'
+const mockExtract = vi.mocked(extractAshby)
 
 beforeEach(() => { mockFetch.mockReset() })
 
@@ -65,5 +71,21 @@ describe('fetchJobList (Ashby)', () => {
   it('throws on non-ok response', async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 404 })
     await expect(fetchJobList('unknown')).rejects.toThrow('Ashby returned 404')
+  })
+})
+
+describe('fetchDescription (Ashby)', () => {
+  it('returns job description on success', async () => {
+    mockExtract.mockResolvedValueOnce({ ok: true, data: { jobDescription: 'Come build with us...' } } as never)
+    const { fetchDescription } = await import('./ashby')
+    const result = await fetchDescription('acme', 'uuid-1')
+    expect(result).toBe('Come build with us...')
+  })
+
+  it('returns null when extraction fails', async () => {
+    mockExtract.mockResolvedValueOnce({ ok: false, error: 'not found' } as never)
+    const { fetchDescription } = await import('./ashby')
+    const result = await fetchDescription('acme', 'bad-slug')
+    expect(result).toBeNull()
   })
 })

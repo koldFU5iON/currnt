@@ -1,9 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+vi.mock('@/modules/jobs/extract-ats', () => ({
+  extractGreenhouse: vi.fn(),
+}))
+
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
 import { fetchJobList } from './greenhouse'
+import { extractGreenhouse } from '@/modules/jobs/extract-ats'
+const mockExtract = vi.mocked(extractGreenhouse)
 
 beforeEach(() => { mockFetch.mockReset() })
 
@@ -51,5 +57,29 @@ describe('fetchJobList (Greenhouse)', () => {
   it('throws when the API returns an error status', async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 404 })
     await expect(fetchJobList('unknown-board')).rejects.toThrow('Greenhouse returned 404')
+  })
+})
+
+describe('fetchDescription (Greenhouse)', () => {
+  it('returns job description on success', async () => {
+    mockExtract.mockResolvedValueOnce({ ok: true, data: { jobDescription: 'We are hiring...' } } as never)
+    const { fetchDescription } = await import('./greenhouse')
+    const result = await fetchDescription('acme', '12345')
+    expect(result).toBe('We are hiring...')
+  })
+
+  it('returns null when extraction fails', async () => {
+    mockExtract.mockResolvedValueOnce({ ok: false, error: 'not found' } as never)
+    const { fetchDescription } = await import('./greenhouse')
+    const result = await fetchDescription('acme', 'bad-id')
+    expect(result).toBeNull()
+  })
+})
+
+describe('getAdapter', () => {
+  it('returns null for unknown provider', async () => {
+    const { getAdapter } = await import('./index')
+    expect(getAdapter('workday')).toBeNull()
+    expect(getAdapter('linkedin')).toBeNull()
   })
 })

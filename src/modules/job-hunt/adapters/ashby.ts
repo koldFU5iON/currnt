@@ -22,7 +22,7 @@ export async function fetchJobList(companySlug: string): Promise<JobListing[]> {
         externalId: String(job.id ?? ''),
         title: String(job.title ?? ''),
         location,
-        url: typeof job.externalLink === 'string' ? job.externalLink : '',
+        url: typeof job.externalLink === 'string' ? job.externalLink : null,
         postedAt: parsed && !isNaN(parsed.getTime()) ? parsed : null,
       }
     })

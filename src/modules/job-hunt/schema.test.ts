@@ -51,6 +51,17 @@ describe('JobListingSchema', () => {
     })
     expect(r.success).toBe(true)
   })
+
+  it('accepts null url', () => {
+    const r = JobListingSchema.safeParse({
+      externalId: '1',
+      title: 'Engineer',
+      location: null,
+      url: null,
+      postedAt: null,
+    })
+    expect(r.success).toBe(true)
+  })
 })
 
 describe('AtsDiscoveryResultSchema', () => {

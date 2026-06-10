@@ -17,7 +17,7 @@ export async function fetchJobList(companySlug: string): Promise<JobListing[]> {
       externalId: String(job.id ?? ''),
       title: String(job.text ?? ''),
       location: typeof categories?.location === 'string' ? categories.location : null,
-      url: typeof job.hostedUrl === 'string' ? job.hostedUrl : '',
+      url: typeof job.hostedUrl === 'string' ? job.hostedUrl : null,
       postedAt: ts ? new Date(ts) : null,
     }
   })

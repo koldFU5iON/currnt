@@ -18,7 +18,7 @@ export async function fetchJobList(boardSlug: string): Promise<JobListing[]> {
       externalId: String(job.id ?? ''),
       title: String(job.title ?? ''),
       location: typeof loc === 'string' ? loc : null,
-      url: typeof job.absolute_url === 'string' ? job.absolute_url : '',
+      url: typeof job.absolute_url === 'string' ? job.absolute_url : null,
       postedAt: parsed && !isNaN(parsed.getTime()) ? parsed : null,
     }
   })
