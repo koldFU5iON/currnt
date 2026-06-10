@@ -12,7 +12,7 @@ import {
 } from './schema'
 
 describe('ATS_PROVIDERS', () => {
-  it('includes the three supported providers', () => {
+  it('contains greenhouse, lever, ashby, and the unknown sentinel', () => {
     expect(ATS_PROVIDERS).toContain('greenhouse')
     expect(ATS_PROVIDERS).toContain('lever')
     expect(ATS_PROVIDERS).toContain('ashby')
@@ -82,6 +82,11 @@ describe('AtsDiscoveryResultSchema', () => {
     })
     expect(r.success).toBe(false)
   })
+
+  it('rejects confidence outside 0–1', () => {
+    const r = AtsDiscoveryResultSchema.safeParse({ provider: 'greenhouse', confidence: 1.5, reasoning: 'test' })
+    expect(r.success).toBe(false)
+  })
 })
 
 describe('COMPANY_WATCH_STATUSES', () => {
@@ -89,6 +94,7 @@ describe('COMPANY_WATCH_STATUSES', () => {
     expect(COMPANY_WATCH_STATUSES).toContain('active')
     expect(COMPANY_WATCH_STATUSES).toContain('paused')
     expect(COMPANY_WATCH_STATUSES).toContain('discovery_failed')
+    expect(COMPANY_WATCH_STATUSES).toHaveLength(3)
   })
 })
 
@@ -113,6 +119,25 @@ describe('AddCompanyInputSchema', () => {
       name: 'Acme Corp',
       website: 'not-a-url',
     })
+    expect(r.success).toBe(false)
+  })
+})
+
+describe('ScanResultSchema', () => {
+  it('accepts a success result', () => {
+    const r = ScanResultSchema.safeParse({ ok: true, found: 10, matched: 3, newJobs: 2 })
+    expect(r.success).toBe(true)
+  })
+
+  it('accepts a failure result with each error code', () => {
+    for (const error of ['not_found', 'no_ats_detected', 'fetch_failed'] as const) {
+      const r = ScanResultSchema.safeParse({ ok: false, error })
+      expect(r.success).toBe(true)
+    }
+  })
+
+  it('rejects unknown error codes', () => {
+    const r = ScanResultSchema.safeParse({ ok: false, error: 'other_error' })
     expect(r.success).toBe(false)
   })
 })

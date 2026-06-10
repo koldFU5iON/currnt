@@ -14,7 +14,7 @@ export const JobListingSchema = z.object({
   externalId: z.string(),
   title: z.string(),
   location: z.string().nullable(),
-  url: z.string(),
+  url: z.string().url(),
   postedAt: z.date().nullable(),
 })
 export type JobListing = z.infer<typeof JobListingSchema>
