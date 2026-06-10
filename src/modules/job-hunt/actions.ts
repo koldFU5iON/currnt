@@ -1,0 +1,342 @@
+'use server'
+
+import { revalidatePath } from 'next/cache'
+import { prisma } from '@/lib/db'
+import { requireProfile } from '@/lib/session'
+import { completeStructured } from '@/modules/llm/client'
+import { LLMError } from '@/modules/llm/errors'
+import { buildProfileSnapshot, serializeProfileForLLM } from '@/modules/profile/snapshot'
+import { normalizeOnboardingContext } from '@/modules/onboarding/schema'
+import { loadWritingRules, composeSystem } from '@/modules/llm/prompt-context'
+import { JobFitSchema } from '@/modules/jobs/schema'
+import { discoverAts } from './ats-discovery'
+import { getAdapter } from './adapters/index'
+import { buildKeywords, matchesProfile, type ProfileFilterData } from './profile-filter'
+import {
+  AddCompanyInputSchema,
+  type AddCompanyInput,
+  type AtsHint,
+  type ScanResult,
+} from './schema'
+import {
+  greenhouseFromUrl,
+  leverFromUrl,
+  ashbyFromUrl,
+} from '@/modules/jobs/extract-ats'
+
+// ── addCompany ────────────────────────────────────────────────────────────────
+
+type AddCompanyResult = { ok: true; watchId: string } | { ok: false; error: string }
+
+export async function addCompany(input: AddCompanyInput): Promise<AddCompanyResult> {
+  const parsed = AddCompanyInputSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }
+
+  const { profile } = await requireProfile()
+  const { name, website } = parsed.data
+
+  const discovery = await discoverAts(profile.id, website)
+  const status = discovery.provider === 'unknown' ? 'discovery_failed' : 'active'
+
+  const watch = await prisma.companyWatch.create({
+    data: {
+      profileId: profile.id,
+      name,
+      website,
+      careersUrl: discovery.careersUrl ?? null,
+      atsProvider: discovery.provider,
+      boardSlug: discovery.boardSlug ?? null,
+      confidence: discovery.confidence,
+      status,
+    },
+    select: { id: true },
+  })
+
+  revalidatePath('/dashboard/job-hunt')
+  return { ok: true, watchId: watch.id }
+}
+
+// ── addCompanyFromHint ────────────────────────────────────────────────────────
+
+export async function addCompanyFromHint(hint: AtsHint): Promise<AddCompanyResult> {
+  const { profile } = await requireProfile()
+
+  const watch = await prisma.companyWatch.create({
+    data: {
+      profileId: profile.id,
+      name: hint.name,
+      website: '',
+      atsProvider: hint.provider,
+      boardSlug: hint.boardSlug,
+      confidence: 1,
+      status: 'active',
+    },
+    select: { id: true },
+  })
+
+  revalidatePath('/dashboard/job-hunt')
+  return { ok: true, watchId: watch.id }
+}
+
+// ── getAtsHintFromUrl ─────────────────────────────────────────────────────────
+
+export async function getAtsHintFromUrl(
+  url: string,
+  company: string,
+): Promise<AtsHint | null> {
+  const gh = greenhouseFromUrl(url)
+  if (gh) return { provider: 'greenhouse', boardSlug: gh.board, name: company }
+
+  const lv = leverFromUrl(url)
+  if (lv) return { provider: 'lever', boardSlug: lv.company, name: company }
+
+  const ash = ashbyFromUrl(url)
+  if (ash) return { provider: 'ashby', boardSlug: ash.company, name: company }
+
+  return null
+}
+
+// ── removeWatch ───────────────────────────────────────────────────────────────
+
+export async function removeWatch(watchId: string): Promise<void> {
+  const { profile } = await requireProfile()
+  await prisma.companyWatch.deleteMany({
+    where: { id: watchId, profileId: profile.id },
+  })
+  revalidatePath('/dashboard/job-hunt')
+}
+
+// ── scanCompany ───────────────────────────────────────────────────────────────
+
+export async function scanCompany(watchId: string): Promise<ScanResult> {
+  const { profile } = await requireProfile()
+
+  const watch = await prisma.companyWatch.findFirst({
+    where: { id: watchId, profileId: profile.id, status: 'active' },
+  })
+  if (!watch) return { ok: false, error: 'not_found' }
+  if (!watch.boardSlug || watch.atsProvider === 'unknown') {
+    return { ok: false, error: 'no_ats_detected' }
+  }
+
+  const adapter = getAdapter(watch.atsProvider)
+  if (!adapter) return { ok: false, error: 'no_ats_detected' }
+
+  const [settings, experiences, skills, profileRow] = await Promise.all([
+    prisma.userSettings.findUnique({
+      where: { profileId: profile.id },
+      select: { onboardingContext: true },
+    }),
+    prisma.experience.findMany({
+      where: { profileId: profile.id },
+      select: { role: true },
+    }),
+    prisma.skill.findMany({
+      where: { profileId: profile.id },
+      select: { name: true },
+    }),
+    prisma.profile.findUnique({
+      where: { id: profile.id },
+      select: { headline: true },
+    }),
+  ])
+
+  const context = normalizeOnboardingContext(settings?.onboardingContext)
+  const filterData: ProfileFilterData = {
+    targetRole: context.targetRole,
+    currentRole: context.currentRole,
+    headline: profileRow?.headline ?? '',
+    experienceRoles: experiences.map((e) => e.role),
+    skillNames: skills.map((s) => s.name),
+  }
+  const keywords = buildKeywords(filterData)
+
+  let listings
+  try {
+    listings = await adapter.fetchJobList(watch.boardSlug)
+  } catch {
+    return { ok: false, error: 'fetch_failed' }
+  }
+
+  const matched = listings.filter((j) => matchesProfile(j.title, keywords))
+
+  const withDescriptions = await Promise.all(
+    matched.map(async (listing) => {
+      try {
+        const description = await adapter.fetchDescription(watch.boardSlug!, listing.externalId)
+        return { ...listing, description }
+      } catch {
+        return { ...listing, description: null }
+      }
+    }),
+  )
+
+  const existing = await prisma.discoveredJob.findMany({
+    where: { watchId },
+    select: { externalId: true },
+  })
+  const existingIds = new Set(existing.map((e) => e.externalId))
+  const newJobs = withDescriptions.filter((j) => !existingIds.has(j.externalId))
+
+  if (newJobs.length > 0) {
+    await prisma.discoveredJob.createMany({
+      data: newJobs.map((j) => ({
+        watchId,
+        profileId: profile.id,
+        externalId: j.externalId,
+        title: j.title,
+        company: watch.name,
+        location: j.location,
+        url: j.url,
+        postedAt: j.postedAt,
+        description: j.description,
+        status: 'new',
+      })),
+    })
+  }
+
+  await prisma.companyWatch.update({
+    where: { id: watchId },
+    data: { lastScannedAt: new Date() },
+  })
+
+  revalidatePath('/dashboard/job-hunt')
+  return { ok: true, found: listings.length, matched: matched.length, newJobs: newJobs.length }
+}
+
+// ── scoreDiscoveredJob ────────────────────────────────────────────────────────
+
+type ScoreResult =
+  | { ok: true; fitLabel: string; fitScore: number }
+  | { ok: false; error: string }
+
+export async function scoreDiscoveredJob(jobId: string): Promise<ScoreResult> {
+  const { profile } = await requireProfile()
+
+  const job = await prisma.discoveredJob.findFirst({
+    where: { id: jobId, profileId: profile.id },
+  })
+  if (!job) return { ok: false, error: 'Job not found' }
+  if (!job.description?.trim()) return { ok: false, error: 'No description available to score against' }
+
+  const [snapshot, settings, rules] = await Promise.all([
+    buildProfileSnapshot(profile.id),
+    prisma.userSettings.findUnique({
+      where: { profileId: profile.id },
+      select: { onboardingContext: true, writingBrief: true },
+    }),
+    loadWritingRules(),
+  ])
+
+  const context = normalizeOnboardingContext(settings?.onboardingContext)
+  const hasGoals = !!(context.targetRole || context.industries)
+
+  const featureInstructions = `You are an experienced career coach assessing whether a candidate is a strong fit for a role.
+
+Be honest and concrete. Calibrate the rating against real-world hiring bars:
+- 0–2 (unlikely): missing core requirements.
+- 3–4 (weak): partial overlap.
+- 5–6 (stretch): meets most requirements but has a meaningful gap.
+- 7–8 (good): strong baseline match.
+- 9–10 (excellent): unusually well-aligned.`
+
+  const system = composeSystem(rules, settings?.writingBrief ?? null, featureInstructions)
+
+  let userPrompt = `# Candidate\n\n${serializeProfileForLLM(snapshot)}\n\n# Role\n\n**${job.title}** at ${job.company}\n\n${job.description}`
+
+  if (hasGoals) {
+    userPrompt += '\n\n# Career Goals'
+    if (context.targetRole) userPrompt += `\n**Target role:** ${context.targetRole}`
+    if (context.industries) userPrompt += `\n**Industries:** ${context.industries}`
+  }
+
+  userPrompt += '\n\nReturn a single JSON object matching the schema.'
+
+  let fit
+  try {
+    const result = await completeStructured(profile.id, userPrompt, JobFitSchema, {
+      system,
+      maxOutputTokens: 700,
+      temperature: 0.2,
+      feature: 'job-hunt-fit',
+    })
+    fit = result.object
+  } catch (err) {
+    if (err instanceof LLMError) return { ok: false, error: err.message }
+    throw err
+  }
+
+  await prisma.discoveredJob.update({
+    where: { id: jobId },
+    data: {
+      fitScore: fit.rating,
+      fitLabel: fit.label,
+      fitJustification: fit.justification,
+      status: 'scored',
+    },
+  })
+
+  revalidatePath('/dashboard/job-hunt')
+  return { ok: true, fitLabel: fit.label, fitScore: fit.rating }
+}
+
+// ── importJob ─────────────────────────────────────────────────────────────────
+
+type ImportResult = { ok: true; jobId: string } | { ok: false; error: string }
+
+export async function importJob(jobId: string): Promise<ImportResult> {
+  const { profile } = await requireProfile()
+
+  const job = await prisma.discoveredJob.findFirst({
+    where: { id: jobId, profileId: profile.id, status: { not: 'imported' } },
+  })
+  if (!job) return { ok: false, error: 'Job not found' }
+
+  const countries = job.location
+    ? job.location.split(',').map((s) => s.trim()).filter(Boolean)
+    : []
+
+  const newJob = await prisma.jobApplication.create({
+    data: {
+      profileId: profile.id,
+      title: job.title,
+      company: job.company,
+      url: job.url ?? null,
+      countries,
+      jobDescription: job.description ?? null,
+      datePublished: job.postedAt ?? null,
+      applicationSource: 'cold',
+      ...(job.fitLabel
+        ? {
+            jobFit: {
+              rating: job.fitScore,
+              label: job.fitLabel,
+              justification: job.fitJustification,
+            },
+            jobFitAssessedAt: new Date(),
+          }
+        : {}),
+    },
+    select: { id: true },
+  })
+
+  await prisma.discoveredJob.update({
+    where: { id: jobId },
+    data: { status: 'imported', importedJobId: newJob.id },
+  })
+
+  revalidatePath('/dashboard/job-applications')
+  revalidatePath('/dashboard/job-hunt')
+  return { ok: true, jobId: newJob.id }
+}
+
+// ── ignoreJob ─────────────────────────────────────────────────────────────────
+
+export async function ignoreJob(jobId: string): Promise<void> {
+  const { profile } = await requireProfile()
+  await prisma.discoveredJob.updateMany({
+    where: { id: jobId, profileId: profile.id },
+    data: { status: 'ignored' },
+  })
+  revalidatePath('/dashboard/job-hunt')
+}
