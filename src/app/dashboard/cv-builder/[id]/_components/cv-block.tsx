@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState } from 'react'
 import { Eye, EyeOff, Copy, Pencil } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import type { CVSection } from '@/modules/cv/schema'
 
 // Blocks consume this to respond when the Edit button in the control bar is clicked.
@@ -41,7 +42,10 @@ export function CvBlock({ section, onToggleVisibility, onCopy, children }: Props
 
   return (
     <BlockEditTrigger.Provider value={editTrigger}>
-      <div className="cv-document-block group relative border-b border-border/30 px-[30px] py-3 last:border-b-0 hover:bg-muted/20 print:hover:bg-transparent">
+      <div className={cn(
+        'cv-document-block group relative border-b border-border/30 px-[30px] last:border-b-0 hover:bg-muted/20 print:hover:bg-transparent',
+        section.type === 'certification' ? 'py-1.5' : 'py-3',
+      )}>
         {/* Controls — Edit / Copy / Hide, shown together on hover (always visible on mobile) */}
         <div className="absolute right-3 top-2.5 flex items-center gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 print:hidden">
           <button

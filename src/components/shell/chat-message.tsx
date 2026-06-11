@@ -1,7 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import { isTextUIPart, isToolUIPart, getToolName, type UIMessage } from 'ai'
-import { Bot, User, Loader2, ChevronRight } from 'lucide-react'
+import { Bot, Check, Copy, User, Loader2, ChevronRight } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { cn } from '@/lib/utils'
@@ -39,9 +40,16 @@ type ChatMessageProps = {
 
 export function ChatMessage({ message, onToolOutput }: ChatMessageProps) {
   const isUser = message.role === 'user'
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null)
 
-  // Navigation breadcrumbs are injected as user messages with a [navigated to ...] prefix.
-  // Render them as a subtle centred pill rather than a chat bubble.
+  function handleCopy(text: string, idx: number) {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedIdx(idx)
+      setTimeout(() => setCopiedIdx(null), 2000)
+    }).catch(() => {})
+  }
+
+  // Navigation breadcrumbs and system pills — render as subtle centred dividers.
   const navText = message.parts?.find(p => isTextUIPart(p))?.text ?? ''
   const navMatch = navText.match(/^\[navigated to (.+)\]$/)
   if (navMatch) {
@@ -49,6 +57,15 @@ export function ChatMessage({ message, onToolOutput }: ChatMessageProps) {
       <div className="flex items-center gap-2 px-4 py-2">
         <div className="h-px flex-1 bg-border" />
         <span className="shrink-0 text-[10px] text-muted-foreground">{navMatch[1]}</span>
+        <div className="h-px flex-1 bg-border" />
+      </div>
+    )
+  }
+  if (navText === '[conversation summarised]') {
+    return (
+      <div className="flex items-center gap-2 px-4 py-2">
+        <div className="h-px flex-1 bg-border" />
+        <span className="shrink-0 text-[10px] text-muted-foreground">Context saved</span>
         <div className="h-px flex-1 bg-border" />
       </div>
     )
@@ -72,7 +89,7 @@ export function ChatMessage({ message, onToolOutput }: ChatMessageProps) {
               <div
                 key={`text-${i}`}
                 className={cn(
-                  'rounded-2xl px-3.5 py-2 text-sm leading-relaxed',
+                  'group/msg relative rounded-2xl px-3.5 py-2 text-sm leading-relaxed',
                   isUser
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted text-foreground',
@@ -100,6 +117,18 @@ export function ChatMessage({ message, onToolOutput }: ChatMessageProps) {
                 >
                   {part.text}
                 </ReactMarkdown>
+                {!isUser && (
+                  <button
+                    onClick={() => handleCopy(part.text, i)}
+                    className="absolute bottom-1 right-1.5 rounded p-0.5 text-muted-foreground/50 opacity-100 transition-opacity hover:bg-black/5 hover:text-muted-foreground sm:opacity-0 sm:group-hover/msg:opacity-100"
+                    aria-label="Copy message"
+                  >
+                    {copiedIdx === i
+                      ? <Check className="size-3 text-green-500" />
+                      : <Copy className="size-3" />
+                    }
+                  </button>
+                )}
               </div>
             )
           }

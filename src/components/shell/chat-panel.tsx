@@ -173,11 +173,22 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
   function resetIdleTimer() {
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
     idleTimerRef.current = setTimeout(() => {
-      triggerSummarize()
+      submitSummarize(() => {
+        setMessages(msgs => [
+          ...msgs,
+          {
+            id: `summarised-${Date.now()}`,
+            role: 'user' as const,
+            content: '[conversation summarised]',
+            parts: [{ type: 'text' as const, text: '[conversation summarised]' }],
+            createdAt: new Date(),
+          },
+        ])
+      })
     }, IDLE_TIMEOUT_MS)
   }
 
-  function triggerSummarize() {
+  function submitSummarize(afterSuccess?: () => void) {
     if (messages.length < 2) return
     const body = messages
       .filter(m => m.role === 'user' || m.role === 'assistant')
@@ -194,20 +205,20 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
     })
       .then(() => {
         sessionStorage.removeItem(SESSION_STORAGE_KEY)
-        setMessages([])
+        afterSuccess?.()
       })
       .catch(() => {})
   }
 
   function handleClose() {
-    triggerSummarize()
+    submitSummarize()
     onClose()
   }
 
   function handleNewChat() {
     sessionStorage.removeItem(SESSION_STORAGE_KEY)
-    triggerSummarize()
-    if (messages.length < 2) setMessages([])
+    submitSummarize()
+    setMessages([])
   }
 
   function handleModelChange(model: string | null) {
