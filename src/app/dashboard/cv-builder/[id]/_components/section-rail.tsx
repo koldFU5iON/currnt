@@ -16,6 +16,13 @@ const SECTION_LABELS: Record<CVSection['type'], string> = {
   languages: 'Languages',
 }
 
+function getSectionLabel(section: CVSection): string {
+  if (section.type === 'experience') return section.data.company || 'Experience'
+  if (section.type === 'education') return section.data.institution || 'Education'
+  if (section.type === 'certification') return section.data.name || 'Certification'
+  return SECTION_LABELS[section.type] ?? section.type
+}
+
 type Props = {
   sections: CVSection[]
   onToggleVisibility: (id: string) => void
@@ -34,7 +41,7 @@ export function SectionRail({ sections, onToggleVisibility }: Props) {
             className="group flex items-center justify-between rounded px-2 py-1.5 text-xs hover:bg-muted"
           >
             <span className={section.visible ? 'text-foreground' : 'text-muted-foreground line-through'}>
-              {SECTION_LABELS[section.type] ?? section.type}
+              {getSectionLabel(section)}
             </span>
             <button
               onClick={() => onToggleVisibility(section.id)}
