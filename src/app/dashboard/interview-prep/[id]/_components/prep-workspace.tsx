@@ -36,7 +36,7 @@ export function PrepWorkspace({ session }: Props) {
         </Button>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="relative flex flex-1 overflow-hidden">
         <NotesPanel
           sessionId={session.id}
           notes={session.notes}
