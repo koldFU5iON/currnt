@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { RotateCcw, Download, MessageSquare, Loader2 } from 'lucide-react'
 import { usePageContext, useWorkspaceContext } from '@/lib/context/page-context'
 import { toast } from 'sonner'
@@ -54,6 +54,19 @@ export function CvEditor({ cv }: Props) {
     title: cv.jobTitle ?? 'CV',
     company: cv.company ?? undefined,
   })
+
+  useEffect(() => {
+    function handleCvSectionUpdated(e: CustomEvent<{ sectionId: string; proposedData: Record<string, unknown> }>) {
+      setContent(c => ({
+        ...c,
+        sections: c.sections.map(s =>
+          s.id === e.detail.sectionId ? { ...s, data: e.detail.proposedData } as typeof s : s
+        ),
+      }))
+    }
+    window.addEventListener('cv-section-updated', handleCvSectionUpdated as EventListener)
+    return () => window.removeEventListener('cv-section-updated', handleCvSectionUpdated as EventListener)
+  }, [])
 
   const displayTitle = cv.jobTitle && cv.company
     ? `${cv.jobTitle} · ${cv.company}`

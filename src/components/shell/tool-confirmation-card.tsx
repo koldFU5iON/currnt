@@ -29,6 +29,11 @@ export function ToolConfirmationCard({ toolName, args, onAccept, onReject, write
     setPending(true)
     try {
       await writeAction()
+      if (toolName === 'propose_cv_update') {
+        window.dispatchEvent(new CustomEvent('cv-section-updated', {
+          detail: { sectionId: args.sectionId, proposedData: args.proposedData },
+        }))
+      }
       onAccept()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to apply change')
