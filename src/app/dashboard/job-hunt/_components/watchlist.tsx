@@ -7,8 +7,8 @@ export function Watchlist({ watches }: { watches: CompanyWatch[] }) {
     <section>
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h2 className="text-base font-semibold">Watched Companies</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-sm font-semibold">Watched Companies</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
             {watches.length === 0
               ? 'Add companies to start discovering roles'
               : `${watches.length} compan${watches.length === 1 ? 'y' : 'ies'} monitored`}

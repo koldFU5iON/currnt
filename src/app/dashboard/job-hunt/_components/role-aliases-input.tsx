@@ -19,8 +19,8 @@ export function RoleAliasesInput({ initialRoles }: { initialRoles: string[] }) {
     <section>
       <div className="mb-3">
         <h2 className="text-sm font-semibold">Also search for</h2>
-        <p className="text-sm text-muted-foreground">
-          Role aliases used when scanning watched companies — expands on your target role without changing your profile.
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Role aliases that expand your scan beyond your primary target role.
         </p>
       </div>
       <LocationTagsInput
