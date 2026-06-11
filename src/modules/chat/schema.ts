@@ -25,6 +25,13 @@ export const PageContextSchema = z.discriminatedUnion('type', [
     company: z.string().optional(),
     role: z.string().optional(),
   }),
+  z.object({
+    type: z.literal('job_application'),
+    jobId: z.string(),
+    title: z.string(),
+    company: z.string().optional(),
+    status: z.string().optional(),
+  }),
 ])
 
 export type PageContext = z.infer<typeof PageContextSchema>
