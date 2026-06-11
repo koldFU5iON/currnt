@@ -178,6 +178,14 @@ type FitDetailProps = {
   jdSnippet?: string
 }
 
+const GAUGE_COLORS: Record<JobFitType['label'], string> = {
+  unlikely: 'bg-blue-400',
+  weak: 'bg-amber-300',
+  stretch: 'bg-amber-500',
+  good: 'bg-orange-500',
+  excellent: 'bg-red-500',
+}
+
 function FitDetail({ jobFit, hasLLMKey, canAssess, onReassess, jobId, company, jdSnippet }: FitDetailProps) {
   const { openPanel, setContext } = usePageContext()
 
@@ -195,9 +203,18 @@ function FitDetail({ jobFit, hasLLMKey, canAssess, onReassess, jobId, company, j
   return (
     <div className="space-y-3">
       <div>
-        <div className="flex items-center justify-between gap-2 mb-1.5">
+        <div className="flex items-center justify-between gap-2 mb-2">
           <p className="text-sm font-semibold capitalize">{jobFit.label}</p>
           <span className="font-mono text-xs text-muted-foreground">{jobFit.rating}/10</span>
+        </div>
+        {/* Rating gauge */}
+        <div className="mb-3 flex items-center gap-1.5">
+          <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-muted">
+            <div
+              className={`absolute inset-y-0 left-0 rounded-full transition-all ${GAUGE_COLORS[jobFit.label]}`}
+              style={{ width: `${jobFit.rating * 10}%` }}
+            />
+          </div>
         </div>
         <MarkdownProse content={jobFit.justification} />
       </div>
