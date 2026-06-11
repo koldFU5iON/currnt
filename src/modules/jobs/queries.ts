@@ -106,7 +106,7 @@ export type JobPickerOption = {
 /** Slim list of non-archived jobs for linking to a cover letter. */
 export async function listActiveJobsForPicker(profileId: string): Promise<JobPickerOption[]> {
   const jobs = await prisma.jobApplication.findMany({
-    where: { profileId, archivedAt: null },
+    where: { profileId, archivedAt: null, status: { in: ['not started', 'in-progress'] } },
     orderBy: [{ dateApplied: { sort: 'desc', nulls: 'last' } }, { lastUpdated: 'desc' }],
     select: { id: true, title: true, company: true, status: true },
   })
