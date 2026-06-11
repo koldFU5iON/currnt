@@ -1,0 +1,50 @@
+// prisma/schema/job-hunt.prisma
+
+model CompanyWatch {
+  id              String    @id @default(cuid())
+  profileId       String
+  name            String
+  website         String
+  careersUrl      String?
+  atsProvider     String    @default("unknown")
+  boardSlug       String?
+  confidence      Float     @default(0)
+  status          String    @default("active")
+  searchLocations String[]  @default([])
+  includeRemote   Boolean   @default(true)
+  lastScannedAt   DateTime?
+  createdAt       DateTime  @default(now())
+
+  profile        Profile         @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  discoveredJobs DiscoveredJob[]
+
+  @@index([profileId])
+  @@index([profileId, status])
+}
+
+model DiscoveredJob {
+  id               String    @id @default(cuid())
+  watchId          String
+  profileId        String
+  externalId       String
+  title            String
+  company          String
+  location         String?
+  url              String?
+  postedAt         DateTime?
+  description      String?
+  fitScore         Float?
+  fitLabel         String?
+  fitJustification String?
+  status           String    @default("new")
+  importedJobId    String?   // soft-link to JobApplication.id — no FK, intentional (avoids back-relation on JobApplication)
+  createdAt        DateTime  @default(now())
+
+  watch   CompanyWatch @relation(fields: [watchId], references: [id], onDelete: Cascade)
+  profile Profile      @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([watchId, externalId])
+  @@index([profileId])
+  @@index([profileId, status])
+  @@index([watchId])
+}
