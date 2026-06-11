@@ -12,6 +12,8 @@ import {
 } from '@/components/ui/sheet'
 import { Field, FieldLabel, FieldError } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
+import { LocationTagsInput } from './location-tags-input'
 import { addCompany } from '@/modules/job-hunt/actions'
 import { AddCompanyInputSchema, type AddCompanyInput } from '@/modules/job-hunt/schema'
 
@@ -75,6 +77,36 @@ export function AddCompanySheet() {
                   <FieldLabel>Website</FieldLabel>
                   <Input placeholder="https://www.mongodb.com" {...field} aria-invalid={fieldState.invalid} />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+            <Controller
+              control={form.control}
+              name="searchLocations"
+              render={({ field }) => (
+                <Field>
+                  <FieldLabel>Locations <span className="text-muted-foreground font-normal">(optional)</span></FieldLabel>
+                  <LocationTagsInput value={field.value} onChange={field.onChange} />
+                  <p className="text-xs text-muted-foreground">Leave empty to see all locations. Press Enter or comma to add each location.</p>
+                </Field>
+              )}
+            />
+            <Controller
+              control={form.control}
+              name="includeRemote"
+              render={({ field }) => (
+                <Field>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="includeRemote"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                    <FieldLabel htmlFor="includeRemote" className="cursor-pointer">
+                      Include remote listings
+                    </FieldLabel>
+                  </div>
+                  <p className="text-xs text-muted-foreground ml-6">Includes roles listed as &quot;Remote&quot;, &quot;US-Remote&quot;, etc.</p>
                 </Field>
               )}
             />
