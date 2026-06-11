@@ -1,16 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { X } from 'lucide-react'
 
 const STORAGE_KEY = 'alpha-banner-dismissed'
 
 export function AlphaBanner() {
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    if (!localStorage.getItem(STORAGE_KEY)) setVisible(true)
-  }, [])
+  const [visible, setVisible] = useState(
+    () => typeof window !== 'undefined' && !localStorage.getItem(STORAGE_KEY)
+  )
 
   function dismiss() {
     localStorage.setItem(STORAGE_KEY, '1')
