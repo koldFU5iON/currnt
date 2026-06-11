@@ -19,7 +19,7 @@ vi.mock('@/lib/db', () => ({
       updateMany: vi.fn(),
     },
     jobApplication: { create: vi.fn() },
-    userSettings: { findUnique: vi.fn().mockResolvedValue(null) },
+    userSettings: { findUnique: vi.fn().mockResolvedValue(null), upsert: vi.fn() },
     experience: { findMany: vi.fn().mockResolvedValue([]) },
     skill: { findMany: vi.fn().mockResolvedValue([]) },
     profile: { findUnique: vi.fn().mockResolvedValue({ headline: null }) },
@@ -47,6 +47,7 @@ vi.mock('@/modules/onboarding/schema', () => ({
     workPreferences: '',
     extraContext: '',
     preferredName: '',
+    additionalRoles: [],
   }),
 }))
 

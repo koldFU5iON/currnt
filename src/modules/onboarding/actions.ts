@@ -23,7 +23,16 @@ function readFormData(formData: FormData): OnboardingContext {
 
 export async function saveOnboardingContext(formData: FormData) {
   const { profile } = await requireProfile()
-  const context = readFormData(formData)
+
+  // Read existing context to preserve fields managed elsewhere (e.g. additionalRoles
+  // from the Job Hunt page) that the onboarding form doesn't include.
+  const existing = await prisma.userSettings.findUnique({
+    where: { profileId: profile.id },
+    select: { onboardingContext: true },
+  })
+  const currentContext = normalizeOnboardingContext(existing?.onboardingContext)
+  const formContext = readFormData(formData)
+  const context = { ...currentContext, ...formContext }
 
   await prisma.userSettings.upsert({
     where: { profileId: profile.id },

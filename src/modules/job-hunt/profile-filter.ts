@@ -4,6 +4,7 @@ export type ProfileFilterData = {
   headline: string
   experienceRoles: string[]
   skillNames: string[]
+  additionalRoles?: string[]
 }
 
 // Each entry is a group of equivalent seniority aliases. Index = seniority level.
@@ -89,6 +90,7 @@ export function buildKeywords(profile: ProfileFilterData): string[] {
     profile.currentRole,
     profile.headline,
     ...profile.experienceRoles,
+    ...(profile.additionalRoles ?? []),
   ]) {
     if (phrase?.trim()) raw.push(normalize(phrase))
   }

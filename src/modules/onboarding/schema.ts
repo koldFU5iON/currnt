@@ -9,6 +9,9 @@ export const onboardingContextSchema = z.object({
   industries: z.string().trim().max(500).optional().default(""),
   workPreferences: z.string().trim().max(500).optional().default(""),
   extraContext: z.string().trim().max(1500).optional().default(""),
+  // Additional role types for job hunt scanning — managed from the Job Hunt page,
+  // not the onboarding form. Preserved when the onboarding form is saved.
+  additionalRoles: z.array(z.string().trim().max(100)).default([]),
 })
 
 export type OnboardingContext = z.infer<typeof onboardingContextSchema>
@@ -20,6 +23,7 @@ export const emptyOnboardingContext: OnboardingContext = {
   industries: "",
   workPreferences: "",
   extraContext: "",
+  additionalRoles: [],
 }
 
 export function normalizeOnboardingContext(value: unknown): OnboardingContext {
@@ -29,5 +33,7 @@ export function normalizeOnboardingContext(value: unknown): OnboardingContext {
 }
 
 export function onboardingContextHasContent(context: OnboardingContext) {
-  return Object.values(context).some((value) => value.trim().length > 0)
+  return Object.values(context).some((value) =>
+    Array.isArray(value) ? value.length > 0 : value.trim().length > 0,
+  )
 }

@@ -216,6 +216,7 @@ export async function scanCompany(watchId: string): Promise<ScanResult> {
     headline: profileRow?.headline ?? '',
     experienceRoles: experiences.map((e) => e.role),
     skillNames: skills.map((s) => s.name),
+    additionalRoles: context.additionalRoles,
   }
   const keywords = buildKeywords(filterData)
 
@@ -409,5 +410,28 @@ export async function ignoreJob(jobId: string): Promise<void> {
     where: { id: jobId, profileId: profile.id },
     data: { status: 'ignored' },
   })
+  revalidatePath('/dashboard/job-hunt')
+}
+
+// ── saveAdditionalRoles ───────────────────────────────────────────────────────
+// Partial-merge update for additionalRoles. Does not touch any other field in
+// onboardingContext — the onboarding form manages the rest.
+
+export async function saveAdditionalRoles(roles: string[]): Promise<void> {
+  const { profile } = await requireProfile()
+
+  const existing = await prisma.userSettings.findUnique({
+    where: { profileId: profile.id },
+    select: { onboardingContext: true },
+  })
+  const context = normalizeOnboardingContext(existing?.onboardingContext)
+  context.additionalRoles = roles.map((r) => r.trim()).filter(Boolean)
+
+  await prisma.userSettings.upsert({
+    where: { profileId: profile.id },
+    create: { profileId: profile.id, onboardingContext: context },
+    update: { onboardingContext: context },
+  })
+
   revalidatePath('/dashboard/job-hunt')
 }

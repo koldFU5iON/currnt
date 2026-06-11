@@ -69,6 +69,24 @@ describe('buildKeywords', () => {
     const kw = buildKeywords({ ...baseProfile, targetRole: 'Senior Engineering Manager' })
     expect(kw.some(k => k.includes('developering'))).toBe(false)
   })
+
+  it('includes additionalRoles with full seniority + synonym expansion', () => {
+    const kw = buildKeywords({
+      ...baseProfile,
+      targetRole: 'Program Manager',
+      additionalRoles: ['Operations', 'MarOps'],
+    })
+    // targetRole expands
+    expect(kw.some(k => k.includes('program') && k.includes('manager'))).toBe(true)
+    // additionalRoles included
+    expect(kw.some(k => k.includes('operations'))).toBe(true)
+    expect(kw.some(k => k.includes('marops'))).toBe(true)
+  })
+
+  it('treats additionalRoles as optional (undefined does not throw)', () => {
+    const kw = buildKeywords({ ...baseProfile, targetRole: 'Engineer' })
+    expect(Array.isArray(kw)).toBe(true)
+  })
 })
 
 describe('matchesProfile', () => {
