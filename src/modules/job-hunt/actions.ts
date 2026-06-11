@@ -35,13 +35,17 @@ type AddCompanyResult = { ok: true; watchId: string } | { ok: false; error: stri
 
 // Extracts ATS provider + board slug directly from a known ATS URL without
 // any scraping — covers board URLs, careers pages, and specific job links.
-function detectAtsBoardFromUrl(url: string): { provider: 'greenhouse' | 'lever' | 'ashby'; boardSlug: string } | null {
+function detectAtsBoardFromUrl(url: string): { provider: 'greenhouse' | 'lever' | 'ashby' | 'successfactors'; boardSlug: string } | null {
   const gh = url.match(/(?:boards|job-boards)\.greenhouse\.io\/([^/?#]+)/i)
   if (gh) return { provider: 'greenhouse', boardSlug: gh[1] }
   const lv = url.match(/jobs\.lever\.co\/([^/?#]+)/i)
   if (lv) return { provider: 'lever', boardSlug: lv[1] }
   const ash = url.match(/jobs\.ashbyhq\.com\/([^/?#]+)/i)
   if (ash) return { provider: 'ashby', boardSlug: ash[1] }
+  // SuccessFactors: subdomain varies (career1–4, performancemanager, etc.)
+  // Board identity lives in the company= query param, not the URL path.
+  const sf = url.match(/(?:successfactors|sapsf)\.com.*[?&]company=([^&\s#]+)/i)
+  if (sf) return { provider: 'successfactors', boardSlug: sf[1] }
   return null
 }
 

@@ -107,6 +107,17 @@ describe('discoverAts', () => {
     expect(mockLLM).not.toHaveBeenCalled()
   })
 
+  it('detects SAP SuccessFactors from career page URL in HTML without LLM', async () => {
+    const html = '<html><a href="https://career4.successfactors.com/careers?company=bentleyprod">Apply</a></html>'
+    mockFetch.mockResolvedValueOnce({ ok: true, text: async () => html })
+
+    const result = await discoverAts('profile-1', 'https://bentley.com')
+
+    expect(mockLLM).not.toHaveBeenCalled()
+    expect(result.provider).toBe('successfactors')
+    expect(result.boardSlug).toBe('bentleyprod')
+  })
+
   it('falls back to origin when job URL returns no useful HTML', async () => {
     const jobUrl = 'https://careers.example.com/role/job/999'
     const origin = 'https://careers.example.com'

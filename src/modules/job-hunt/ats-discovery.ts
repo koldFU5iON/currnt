@@ -93,6 +93,15 @@ function detectAtsFromHtml(html: string): AtsDiscoveryResult | null {
     reasoning: 'Ashby board URL found in page source',
   }
 
+  // SuccessFactors: any subdomain of successfactors.com or sapsf.com with company= param
+  const sf = html.match(/(?:successfactors|sapsf)\.com[^"']*[?&]company=([a-zA-Z0-9_-]+)/i)
+  if (sf) return {
+    provider: 'successfactors',
+    boardSlug: sf[1],
+    confidence: 0.9,
+    reasoning: 'SAP SuccessFactors career portal URL found in page source',
+  }
+
   return null
 }
 
@@ -142,8 +151,9 @@ Look for:
 - Greenhouse: scripts from boards.greenhouse.io, "gh_jid" parameters, greenhouse embed scripts
 - Lever: jobs.lever.co links or lever.co in scripts
 - Ashby: jobs.ashbyhq.com links or ashbyhq.com in scripts
+- SAP SuccessFactors: links or scripts referencing successfactors.com or sapsf.com with a company= parameter
 
-Extract the board/company slug (e.g. "mongodb" from boards.greenhouse.io/mongodb).
+Extract the board/company slug (e.g. "mongodb" from boards.greenhouse.io/mongodb, or "bentleyprod" from successfactors.com/careers?company=bentleyprod).
 
 HTML:
 \`\`\`

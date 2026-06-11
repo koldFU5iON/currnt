@@ -274,6 +274,34 @@ describe('getAtsHintFromUrl', () => {
   })
 })
 
+describe('addCompany — SuccessFactors URL fast-path', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  it('detects SuccessFactors board slug from company= query param', async () => {
+    vi.mocked(prisma.companyWatch.create).mockResolvedValueOnce({ id: 'watch-sf' } as never)
+
+    const result = await addCompany({
+      name: 'Bentley',
+      website: 'https://career4.successfactors.com/careers?company=bentleyprod',
+      searchLocations: [],
+      includeRemote: true,
+    })
+
+    expect(result.ok).toBe(true)
+    expect(mockDiscoverAts).not.toHaveBeenCalled()
+    expect(vi.mocked(prisma.companyWatch.create)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          atsProvider: 'successfactors',
+          boardSlug: 'bentleyprod',
+          confidence: 1,
+          status: 'active',
+        }),
+      }),
+    )
+  })
+})
+
 describe('removeWatch', () => {
   it('calls deleteMany with profileId guard', async () => {
     vi.mocked(prisma.companyWatch.deleteMany).mockResolvedValueOnce({ count: 1 })

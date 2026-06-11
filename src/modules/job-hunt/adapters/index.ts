@@ -2,6 +2,7 @@ import type { JobListing } from '../schema'
 import * as greenhouse from './greenhouse'
 import * as lever from './lever'
 import * as ashby from './ashby'
+import * as successfactors from './successfactors'
 
 type Adapter = {
   fetchJobList(slug: string): Promise<JobListing[]>
@@ -12,6 +13,7 @@ const ADAPTERS: Record<string, Adapter> = {
   greenhouse,
   lever,
   ashby,
+  successfactors,
 }
 
 export function getAdapter(provider: string): Adapter | null {
