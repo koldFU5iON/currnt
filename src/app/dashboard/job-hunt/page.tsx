@@ -26,10 +26,14 @@ export default async function JobHuntPage() {
       title="Job Hunt"
       description="Monitor companies you're interested in and review matched roles as they appear."
     >
-      <div className="space-y-8">
-        <RoleAliasesInput initialRoles={additionalRoles} />
-        <Watchlist watches={watches} />
-        <DiscoveredJobs jobs={jobs} watches={watches} />
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-start">
+        <div className="min-w-0">
+          <DiscoveredJobs jobs={jobs} watches={watches} />
+        </div>
+        <aside className="space-y-6 lg:sticky lg:top-6">
+          <RoleAliasesInput initialRoles={additionalRoles} />
+          <Watchlist watches={watches} />
+        </aside>
       </div>
     </ContentContainer>
   )

@@ -74,12 +74,24 @@ export function JobQueueRow({ job }: { job: DiscoveredJobWithWatch }) {
   }
 
   const isImported = job.status === 'imported'
+  const isFoundToday = (daysAgo(job.createdAt) ?? 1) === 0
+  const isRecentPost = job.postedAt !== null && (daysAgo(job.postedAt) ?? Infinity) < 7
 
   return (
     <div className="flex items-start justify-between gap-4 rounded-lg border px-4 py-3">
       <div className="min-w-0 space-y-1">
         <div className="flex items-center gap-2 flex-wrap">
           <p className="font-medium">{job.title}</p>
+          {isFoundToday && (
+            <span className="text-xs px-2 py-0.5 rounded-full border font-medium bg-emerald-50 text-emerald-700 border-emerald-200">
+              Found today
+            </span>
+          )}
+          {!isFoundToday && isRecentPost && (
+            <span className="text-xs px-2 py-0.5 rounded-full border font-medium bg-blue-50 text-blue-700 border-blue-200">
+              New
+            </span>
+          )}
           {job.fitLabel && (
             <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${FIT_BADGE_STYLES[job.fitLabel] ?? ''}`}>
               {job.fitLabel}

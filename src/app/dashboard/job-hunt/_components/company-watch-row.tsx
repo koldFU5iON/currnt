@@ -3,19 +3,20 @@
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
-import { Loader2, RefreshCw, Trash2, AlertTriangle, Pencil } from 'lucide-react'
+import { Loader2, RefreshCw, Trash2, AlertTriangle, Pencil, MapPin, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { formatDate } from '@/lib/utils'
+import { daysAgo, formatRelative } from '@/lib/utils'
 import { scanCompany, removeWatch } from '@/modules/job-hunt/actions'
 import { EditWatchSheet } from './edit-watch-sheet'
 import type { CompanyWatch } from '@prisma/client'
 
 const PROVIDER_LABELS: Record<string, string> = {
-  greenhouse: 'Greenhouse',
-  lever: 'Lever',
-  ashby: 'Ashby',
-  unknown: 'Unknown',
+  greenhouse:     'Greenhouse',
+  lever:          'Lever',
+  ashby:          'Ashby',
+  successfactors: 'SuccessFactors',
+  workday:        'Workday',
+  unknown:        'Unknown',
 }
 
 export function CompanyWatchRow({ watch }: { watch: CompanyWatch }) {
@@ -29,9 +30,9 @@ export function CompanyWatchRow({ watch }: { watch: CompanyWatch }) {
       const result = await scanCompany(watch.id)
       if (!result.ok) {
         const messages: Record<string, string> = {
-          not_found: 'Watch not found',
+          not_found:      'Watch not found',
           no_ats_detected: 'No ATS detected — try updating the careers URL',
-          fetch_failed: 'Could not reach the job board. Try again later.',
+          fetch_failed:   'Could not reach the job board. Try again later.',
         }
         toast.error(messages[result.error] ?? 'Scan failed')
         return
@@ -53,62 +54,74 @@ export function CompanyWatchRow({ watch }: { watch: CompanyWatch }) {
     })
   }
 
+  const scanDays = daysAgo(watch.lastScannedAt)
+  const scanLabel = scanDays !== null
+    ? `Scanned ${formatRelative(scanDays)}`
+    : 'Never scanned'
+
+  const detectionFailed = watch.status === 'discovery_failed'
+
   return (
     <>
-      <div className="flex items-center justify-between gap-3 rounded-lg border px-4 py-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="min-w-0">
-            <p className="font-medium truncate">{watch.name}</p>
-            {watch.searchLocations.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-1">
-                {watch.searchLocations.map(loc => (
-                  <Badge key={loc} variant="outline" className="text-xs px-1.5 py-0 font-normal">
+      <div className="flex items-start justify-between gap-3 rounded-lg border px-4 py-3">
+        <div className="min-w-0 space-y-1">
+          {/* Line 1: name + ATS inline */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="font-medium leading-snug">{watch.name}</p>
+            {detectionFailed ? (
+              <span className="flex items-center gap-1 text-xs text-amber-600">
+                <AlertTriangle className="size-3" />
+                ATS unknown
+              </span>
+            ) : (
+              <span className="text-xs text-muted-foreground">
+                {PROVIDER_LABELS[watch.atsProvider] ?? watch.atsProvider}
+              </span>
+            )}
+          </div>
+
+          {/* Line 2: meta — location filters + scan time */}
+          <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+            {watch.searchLocations.length > 0 ? (
+              <>
+                {watch.searchLocations.map((loc) => (
+                  <span key={loc} className="flex items-center gap-1">
+                    <MapPin className="size-3" />
                     {loc}
-                  </Badge>
+                  </span>
                 ))}
                 {watch.includeRemote && (
-                  <Badge variant="outline" className="text-xs px-1.5 py-0 font-normal text-muted-foreground">
-                    + remote
-                  </Badge>
+                  <span className="text-muted-foreground/70">+remote</span>
                 )}
-              </div>
-            )}
-            {watch.lastScannedAt ? (
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Last scanned {formatDate(watch.lastScannedAt)}
-              </p>
-            ) : (
-              <p className="text-xs text-muted-foreground mt-0.5">Never scanned</p>
-            )}
+              </>
+            ) : null}
+            <span className="flex items-center gap-1">
+              <Clock className="size-3" />
+              {scanLabel}
+            </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          {watch.status === 'discovery_failed' ? (
-            <Badge variant="outline" className="text-amber-600 border-amber-300 gap-1">
-              <AlertTriangle className="size-3" />
-              ATS unknown
-            </Badge>
-          ) : (
-            <Badge variant="secondary">{PROVIDER_LABELS[watch.atsProvider] ?? watch.atsProvider}</Badge>
-          )}
-
+        <div className="flex items-center gap-1 shrink-0">
           <Button
             size="sm"
             variant="outline"
             onClick={handleScan}
-            disabled={isScanning || watch.status === 'discovery_failed'}
+            disabled={isScanning || detectionFailed}
+            className="h-7 px-2 text-xs"
           >
-            {isScanning ? <Loader2 className="size-3.5 animate-spin" /> : <RefreshCw className="size-3.5" />}
-            <span className="ml-1.5">{isScanning ? 'Scanning…' : 'Scan'}</span>
+            {isScanning
+              ? <Loader2 className="size-3 animate-spin" />
+              : <RefreshCw className="size-3" />}
+            <span className="ml-1">{isScanning ? 'Scanning…' : 'Scan'}</span>
           </Button>
 
           <Button
             size="sm"
             variant="ghost"
             onClick={() => setEditOpen(true)}
-            className="text-muted-foreground"
-            aria-label="Edit location filter"
+            className="h-7 w-7 p-0 text-muted-foreground"
+            aria-label="Edit watch"
           >
             <Pencil className="size-3.5" />
           </Button>
@@ -118,7 +131,8 @@ export function CompanyWatchRow({ watch }: { watch: CompanyWatch }) {
             variant="ghost"
             onClick={handleRemove}
             disabled={isRemoving}
-            className="text-muted-foreground hover:text-destructive"
+            className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+            aria-label="Remove watch"
           >
             <Trash2 className="size-3.5" />
           </Button>

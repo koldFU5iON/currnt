@@ -274,6 +274,62 @@ describe('getAtsHintFromUrl', () => {
   })
 })
 
+describe('addCompany — Workday URL fast-path', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  it('detects Workday board slug from subdomain + path', async () => {
+    vi.mocked(prisma.companyWatch.create).mockResolvedValueOnce({ id: 'watch-wd' } as never)
+
+    const result = await addCompany({
+      name: 'Logitech',
+      website: 'https://logitech.wd5.myworkdayjobs.com/Logitech',
+      searchLocations: [],
+      includeRemote: true,
+    })
+
+    expect(result.ok).toBe(true)
+    expect(mockDiscoverAts).not.toHaveBeenCalled()
+    expect(vi.mocked(prisma.companyWatch.create)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          atsProvider: 'workday',
+          boardSlug: 'logitech.wd5/Logitech',
+          confidence: 1,
+          status: 'active',
+        }),
+      }),
+    )
+  })
+})
+
+describe('addCompany — SuccessFactors URL fast-path', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  it('detects SuccessFactors board slug from company= query param', async () => {
+    vi.mocked(prisma.companyWatch.create).mockResolvedValueOnce({ id: 'watch-sf' } as never)
+
+    const result = await addCompany({
+      name: 'Bentley',
+      website: 'https://career4.successfactors.com/careers?company=bentleyprod',
+      searchLocations: [],
+      includeRemote: true,
+    })
+
+    expect(result.ok).toBe(true)
+    expect(mockDiscoverAts).not.toHaveBeenCalled()
+    expect(vi.mocked(prisma.companyWatch.create)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          atsProvider: 'successfactors',
+          boardSlug: 'bentleyprod',
+          confidence: 1,
+          status: 'active',
+        }),
+      }),
+    )
+  })
+})
+
 describe('removeWatch', () => {
   it('calls deleteMany with profileId guard', async () => {
     vi.mocked(prisma.companyWatch.deleteMany).mockResolvedValueOnce({ count: 1 })

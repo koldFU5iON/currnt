@@ -79,7 +79,7 @@ describe('fetchDescription (Greenhouse)', () => {
 describe('getAdapter', () => {
   it('returns null for unknown provider', async () => {
     const { getAdapter } = await import('./index')
-    expect(getAdapter('workday')).toBeNull()
     expect(getAdapter('linkedin')).toBeNull()
+    expect(getAdapter('taleo')).toBeNull()
   })
 })
