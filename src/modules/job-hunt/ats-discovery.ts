@@ -46,7 +46,7 @@ async function fetchHtml(url: string): Promise<string | null> {
     const redirectUrl = new URL(location, url).toString()
     if (!isSafePublicUrl(redirectUrl)) return null
     const res2 = await fetch(redirectUrl, {
-      redirect: 'follow',
+      redirect: 'manual',
       signal: AbortSignal.timeout(10_000),
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)' },
     })
