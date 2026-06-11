@@ -53,7 +53,7 @@ export function AddCompanySheet() {
           <SheetHeader>
             <SheetTitle>Watch a Company</SheetTitle>
             <SheetDescription>
-              We&apos;ll detect their ATS provider and scan for roles that match your profile.
+              Paste the company website, careers page, or a direct job URL — we&apos;ll detect their ATS and scan for matching roles.
             </SheetDescription>
           </SheetHeader>
 
@@ -74,8 +74,8 @@ export function AddCompanySheet() {
               name="website"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Website</FieldLabel>
-                  <Input placeholder="https://www.mongodb.com" {...field} aria-invalid={fieldState.invalid} />
+                  <FieldLabel>Website or job URL</FieldLabel>
+                  <Input placeholder="https://www.mongodb.com or https://job-boards.greenhouse.io/…" {...field} aria-invalid={fieldState.invalid} />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}

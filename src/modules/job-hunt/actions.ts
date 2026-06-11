@@ -31,6 +31,18 @@ import {
 
 type AddCompanyResult = { ok: true; watchId: string } | { ok: false; error: string }
 
+// Extracts ATS provider + board slug directly from a known ATS URL without
+// any scraping — covers board URLs, careers pages, and specific job links.
+function detectAtsBoardFromUrl(url: string): { provider: 'greenhouse' | 'lever' | 'ashby'; boardSlug: string } | null {
+  const gh = url.match(/(?:boards|job-boards)\.greenhouse\.io\/([^/?#]+)/i)
+  if (gh) return { provider: 'greenhouse', boardSlug: gh[1] }
+  const lv = url.match(/jobs\.lever\.co\/([^/?#]+)/i)
+  if (lv) return { provider: 'lever', boardSlug: lv[1] }
+  const ash = url.match(/jobs\.ashbyhq\.com\/([^/?#]+)/i)
+  if (ash) return { provider: 'ashby', boardSlug: ash[1] }
+  return null
+}
+
 export async function addCompany(input: AddCompanyInput): Promise<AddCompanyResult> {
   const parsed = AddCompanyInputSchema.safeParse(input)
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }
@@ -38,18 +50,40 @@ export async function addCompany(input: AddCompanyInput): Promise<AddCompanyResu
   const { profile } = await requireProfile()
   const { name, website } = parsed.data
 
-  const discovery = await discoverAts(profile.id, website)
-  const status = discovery.provider === 'unknown' ? 'discovery_failed' : 'active'
+  // Fast path: if the URL is directly recognisable as an ATS board/job URL,
+  // extract the board slug without scraping. Handles cases where the company
+  // site is hard to crawl (SPAs, JS-heavy, etc.) but their job board URL is known.
+  const urlAts = detectAtsBoardFromUrl(website)
+
+  let atsProvider: string
+  let boardSlug: string | null
+  let careersUrl: string | null = null
+  let confidence: number
+  let status: string
+
+  if (urlAts) {
+    atsProvider = urlAts.provider
+    boardSlug = urlAts.boardSlug
+    confidence = 1
+    status = 'active'
+  } else {
+    const discovery = await discoverAts(profile.id, website)
+    atsProvider = discovery.provider
+    boardSlug = discovery.boardSlug ?? null
+    careersUrl = discovery.careersUrl ?? null
+    confidence = discovery.confidence
+    status = discovery.provider === 'unknown' ? 'discovery_failed' : 'active'
+  }
 
   const watch = await prisma.companyWatch.create({
     data: {
       profileId: profile.id,
       name,
       website,
-      careersUrl: discovery.careersUrl ?? null,
-      atsProvider: discovery.provider,
-      boardSlug: discovery.boardSlug ?? null,
-      confidence: discovery.confidence,
+      careersUrl,
+      atsProvider,
+      boardSlug,
+      confidence,
       status,
       searchLocations: parsed.data.searchLocations,
       includeRemote: parsed.data.includeRemote,

@@ -106,6 +106,49 @@ describe('addCompany', () => {
       }),
     )
   })
+
+  it('skips discoverAts when URL is a direct Greenhouse job board URL', async () => {
+    mockCreate.mockResolvedValueOnce({ id: 'watch-3' } as never)
+
+    const result = await addCompany({
+      name: '2K',
+      website: 'https://job-boards.greenhouse.io/2k/jobs/7762602003',
+      searchLocations: [],
+      includeRemote: true,
+    })
+
+    expect(result.ok).toBe(true)
+    expect(mockDiscoverAts).not.toHaveBeenCalled()
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          atsProvider: 'greenhouse',
+          boardSlug: '2k',
+          confidence: 1,
+          status: 'active',
+        }),
+      }),
+    )
+  })
+
+  it('skips discoverAts when URL is a Greenhouse board-level URL', async () => {
+    mockCreate.mockResolvedValueOnce({ id: 'watch-4' } as never)
+
+    const result = await addCompany({
+      name: 'Stripe',
+      website: 'https://boards.greenhouse.io/stripe',
+      searchLocations: [],
+      includeRemote: true,
+    })
+
+    expect(result.ok).toBe(true)
+    expect(mockDiscoverAts).not.toHaveBeenCalled()
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ atsProvider: 'greenhouse', boardSlug: 'stripe' }),
+      }),
+    )
+  })
 })
 
 describe('scanCompany', () => {
