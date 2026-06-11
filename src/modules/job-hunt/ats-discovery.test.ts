@@ -19,7 +19,7 @@ beforeEach(() => {
 })
 
 describe('discoverAts', () => {
-  it('returns unknown with zero confidence when fetch fails', async () => {
+  it('returns unknown with zero confidence when all fetches fail', async () => {
     mockFetch.mockRejectedValue(new Error('network error'))
     const result = await discoverAts('profile-1', 'https://example.com')
     expect(result.provider).toBe('unknown')
@@ -27,16 +27,50 @@ describe('discoverAts', () => {
     expect(mockLLM).not.toHaveBeenCalled()
   })
 
-  it('calls LLM with truncated HTML from careers page', async () => {
+  it('detects Greenhouse from embed URL in page source without LLM', async () => {
     const html = '<html><script src="boards.greenhouse.io/embed/job_board/js?for=acme"></script></html>'
+    mockFetch.mockResolvedValueOnce({ ok: true, text: async () => html })
+
+    const result = await discoverAts('profile-1', 'https://acme.com')
+
+    expect(mockLLM).not.toHaveBeenCalled()
+    expect(result.provider).toBe('greenhouse')
+    expect(result.boardSlug).toBe('acme')
+    expect(result.confidence).toBeGreaterThanOrEqual(0.9)
+  })
+
+  it('detects Lever from board URL in page source without LLM', async () => {
+    const html = '<html><a href="https://jobs.lever.co/stripe/abc123">Apply</a></html>'
+    mockFetch.mockResolvedValueOnce({ ok: true, text: async () => html })
+
+    const result = await discoverAts('profile-1', 'https://stripe.com')
+
+    expect(mockLLM).not.toHaveBeenCalled()
+    expect(result.provider).toBe('lever')
+    expect(result.boardSlug).toBe('stripe')
+  })
+
+  it('detects Ashby from board URL in page source without LLM', async () => {
+    const html = '<html><a href="https://jobs.ashbyhq.com/vercel">Open roles</a></html>'
+    mockFetch.mockResolvedValueOnce({ ok: true, text: async () => html })
+
+    const result = await discoverAts('profile-1', 'https://vercel.com')
+
+    expect(mockLLM).not.toHaveBeenCalled()
+    expect(result.provider).toBe('ashby')
+    expect(result.boardSlug).toBe('vercel')
+  })
+
+  it('falls back to LLM when HTML has no recognizable ATS patterns', async () => {
+    const html = '<html><head><title>Careers at Acme</title></head><body><h1>Join us</h1></body></html>'
     mockFetch.mockResolvedValueOnce({ ok: true, text: async () => html })
     mockLLM.mockResolvedValueOnce({
       object: {
         provider: 'greenhouse',
         boardSlug: 'acme',
         careersUrl: 'https://boards.greenhouse.io/acme',
-        confidence: 0.95,
-        reasoning: 'Found Greenhouse embed script',
+        confidence: 0.8,
+        reasoning: 'Inferred from context',
       },
     } as never)
 
@@ -45,7 +79,6 @@ describe('discoverAts', () => {
     expect(mockLLM).toHaveBeenCalledOnce()
     expect(result.provider).toBe('greenhouse')
     expect(result.boardSlug).toBe('acme')
-    expect(result.confidence).toBe(0.95)
   })
 
   it('returns unknown when LLM returns unknown provider', async () => {
@@ -56,6 +89,39 @@ describe('discoverAts', () => {
 
     const result = await discoverAts('profile-1', 'https://example.com')
     expect(result.provider).toBe('unknown')
+  })
+
+  it('tries the specific job URL itself before falling back to origin paths', async () => {
+    const jobUrl = 'https://careers.playstation.com/optimisation-manager/job/6005905004'
+    const html = '<html><script src="boards.greenhouse.io/embed/job_board/js?for=sonyinteractiveentertainmentglobal"></script></html>'
+
+    // Only first fetch (the job URL itself) returns useful HTML
+    mockFetch.mockResolvedValueOnce({ ok: true, text: async () => html })
+
+    const result = await discoverAts('profile-1', jobUrl)
+
+    expect(result.provider).toBe('greenhouse')
+    expect(result.boardSlug).toBe('sonyinteractiveentertainmentglobal')
+    // Job URL should be the first candidate fetched
+    expect(mockFetch).toHaveBeenCalledWith(jobUrl, expect.anything())
+    expect(mockLLM).not.toHaveBeenCalled()
+  })
+
+  it('falls back to origin when job URL returns no useful HTML', async () => {
+    const jobUrl = 'https://careers.example.com/role/job/999'
+    const origin = 'https://careers.example.com'
+    const html = '<html><a href="https://jobs.lever.co/example">View all jobs</a></html>'
+
+    // Job URL returns 404, origin returns the useful HTML
+    mockFetch
+      .mockResolvedValueOnce({ ok: false, status: 404 })   // jobUrl
+      .mockResolvedValueOnce({ ok: true, text: async () => html })  // origin
+
+    const result = await discoverAts('profile-1', jobUrl)
+
+    expect(result.provider).toBe('lever')
+    expect(result.boardSlug).toBe('example')
+    expect(mockFetch).toHaveBeenCalledWith(origin, expect.anything())
   })
 })
 
