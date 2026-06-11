@@ -31,6 +31,8 @@ export type AtsDiscoveryResult = z.infer<typeof AtsDiscoveryResultSchema>
 export const AddCompanyInputSchema = z.object({
   name: z.string().min(1, 'Company name is required'),
   website: z.string().url('Must be a valid URL'),
+  searchLocations: z.array(z.string()).default([]),
+  includeRemote: z.boolean().default(true),
 })
 export type AddCompanyInput = z.infer<typeof AddCompanyInputSchema>
 
@@ -54,3 +56,10 @@ export const AtsHintSchema = z.object({
   name: z.string(),
 })
 export type AtsHint = z.infer<typeof AtsHintSchema>
+
+export const UpdateWatchInputSchema = z.object({
+  watchId: z.string().min(1),
+  searchLocations: z.array(z.string()).default([]),
+  includeRemote: z.boolean().default(true),
+})
+export type UpdateWatchInput = z.infer<typeof UpdateWatchInputSchema>

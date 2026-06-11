@@ -21,8 +21,8 @@ export function AddCompanySheet() {
   const router = useRouter()
 
   const form = useForm<AddCompanyInput>({
-    resolver: zodResolver(AddCompanyInputSchema),
-    defaultValues: { name: '', website: '' },
+    resolver: zodResolver(AddCompanyInputSchema) as never,
+    defaultValues: { name: '', website: '', searchLocations: [], includeRemote: true },
   })
 
   function onSubmit(data: AddCompanyInput) {

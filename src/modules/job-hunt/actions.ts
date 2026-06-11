@@ -11,13 +11,15 @@ import { loadWritingRules, composeSystem } from '@/modules/llm/prompt-context'
 import { JobFitSchema } from '@/modules/jobs/schema'
 import { discoverAts } from './ats-discovery'
 import { getAdapter } from './adapters/index'
-import { buildKeywords, matchesProfile, type ProfileFilterData } from './profile-filter'
+import { buildKeywords, matchesProfile, matchesLocation, type ProfileFilterData } from './profile-filter'
 import {
   AddCompanyInputSchema,
   AtsHintSchema,
+  UpdateWatchInputSchema,
   type AddCompanyInput,
   type AtsHint,
   type ScanResult,
+  type UpdateWatchInput,
 } from './schema'
 import {
   greenhouseFromUrl,
@@ -49,6 +51,8 @@ export async function addCompany(input: AddCompanyInput): Promise<AddCompanyResu
       boardSlug: discovery.boardSlug ?? null,
       confidence: discovery.confidence,
       status,
+      searchLocations: parsed.data.searchLocations,
+      includeRemote: parsed.data.includeRemote,
     },
     select: { id: true },
   })
@@ -74,6 +78,8 @@ export async function addCompanyFromHint(hint: AtsHint): Promise<AddCompanyResul
       boardSlug: parsed.data.boardSlug,
       confidence: 1,
       status: 'active',
+      searchLocations: [],
+      includeRemote: true,
     },
     select: { id: true },
   })
@@ -108,6 +114,28 @@ export async function removeWatch(watchId: string): Promise<void> {
     where: { id: watchId, profileId: profile.id },
   })
   revalidatePath('/dashboard/job-hunt')
+}
+
+// ── updateWatch ───────────────────────────────────────────────────────────────
+
+export async function updateWatch(
+  input: UpdateWatchInput,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const parsed = UpdateWatchInputSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }
+
+  const { profile } = await requireProfile()
+
+  await prisma.companyWatch.updateMany({
+    where: { id: parsed.data.watchId, profileId: profile.id },
+    data: {
+      searchLocations: parsed.data.searchLocations,
+      includeRemote: parsed.data.includeRemote,
+    },
+  })
+
+  revalidatePath('/dashboard/job-hunt')
+  return { ok: true }
 }
 
 // ── scanCompany ───────────────────────────────────────────────────────────────
@@ -162,7 +190,10 @@ export async function scanCompany(watchId: string): Promise<ScanResult> {
     return { ok: false, error: 'fetch_failed' }
   }
 
-  const matched = listings.filter((j) => matchesProfile(j.title, keywords))
+  const matched = listings.filter((j) =>
+    matchesProfile(j.title, keywords) &&
+    matchesLocation(j.location, watch.searchLocations, watch.includeRemote)
+  )
 
   const withDescriptions = await Promise.all(
     matched.map(async (listing) => {

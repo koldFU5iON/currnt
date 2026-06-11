@@ -76,7 +76,7 @@ describe('addCompany', () => {
     })
     mockCreate.mockResolvedValueOnce({ id: 'watch-1' } as never)
 
-    const result = await addCompany({ name: 'Acme', website: 'https://acme.com' })
+    const result = await addCompany({ name: 'Acme', website: 'https://acme.com', searchLocations: [], includeRemote: true })
 
     expect(result.ok).toBe(true)
     expect(mockCreate).toHaveBeenCalledWith(
@@ -97,7 +97,7 @@ describe('addCompany', () => {
     })
     mockCreate.mockResolvedValueOnce({ id: 'watch-2' } as never)
 
-    const result = await addCompany({ name: 'NoATS', website: 'https://noats.com' })
+    const result = await addCompany({ name: 'NoATS', website: 'https://noats.com', searchLocations: [], includeRemote: true })
 
     expect(result.ok).toBe(true)
     expect(mockCreate).toHaveBeenCalledWith(
