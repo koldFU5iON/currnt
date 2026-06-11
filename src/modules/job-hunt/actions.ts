@@ -126,13 +126,15 @@ export async function updateWatch(
 
   const { profile } = await requireProfile()
 
-  await prisma.companyWatch.updateMany({
+  const { count } = await prisma.companyWatch.updateMany({
     where: { id: parsed.data.watchId, profileId: profile.id },
     data: {
       searchLocations: parsed.data.searchLocations,
       includeRemote: parsed.data.includeRemote,
     },
   })
+
+  if (count === 0) return { ok: false, error: 'Watch not found' }
 
   revalidatePath('/dashboard/job-hunt')
   return { ok: true }
