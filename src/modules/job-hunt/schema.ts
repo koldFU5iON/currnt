@@ -63,3 +63,9 @@ export const UpdateWatchInputSchema = z.object({
   includeRemote: z.boolean().default(true),
 })
 export type UpdateWatchInput = z.infer<typeof UpdateWatchInputSchema>
+
+export const RetryAtsInputSchema = z.object({
+  watchId: z.string().min(1),
+  website: z.string().url('Must be a valid URL'),
+})
+export type RetryAtsInput = z.infer<typeof RetryAtsInputSchema>

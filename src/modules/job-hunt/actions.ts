@@ -16,10 +16,12 @@ import {
   AddCompanyInputSchema,
   AtsHintSchema,
   UpdateWatchInputSchema,
+  RetryAtsInputSchema,
   type AddCompanyInput,
   type AtsHint,
   type ScanResult,
   type UpdateWatchInput,
+  type RetryAtsInput,
 } from './schema'
 import {
   greenhouseFromUrl,
@@ -411,6 +413,57 @@ export async function ignoreJob(jobId: string): Promise<void> {
     data: { status: 'ignored' },
   })
   revalidatePath('/dashboard/job-hunt')
+}
+
+// ── retryAtsDiscovery ─────────────────────────────────────────────────────────
+
+type RetryAtsResult = { ok: true; provider: string; boardSlug: string | null } | { ok: false; error: string }
+
+export async function retryAtsDiscovery(input: RetryAtsInput): Promise<RetryAtsResult> {
+  const parsed = RetryAtsInputSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }
+
+  const { profile } = await requireProfile()
+
+  const watch = await prisma.companyWatch.findFirst({
+    where: { id: parsed.data.watchId, profileId: profile.id },
+    select: { id: true },
+  })
+  if (!watch) return { ok: false, error: 'Watch not found' }
+
+  const urlAts = detectAtsBoardFromUrl(parsed.data.website)
+
+  let atsProvider: string
+  let boardSlug: string | null
+  let careersUrl: string | null = null
+  let confidence: number
+  let status: string
+
+  if (urlAts) {
+    atsProvider = urlAts.provider
+    boardSlug = urlAts.boardSlug
+    confidence = 1
+    status = 'active'
+  } else {
+    const discovery = await discoverAts(profile.id, parsed.data.website)
+    atsProvider = discovery.provider
+    boardSlug = discovery.boardSlug ?? null
+    careersUrl = discovery.careersUrl ?? null
+    confidence = discovery.confidence
+    status = discovery.provider === 'unknown' ? 'discovery_failed' : 'active'
+  }
+
+  await prisma.companyWatch.updateMany({
+    where: { id: parsed.data.watchId, profileId: profile.id },
+    data: { website: parsed.data.website, atsProvider, boardSlug, careersUrl, confidence, status },
+  })
+
+  revalidatePath('/dashboard/job-hunt')
+
+  if (atsProvider === 'unknown') {
+    return { ok: false, error: 'Could not detect ATS — try a direct careers page or ATS board URL' }
+  }
+  return { ok: true, provider: atsProvider, boardSlug }
 }
 
 // ── saveAdditionalRoles ───────────────────────────────────────────────────────

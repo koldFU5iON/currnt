@@ -55,9 +55,64 @@ async function fetchHtml(url: string): Promise<string | null> {
   return null
 }
 
+// Regex-based ATS detection from HTML source — skips LLM for clear-cut cases.
+function detectAtsFromHtml(html: string): AtsDiscoveryResult | null {
+  // Greenhouse embed: greenhouse.io/embed/...?for=SLUG (covers both board and job-app embeds)
+  const ghEmbed = html.match(/greenhouse\.io\/embed\/[^?"']*\?[^"']*for=([a-zA-Z0-9_-]+)/i)
+  if (ghEmbed) return {
+    provider: 'greenhouse',
+    boardSlug: ghEmbed[1],
+    confidence: 0.95,
+    reasoning: 'Greenhouse embed URL detected in page source',
+  }
+
+  // Greenhouse board URL: boards.greenhouse.io/SLUG (excluding /embed sub-paths)
+  const ghBoard = html.match(/(?:boards|job-boards)\.greenhouse\.io\/(?!embed\b)([a-zA-Z0-9_-]+)/i)
+  if (ghBoard) return {
+    provider: 'greenhouse',
+    boardSlug: ghBoard[1],
+    confidence: 0.9,
+    reasoning: 'Greenhouse board URL found in page source',
+  }
+
+  // Lever
+  const lv = html.match(/jobs\.lever\.co\/([a-zA-Z0-9_-]+)/i)
+  if (lv) return {
+    provider: 'lever',
+    boardSlug: lv[1],
+    confidence: 0.9,
+    reasoning: 'Lever board URL found in page source',
+  }
+
+  // Ashby
+  const ash = html.match(/jobs\.ashbyhq\.com\/([a-zA-Z0-9_-]+)/i)
+  if (ash) return {
+    provider: 'ashby',
+    boardSlug: ash[1],
+    confidence: 0.9,
+    reasoning: 'Ashby board URL found in page source',
+  }
+
+  return null
+}
+
 export async function discoverAts(profileId: string, website: string): Promise<AtsDiscoveryResult> {
-  const base = website.replace(/\/$/, '')
-  const candidates = [`${base}/careers`, `${base}/jobs`]
+  let origin: string
+  try {
+    origin = new URL(website).origin
+  } catch {
+    return FAILED_DISCOVERY
+  }
+
+  // Try the URL itself first — a specific job or careers page often embeds ATS scripts
+  // in its own HTML. Then fall back to the site root and common careers paths.
+  // Using origin (not the full path) for the /careers and /jobs suffixes.
+  const candidates = [...new Set([
+    website,
+    origin,
+    `${origin}/careers`,
+    `${origin}/jobs`,
+  ])]
 
   let html = ''
   for (const url of candidates) {
@@ -73,6 +128,11 @@ export async function discoverAts(profileId: string, website: string): Promise<A
   }
 
   if (!html) return FAILED_DISCOVERY
+
+  // Try regex detection before calling the LLM — faster, cheaper, more reliable
+  // for pages that include recognizable ATS embed scripts or board URLs.
+  const regexResult = detectAtsFromHtml(html)
+  if (regexResult) return regexResult
 
   const truncated = html.slice(0, 8_000)
 
