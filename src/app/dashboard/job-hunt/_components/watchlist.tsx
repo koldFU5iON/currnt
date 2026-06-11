@@ -1,6 +1,7 @@
 import type { CompanyWatch } from '@prisma/client'
 import { AddCompanySheet } from './add-company-sheet'
 import { CompanyWatchRow } from './company-watch-row'
+import { SyncAllButton } from './sync-all-button'
 
 export function Watchlist({ watches }: { watches: CompanyWatch[] }) {
   return (
@@ -14,7 +15,10 @@ export function Watchlist({ watches }: { watches: CompanyWatch[] }) {
               : `${watches.length} compan${watches.length === 1 ? 'y' : 'ies'} monitored`}
           </p>
         </div>
-        <AddCompanySheet />
+        <div className="flex items-center gap-1.5">
+          {watches.length > 0 && <SyncAllButton />}
+          <AddCompanySheet />
+        </div>
       </div>
 
       {watches.length > 0 && (
