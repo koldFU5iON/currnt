@@ -412,13 +412,13 @@ function ActivityManageDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[85svh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Activities — {experience.company}</DialogTitle>
           <DialogDescription>{experience.role}</DialogDescription>
         </DialogHeader>
 
-        <div className="max-h-72 overflow-y-auto space-y-4 pr-1">
+        <div className="space-y-4 pr-1">
           {(['responsibility', 'achievement'] as const).map(kind => {
             const items = grouped[kind]
             if (items.length === 0) return null

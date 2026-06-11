@@ -173,11 +173,18 @@ export function CvEditor({ cv }: Props) {
 
       <div className="flex h-full flex-col print:block print:h-auto">
         {/* Toolbar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between border-b border-border bg-background px-4 py-2 print:hidden">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold">{displayTitle}</span>
-            <Badge variant="outline" className="text-xs capitalize">{cv.status}</Badge>
+        <div className="border-b border-border bg-background px-4 py-2 print:hidden">
+          {/* Mobile: title on its own line to prevent squash */}
+          <div className="mb-1.5 flex items-center gap-2 min-w-0 sm:hidden">
+            <span className="text-sm font-semibold truncate">{displayTitle}</span>
+            <Badge variant="outline" className="text-xs capitalize shrink-0">{cv.status}</Badge>
           </div>
+          <div className="flex items-center justify-between">
+            {/* Desktop-only title */}
+            <div className="hidden sm:flex items-center gap-2">
+              <span className="text-sm font-semibold">{displayTitle}</span>
+              <Badge variant="outline" className="text-xs capitalize">{cv.status}</Badge>
+            </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowConfirm(true)}
@@ -225,6 +232,7 @@ export function CvEditor({ cv }: Props) {
               <MessageSquare className="size-3.5" />
               Discuss
             </button>
+          </div>
           </div>
         </div>
 
