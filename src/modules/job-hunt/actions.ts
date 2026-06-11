@@ -14,6 +14,7 @@ import { getAdapter } from './adapters/index'
 import { buildKeywords, matchesProfile, type ProfileFilterData } from './profile-filter'
 import {
   AddCompanyInputSchema,
+  AtsHintSchema,
   type AddCompanyInput,
   type AtsHint,
   type ScanResult,
@@ -59,15 +60,18 @@ export async function addCompany(input: AddCompanyInput): Promise<AddCompanyResu
 // ── addCompanyFromHint ────────────────────────────────────────────────────────
 
 export async function addCompanyFromHint(hint: AtsHint): Promise<AddCompanyResult> {
+  const parsed = AtsHintSchema.safeParse(hint)
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }
+
   const { profile } = await requireProfile()
 
   const watch = await prisma.companyWatch.create({
     data: {
       profileId: profile.id,
-      name: hint.name,
+      name: parsed.data.name,
       website: '',
-      atsProvider: hint.provider,
-      boardSlug: hint.boardSlug,
+      atsProvider: parsed.data.provider,
+      boardSlug: parsed.data.boardSlug,
       confidence: 1,
       status: 'active',
     },
@@ -195,8 +199,8 @@ export async function scanCompany(watchId: string): Promise<ScanResult> {
     })
   }
 
-  await prisma.companyWatch.update({
-    where: { id: watchId },
+  await prisma.companyWatch.updateMany({
+    where: { id: watchId, profileId: profile.id },
     data: { lastScannedAt: new Date() },
   })
 
@@ -320,8 +324,8 @@ export async function importJob(jobId: string): Promise<ImportResult> {
     select: { id: true },
   })
 
-  await prisma.discoveredJob.update({
-    where: { id: jobId },
+  await prisma.discoveredJob.updateMany({
+    where: { id: jobId, profileId: profile.id },
     data: { status: 'imported', importedJobId: newJob.id },
   })
 

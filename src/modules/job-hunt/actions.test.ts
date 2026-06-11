@@ -151,7 +151,7 @@ describe('importJob', () => {
       fitJustification: null, status: 'new',
     } as never)
     mockJobCreate.mockResolvedValueOnce({ id: 'ja-1' } as never)
-    mockDiscoveredUpdate.mockResolvedValueOnce({} as never)
+    vi.mocked(prisma.discoveredJob.updateMany).mockResolvedValueOnce({ count: 1 })
 
     const result = await importJob('dj-1')
 
@@ -165,8 +165,9 @@ describe('importJob', () => {
         }),
       }),
     )
-    expect(mockDiscoveredUpdate).toHaveBeenCalledWith(
+    expect(vi.mocked(prisma.discoveredJob.updateMany)).toHaveBeenCalledWith(
       expect.objectContaining({
+        where: expect.objectContaining({ id: 'dj-1', profileId: 'profile-1' }),
         data: expect.objectContaining({ status: 'imported', importedJobId: 'ja-1' }),
       }),
     )

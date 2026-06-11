@@ -18,6 +18,7 @@ export async function getDiscoveredJobs(filters?: {
     where: {
       profileId: profile.id,
       status: filters?.statuses ? { in: filters.statuses } : { notIn: ['ignored'] },
+      watch: { status: { not: 'paused' } },
       ...(filters?.watchIds?.length ? { watchId: { in: filters.watchIds } } : {}),
     },
     include: { watch: { select: { name: true, atsProvider: true } } },

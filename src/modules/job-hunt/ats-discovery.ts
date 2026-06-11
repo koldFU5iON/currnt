@@ -30,21 +30,41 @@ function isSafePublicUrl(rawUrl: string): boolean {
   return true
 }
 
+// Fetches a URL with one validated redirect hop — prevents SSRF via open redirects
+// while still working for careers pages that redirect to their ATS board.
+async function fetchHtml(url: string): Promise<string | null> {
+  if (!isSafePublicUrl(url)) return null
+  const res = await fetch(url, {
+    redirect: 'manual',
+    signal: AbortSignal.timeout(10_000),
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)' },
+  })
+  if (res.ok) return res.text()
+  if (res.status >= 300 && res.status < 400) {
+    const location = res.headers.get('location')
+    if (!location) return null
+    const redirectUrl = new URL(location, url).toString()
+    if (!isSafePublicUrl(redirectUrl)) return null
+    const res2 = await fetch(redirectUrl, {
+      redirect: 'follow',
+      signal: AbortSignal.timeout(10_000),
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)' },
+    })
+    return res2.ok ? res2.text() : null
+  }
+  return null
+}
+
 export async function discoverAts(profileId: string, website: string): Promise<AtsDiscoveryResult> {
   const base = website.replace(/\/$/, '')
   const candidates = [`${base}/careers`, `${base}/jobs`]
 
   let html = ''
   for (const url of candidates) {
-    if (!isSafePublicUrl(url)) continue
     try {
-      const res = await fetch(url, {
-        redirect: 'manual',
-        signal: AbortSignal.timeout(10_000),
-        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)' },
-      })
-      if (res.ok) {
-        html = await res.text()
+      const fetched = await fetchHtml(url)
+      if (fetched) {
+        html = fetched
         break
       }
     } catch {
