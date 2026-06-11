@@ -146,5 +146,11 @@ function formatPageContext(ctx: PageContext): string {
         `${ctx.role ? ` — ${ctx.role}` : ''}\n` +
         `Session ID: ${ctx.sessionId} — use this with get_interview_prep to fetch notes, documents, and interviewers`
       )
+    case 'job_application':
+      return (
+        `User is viewing job application: "${ctx.title}"${ctx.company ? ` at ${ctx.company}` : ''}` +
+        `${ctx.status ? ` (${ctx.status})` : ''}\n` +
+        `Job ID: ${ctx.jobId} — use this with get_job_application to fetch the full description, fit score, and notes`
+      )
   }
 }

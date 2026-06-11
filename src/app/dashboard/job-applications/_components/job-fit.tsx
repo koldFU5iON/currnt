@@ -55,11 +55,13 @@ export function JobFit({ jobId, jobFit, canAssess = true, hasLLMKey = true, comp
   function handleAssess() {
     if (!jobId || isPending) return
     startTransition(async () => {
+      const scrollY = window.scrollY
       const result = await assessJobFit(jobId)
       if (result.ok) {
         notifyUsageUpdated()
         if (window.innerWidth >= 640) {
           setPopoverOpen(true)
+          requestAnimationFrame(() => window.scrollTo({ top: scrollY, behavior: 'instant' }))
         } else {
           setDrawerOpen(true)
         }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { PanelRight, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { PrepDocumentRow, PrepInterviewerRow } from '@/modules/interview-prep/queries'
 import { DocumentsTab } from './documents-tab'
@@ -18,6 +19,7 @@ type Props = {
 
 export function ReferencePanel({ sessionId, activeNoteId, documents, interviewers }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('documents')
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'documents', label: 'Documents' },
@@ -25,8 +27,8 @@ export function ReferencePanel({ sessionId, activeNoteId, documents, interviewer
     { id: 'qa', label: 'Q&A' },
   ]
 
-  return (
-    <div className="flex w-80 shrink-0 flex-col overflow-hidden border-l bg-muted/10">
+  const panel = (
+    <div className="flex h-full flex-col overflow-hidden bg-muted/10">
       {/* Tab bar */}
       <div className="flex border-b">
         {tabs.map(tab => (
@@ -43,6 +45,14 @@ export function ReferencePanel({ sessionId, activeNoteId, documents, interviewer
             {tab.label}
           </button>
         ))}
+        {/* Close button — mobile only */}
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="sm:hidden px-3 py-2.5 text-muted-foreground hover:text-foreground"
+          aria-label="Close reference panel"
+        >
+          <X className="size-4" />
+        </button>
       </div>
 
       {activeTab === 'documents' && (
@@ -55,5 +65,33 @@ export function ReferencePanel({ sessionId, activeNoteId, documents, interviewer
         <QaTab sessionId={sessionId} activeNoteId={activeNoteId} />
       )}
     </div>
+  )
+
+  return (
+    <>
+      {/* Mobile toggle button — visible only when panel is closed */}
+      {!mobileOpen && (
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="sm:hidden absolute bottom-4 right-4 z-10 flex items-center gap-1.5 rounded-full border bg-background px-3 py-2 text-xs font-medium shadow-md"
+          aria-label="Open reference panel"
+        >
+          <PanelRight className="size-3.5" />
+          Resources
+        </button>
+      )}
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div className="sm:hidden absolute inset-0 z-20 border-l bg-background">
+          {panel}
+        </div>
+      )}
+
+      {/* Desktop: fixed right panel */}
+      <div className="hidden sm:flex w-80 shrink-0 flex-col overflow-hidden border-l">
+        {panel}
+      </div>
+    </>
   )
 }
