@@ -35,7 +35,7 @@ type AddCompanyResult = { ok: true; watchId: string } | { ok: false; error: stri
 
 // Extracts ATS provider + board slug directly from a known ATS URL without
 // any scraping — covers board URLs, careers pages, and specific job links.
-function detectAtsBoardFromUrl(url: string): { provider: 'greenhouse' | 'lever' | 'ashby' | 'successfactors'; boardSlug: string } | null {
+function detectAtsBoardFromUrl(url: string): { provider: 'greenhouse' | 'lever' | 'ashby' | 'successfactors' | 'workday'; boardSlug: string } | null {
   const gh = url.match(/(?:boards|job-boards)\.greenhouse\.io\/([^/?#]+)/i)
   if (gh) return { provider: 'greenhouse', boardSlug: gh[1] }
   const lv = url.match(/jobs\.lever\.co\/([^/?#]+)/i)
@@ -46,6 +46,10 @@ function detectAtsBoardFromUrl(url: string): { provider: 'greenhouse' | 'lever' 
   // Board identity lives in the company= query param, not the URL path.
   const sf = url.match(/(?:successfactors|sapsf)\.com.*[?&]company=([^&\s#]+)/i)
   if (sf) return { provider: 'successfactors', boardSlug: sf[1] }
+  // Workday: {company}.{datacenter}.myworkdayjobs.com/{BoardName}
+  // boardSlug encodes both subdomain and board: "logitech.wd5/Logitech"
+  const wd = url.match(/([a-zA-Z0-9-]+\.[a-zA-Z0-9]+)\.myworkdayjobs\.com\/([^/?#\s]+)/i)
+  if (wd) return { provider: 'workday', boardSlug: `${wd[1].toLowerCase()}/${wd[2]}` }
   return null
 }
 

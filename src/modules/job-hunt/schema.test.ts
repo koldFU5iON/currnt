@@ -87,7 +87,7 @@ describe('AtsDiscoveryResultSchema', () => {
 
   it('rejects invalid provider', () => {
     const r = AtsDiscoveryResultSchema.safeParse({
-      provider: 'workday',
+      provider: 'taleo',
       confidence: 0.5,
       reasoning: 'test',
     })

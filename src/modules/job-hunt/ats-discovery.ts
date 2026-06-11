@@ -102,6 +102,15 @@ function detectAtsFromHtml(html: string): AtsDiscoveryResult | null {
     reasoning: 'SAP SuccessFactors career portal URL found in page source',
   }
 
+  // Workday: {company}.{datacenter}.myworkdayjobs.com/{BoardName}
+  const wd = html.match(/([a-zA-Z0-9-]+\.[a-zA-Z0-9]+)\.myworkdayjobs\.com\/([a-zA-Z0-9_-]+)/i)
+  if (wd) return {
+    provider: 'workday',
+    boardSlug: `${wd[1].toLowerCase()}/${wd[2]}`,
+    confidence: 0.9,
+    reasoning: 'Workday career portal URL found in page source',
+  }
+
   return null
 }
 
@@ -152,8 +161,9 @@ Look for:
 - Lever: jobs.lever.co links or lever.co in scripts
 - Ashby: jobs.ashbyhq.com links or ashbyhq.com in scripts
 - SAP SuccessFactors: links or scripts referencing successfactors.com or sapsf.com with a company= parameter
+- Workday: links to {company}.{datacenter}.myworkdayjobs.com/{BoardName}
 
-Extract the board/company slug (e.g. "mongodb" from boards.greenhouse.io/mongodb, or "bentleyprod" from successfactors.com/careers?company=bentleyprod).
+Extract the board/company slug (e.g. "mongodb" from boards.greenhouse.io/mongodb, "bentleyprod" from successfactors.com/careers?company=bentleyprod, or "logitech.wd5/Logitech" from logitech.wd5.myworkdayjobs.com/Logitech).
 
 HTML:
 \`\`\`

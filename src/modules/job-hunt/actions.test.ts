@@ -274,6 +274,34 @@ describe('getAtsHintFromUrl', () => {
   })
 })
 
+describe('addCompany — Workday URL fast-path', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  it('detects Workday board slug from subdomain + path', async () => {
+    vi.mocked(prisma.companyWatch.create).mockResolvedValueOnce({ id: 'watch-wd' } as never)
+
+    const result = await addCompany({
+      name: 'Logitech',
+      website: 'https://logitech.wd5.myworkdayjobs.com/Logitech',
+      searchLocations: [],
+      includeRemote: true,
+    })
+
+    expect(result.ok).toBe(true)
+    expect(mockDiscoverAts).not.toHaveBeenCalled()
+    expect(vi.mocked(prisma.companyWatch.create)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          atsProvider: 'workday',
+          boardSlug: 'logitech.wd5/Logitech',
+          confidence: 1,
+          status: 'active',
+        }),
+      }),
+    )
+  })
+})
+
 describe('addCompany — SuccessFactors URL fast-path', () => {
   beforeEach(() => { vi.clearAllMocks() })
 
