@@ -8,7 +8,7 @@ import {
 } from "@/app/types/job-application"
 import { AppProgressBar } from "./app-progress-bar"
 import { AppControls } from "@/components/app-item-menu"
-import { Loader2, SquareArrowOutUpRight } from "lucide-react"
+import { FileText, Loader2, SquareArrowOutUpRight } from "lucide-react"
 import { JobFit } from "./job-fit"
 import { JobNotes } from "./job-notes"
 import { StatusDropdown } from "./status-dropdown"
@@ -99,6 +99,15 @@ export function JobRowCard({ job, selected, busyLabel, onToggleSelect, onEdit, o
               >
                 <SquareArrowOutUpRight size={12} />
               </a>
+            )}
+            {job.cvDocumentId && (
+              <Link
+                href={`/dashboard/cv-builder/${job.cvDocumentId}`}
+                aria-label="View CV"
+                className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <FileText size={12} />
+              </Link>
             )}
             {showSourceBadge && (
               <Badge variant="outline" className="shrink-0 text-[10px] font-normal py-0 px-1.5 h-4">
