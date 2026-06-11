@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildKeywords, matchesProfile } from './profile-filter'
+import { buildKeywords, matchesProfile, matchesLocation } from './profile-filter'
 
 const baseProfile = {
   targetRole: '',
@@ -110,5 +110,45 @@ describe('matchesProfile', () => {
 
   it('returns false for empty keywords', () => {
     expect(matchesProfile('Any Job Title', [])).toBe(false)
+  })
+})
+
+describe('matchesLocation', () => {
+  it('returns true when no locations configured (filter inactive)', () => {
+    expect(matchesLocation('New York, US', [], true)).toBe(true)
+    expect(matchesLocation('New York, US', [], false)).toBe(true)
+  })
+
+  it('returns true for null/empty location (benefit of doubt)', () => {
+    expect(matchesLocation(null, ['UK'], true)).toBe(true)
+    expect(matchesLocation('', ['UK'], true)).toBe(true)
+    expect(matchesLocation('  ', ['UK'], true)).toBe(true)
+  })
+
+  it('includes remote when includeRemote is true', () => {
+    expect(matchesLocation('Remote', ['UK'], true)).toBe(true)
+    expect(matchesLocation('US-Remote', ['UK'], true)).toBe(true)
+    expect(matchesLocation('Remote - US', ['UK'], true)).toBe(true)
+    expect(matchesLocation('Fully Remote', ['UK'], true)).toBe(true)
+  })
+
+  it('excludes remote when includeRemote is false', () => {
+    expect(matchesLocation('Remote', ['UK'], false)).toBe(false)
+    expect(matchesLocation('US-Remote', ['UK'], false)).toBe(false)
+  })
+
+  it('matches configured locations case-insensitively', () => {
+    expect(matchesLocation('London, UK', ['UK', 'Ireland'], true)).toBe(true)
+    expect(matchesLocation('Dublin, Ireland', ['UK', 'Ireland'], true)).toBe(true)
+    expect(matchesLocation('london, uk', ['UK'], true)).toBe(true)
+  })
+
+  it('matches partial location strings', () => {
+    expect(matchesLocation('London, United Kingdom', ['United Kingdom'], true)).toBe(true)
+  })
+
+  it('excludes non-matching locations', () => {
+    expect(matchesLocation('New York, US', ['UK', 'Ireland'], false)).toBe(false)
+    expect(matchesLocation('Berlin, Germany', ['UK', 'Ireland'], false)).toBe(false)
   })
 })

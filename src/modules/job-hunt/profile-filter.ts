@@ -117,3 +117,23 @@ export function matchesProfile(title: string, keywords: string[]): boolean {
   }
   return false
 }
+
+export function matchesLocation(
+  location: string | null | undefined,
+  searchLocations: string[],
+  includeRemote: boolean,
+): boolean {
+  // Filter inactive — include everything
+  if (searchLocations.length === 0) return true
+
+  // Unknown location — include (benefit of doubt)
+  if (!location?.trim()) return true
+
+  const normalized = location.toLowerCase()
+
+  // "remote" anywhere in the string — catches "Remote", "US-Remote", "Remote - EMEA"
+  if (includeRemote && normalized.includes('remote')) return true
+
+  // Case-insensitive substring match against any configured location
+  return searchLocations.some(loc => normalized.includes(loc.toLowerCase()))
+}
