@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db'
 import { requireProfile } from '@/lib/session'
 import { revalidatePath } from 'next/cache'
 
-export type ContactField = 'name' | 'email' | 'phone' | 'location' | 'website' | 'linkedIn' | 'headline'
+export type ContactField = 'name' | 'email' | 'phone' | 'location' | 'website' | 'linkedIn' | 'github' | 'headline'
 
 export async function updateContactField(field: ContactField, value: string) {
   const { profile } = await requireProfile()
@@ -24,7 +24,7 @@ export async function updateProfileSummary(summary: string) {
   revalidatePath('/dashboard/profile')
 }
 
-const CONTACT_FIELDS: ContactField[] = ['name', 'email', 'phone', 'location', 'website', 'linkedIn', 'headline']
+const CONTACT_FIELDS: ContactField[] = ['name', 'email', 'phone', 'location', 'website', 'linkedIn', 'github', 'headline']
 
 // Used by the AI chat assistant when applying a proposed profile field update.
 export async function patchProfileField(field: string, value: string): Promise<void> {
@@ -32,7 +32,7 @@ export async function patchProfileField(field: string, value: string): Promise<v
   if ((CONTACT_FIELDS as string[]).includes(field)) {
     return updateContactField(field as ContactField, value)
   }
-  throw new Error(`Unknown profile field: ${field}`)
+  throw new Error(`"${field}" is not an editable profile field. Supported fields: ${CONTACT_FIELDS.join(', ')}, summary.`)
 }
 
 // ── Activities ────────────────────────────────────────────────────────────────
