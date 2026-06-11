@@ -5,6 +5,8 @@ export type UserUsageSummary = {
   thisMonth: number
   allTime: number
   totalCalls: number
+  byMonth: { month: string; tokens: number }[]
+  byFeature: { feature: string; tokens: number; calls: number }[]
   recentLogs: {
     id: string
     provider: string
@@ -36,7 +38,7 @@ function startOfMonth(): Date {
 }
 
 export async function getUserUsageSummary(profileId: string): Promise<UserUsageSummary> {
-  const [today, thisMonth, allTime, recentLogs] = await Promise.all([
+  const [today, thisMonth, allTime, byMonthRaw, byFeatureRaw, recentLogs] = await Promise.all([
     prisma.llmUsageLog.aggregate({
       where: { profileId, createdAt: { gte: startOfToday() } },
       _sum: { totalTokens: true },
@@ -49,6 +51,24 @@ export async function getUserUsageSummary(profileId: string): Promise<UserUsageS
       where: { profileId },
       _sum: { totalTokens: true },
       _count: { id: true },
+    }),
+    prisma.$queryRaw<{ month: string; tokens: bigint }[]>`
+      SELECT
+        TO_CHAR(DATE_TRUNC('month', "createdAt"), 'YYYY-MM') AS month,
+        SUM("totalTokens") AS tokens
+      FROM "LlmUsageLog"
+      WHERE "profileId" = ${profileId}
+        AND "createdAt" >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
+      GROUP BY DATE_TRUNC('month', "createdAt")
+      ORDER BY month ASC
+    `,
+    prisma.llmUsageLog.groupBy({
+      by: ['feature'],
+      where: { profileId },
+      _sum: { totalTokens: true },
+      _count: { id: true },
+      orderBy: { _sum: { totalTokens: 'desc' } },
+      take: 10,
     }),
     prisma.llmUsageLog.findMany({
       where: { profileId },
@@ -67,6 +87,12 @@ export async function getUserUsageSummary(profileId: string): Promise<UserUsageS
     thisMonth: thisMonth._sum.totalTokens ?? 0,
     allTime: allTime._sum.totalTokens ?? 0,
     totalCalls: allTime._count.id,
+    byMonth: byMonthRaw.map(r => ({ month: r.month, tokens: Number(r.tokens) })),
+    byFeature: byFeatureRaw.map(r => ({
+      feature: r.feature ?? 'unknown',
+      tokens: r._sum.totalTokens ?? 0,
+      calls: r._count.id,
+    })),
     recentLogs,
   }
 }

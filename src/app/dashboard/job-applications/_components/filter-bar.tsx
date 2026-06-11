@@ -55,12 +55,12 @@ const SOURCE_OPTIONS = APPLICATION_SOURCES.map(v => ({
 }))
 
 const FIT_OPTIONS: { value: JobFit['label'] | 'none'; label: string }[] = [
-  { value: 'excellent', label: 'Excellent' },
-  { value: 'good',      label: 'Good' },
-  { value: 'stretch',   label: 'Stretch' },
-  { value: 'weak',      label: 'Weak' },
-  { value: 'unlikely',  label: 'Unlikely' },
-  { value: 'none',      label: 'Not assessed' },
+  { value: 'standout', label: 'Standout' },
+  { value: 'solid',    label: 'Solid' },
+  { value: 'stretch',  label: 'Stretch' },
+  { value: 'possible', label: 'Possible' },
+  { value: 'reach',    label: 'Reach' },
+  { value: 'none',     label: 'Not assessed' },
 ]
 
 type FilterBarProps = {
