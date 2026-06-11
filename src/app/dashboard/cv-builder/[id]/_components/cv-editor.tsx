@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
-import { RotateCcw, Download, MessageSquare, Loader2 } from 'lucide-react'
+import { RotateCcw, Download, MessageSquare, Loader2, X } from 'lucide-react'
+import Link from 'next/link'
 import { usePageContext, useWorkspaceContext } from '@/lib/context/page-context'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
@@ -35,6 +36,7 @@ export type CVWithMeta = {
   jobTitle: string | null
   company: string | null
   jobApplicationId: string | null
+  jobApplication?: { id: string; title: string | null; company: string | null; jobDescription: string | null } | null
   profileName: string
   content: CVDocumentContent
 }
@@ -46,6 +48,7 @@ export function CvEditor({ cv }: Props) {
   const [isPending, startTransition] = useTransition()
   const [showConfirm, setShowConfirm] = useState(false)
   const [showExport, setShowExport] = useState(false)
+  const [jobPanelOpen, setJobPanelOpen] = useState(false)
 
   const { openPanel } = usePageContext()
   useWorkspaceContext({
@@ -232,12 +235,20 @@ export function CvEditor({ cv }: Props) {
               <MessageSquare className="size-3.5" />
               Discuss
             </button>
+            {cv.jobApplicationId && cv.jobApplication?.jobDescription && (
+              <button
+                onClick={() => setJobPanelOpen(o => !o)}
+                className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
+              >
+                Job ▸
+              </button>
+            )}
           </div>
           </div>
         </div>
 
         {/* Body */}
-        <div className="flex flex-1 overflow-hidden print:overflow-visible print:h-auto print:block">
+        <div className="relative flex flex-1 overflow-hidden print:overflow-visible print:h-auto print:block">
           <div className="relative flex-1 overflow-y-auto bg-muted/30 p-0 md:p-6 print:overflow-visible print:h-auto print:bg-white print:p-0">
             {isPending && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background/60 backdrop-blur-sm print:hidden">
@@ -272,6 +283,43 @@ export function CvEditor({ cv }: Props) {
               )}
             </div>
           </div>
+          {jobPanelOpen && cv.jobApplication && (
+            <div className="absolute inset-y-0 right-0 z-10 flex w-[42%] min-w-[260px] max-w-[480px] flex-col border-l bg-background overflow-y-auto p-4 print:hidden">
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-sm font-semibold">Job</span>
+                <button
+                  type="button"
+                  onClick={() => setJobPanelOpen(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                  aria-label="Close job panel"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+              <p className="text-sm font-medium">{cv.jobApplication.title}</p>
+              {cv.jobApplication.company && (
+                <p className="text-xs text-muted-foreground">{cv.jobApplication.company}</p>
+              )}
+              {cv.jobApplication.jobDescription && (
+                <div className="mt-3">
+                  <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                    Job Description
+                  </p>
+                  <p className="whitespace-pre-wrap text-xs text-muted-foreground">
+                    {cv.jobApplication.jobDescription}
+                  </p>
+                </div>
+              )}
+              <div className="mt-auto border-t pt-3">
+                <Link
+                  href={`/dashboard/job-applications/view/${cv.jobApplication.id}`}
+                  className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+                >
+                  View job →
+                </Link>
+              </div>
+            </div>
+          )}
           <SectionRail sections={content.sections} onToggleVisibility={handleToggleVisibility} />
         </div>
       </div>

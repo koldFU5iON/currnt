@@ -390,32 +390,39 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
                     ))}
                   </div>
                 )}
+                {job.jobDescription && (
+                  <div className="mb-3">
+                    <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                      Full description
+                    </p>
+                    <p className="whitespace-pre-wrap text-xs text-muted-foreground">
+                      {job.jobDescription}
+                    </p>
+                  </div>
+                )}
               </>
             ) : job.jobDescription ? (
               <div className="mb-3">
                 <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                   Job Description
                 </p>
-                <p className="text-xs text-muted-foreground line-clamp-5">
-                  {job.jobDescription.slice(0, 300)}
+                <p className="whitespace-pre-wrap text-xs text-muted-foreground">
+                  {job.jobDescription}
                 </p>
-                <a
-                  href={`/dashboard/job-applications/view/${job.id}`}
-                  className="mt-1 text-xs underline"
-                >
-                  View full description →
-                </a>
               </div>
             ) : (
               <p className="text-xs text-muted-foreground">
-                No job description or analysis available.
+                No job description available.
               </p>
             )}
 
             <div className="mt-auto border-t pt-3">
-              <p className="text-[10px] text-muted-foreground opacity-50">
-                ✦ Writing guide — coming soon
-              </p>
+              <Link
+                href={`/dashboard/job-applications/view/${job.id}`}
+                className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+              >
+                View job →
+              </Link>
             </div>
           </div>
         )}
