@@ -25,10 +25,14 @@ export function CommandBar({ chatOpen, onToggleChat }: CommandBarProps) {
         event.preventDefault()
         setPaletteOpen((open) => !open)
       }
+      if (event.key.toLowerCase() === "l" && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault()
+        onToggleChat()
+      }
     }
     document.addEventListener("keydown", onKeyDown)
     return () => document.removeEventListener("keydown", onKeyDown)
-  }, [])
+  }, [onToggleChat])
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-background px-3">
@@ -56,7 +60,8 @@ export function CommandBar({ chatOpen, onToggleChat }: CommandBarProps) {
           size="icon"
           onClick={onToggleChat}
           aria-pressed={chatOpen}
-          aria-label="Toggle assistant"
+          aria-label="Toggle assistant (Ctrl+L)"
+          title="AI Coach (Ctrl+L)"
           className={cn("size-9 [&_svg]:size-5", chatOpen && "bg-accent text-accent-foreground")}
         >
           <Sparkles />

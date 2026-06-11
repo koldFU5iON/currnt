@@ -2,6 +2,7 @@
 
 import { CommandBar } from "./command-bar"
 import { AppFooter } from "./app-footer"
+import { AlphaBanner } from "./alpha-banner"
 import { ChatPanel } from "./chat-panel"
 import { usePageContext } from "@/lib/context/page-context"
 
@@ -16,6 +17,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           chatOpen={chatOpen}
           onToggleChat={togglePanel}
         />
+        <AlphaBanner />
         <div className="flex min-h-0 flex-1 flex-col overflow-auto print:overflow-visible print:h-auto">{children}</div>
         <AppFooter />
       </div>

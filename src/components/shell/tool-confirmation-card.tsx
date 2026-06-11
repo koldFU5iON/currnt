@@ -15,6 +15,7 @@ type Props = {
 
 const TOOL_LABELS: Record<string, string> = {
   propose_profile_update: 'Update profile field',
+  propose_tool_create: 'Add tool to profile',
   propose_cv_update: 'Update CV section',
   propose_prep_note_update: 'Update prep note',
   submit_feedback: 'Submit feedback',
@@ -53,11 +54,15 @@ export function ToolConfirmationCard({ toolName, args, onAccept, onReject, write
           {String(args.currentValue ?? args.currentContent)}
         </div>
       )}
-      {(args.proposedValue ?? args.proposedContent) !== undefined && (
-        <div className="mb-3 rounded-md bg-green-50 px-2.5 py-1.5 text-xs text-green-700 dark:bg-green-950 dark:text-green-400">
-          {String(args.proposedValue ?? args.proposedContent)}
-        </div>
-      )}
+      {(() => {
+        const display = args.proposedValue ?? args.proposedContent ??
+          (args.name != null ? `${args.name}${args.category ? ` · ${args.category}` : ''}` : undefined)
+        return display !== undefined ? (
+          <div className="mb-3 rounded-md bg-green-50 px-2.5 py-1.5 text-xs text-green-700 dark:bg-green-950 dark:text-green-400">
+            {String(display)}
+          </div>
+        ) : null
+      })()}
       <div className="flex gap-2">
         <Button size="sm" className="h-7 gap-1 text-xs" onClick={handleAccept} disabled={pending}>
           {pending ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3" />}

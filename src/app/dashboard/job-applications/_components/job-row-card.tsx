@@ -8,7 +8,7 @@ import {
 } from "@/app/types/job-application"
 import { AppProgressBar } from "./app-progress-bar"
 import { AppControls } from "@/components/app-item-menu"
-import { FileText, Loader2, SquareArrowOutUpRight } from "lucide-react"
+import { FileText, Mail, Loader2, SquareArrowOutUpRight } from "lucide-react"
 import { JobFit } from "./job-fit"
 import { JobNotes } from "./job-notes"
 import { StatusDropdown } from "./status-dropdown"
@@ -107,6 +107,15 @@ export function JobRowCard({ job, selected, busyLabel, onToggleSelect, onEdit, o
                 className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
               >
                 <FileText size={12} />
+              </Link>
+            )}
+            {job.coverLetterDocumentId && (
+              <Link
+                href={`/dashboard/cover-letters/${job.coverLetterDocumentId}`}
+                aria-label="View cover letter"
+                className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <Mail size={12} />
               </Link>
             )}
             {showSourceBadge && (

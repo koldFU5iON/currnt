@@ -9,7 +9,7 @@ import {
 import { AppProgressBar } from "./app-progress-bar"
 import { StatusDropdown } from "./status-dropdown"
 import { AppControls } from "@/components/app-item-menu"
-import { Loader2, FileText, SquareArrowOutUpRight } from "lucide-react"
+import { Loader2, FileText, Mail, SquareArrowOutUpRight } from "lucide-react"
 import { ApplicationDateBlock } from "./app-date-block"
 import { JobFit } from "./job-fit"
 import { JobNotes } from "./job-notes"
@@ -116,6 +116,15 @@ export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArc
               className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
             >
               <FileText size={12} />
+            </Link>
+          )}
+          {coverLetterDocumentId && (
+            <Link
+              href={`/dashboard/cover-letters/${coverLetterDocumentId}`}
+              aria-label="View cover letter"
+              className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Mail size={12} />
             </Link>
           )}
           {showSourceBadge && (
