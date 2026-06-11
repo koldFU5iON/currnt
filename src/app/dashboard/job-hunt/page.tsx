@@ -5,7 +5,7 @@ import { normalizeOnboardingContext } from '@/modules/onboarding/schema'
 import { getWatchlist, getDiscoveredJobs } from '@/modules/job-hunt/queries'
 import { Watchlist } from './_components/watchlist'
 import { DiscoveredJobs } from './_components/discovered-jobs'
-import { RoleAliasesInput } from './_components/role-aliases-input'
+import { ScanSettingsDialog } from './_components/scan-settings-dialog'
 
 export default async function JobHuntPage() {
   const { profile } = await requireProfile()
@@ -19,7 +19,7 @@ export default async function JobHuntPage() {
     }),
   ])
 
-  const { additionalRoles } = normalizeOnboardingContext(settings?.onboardingContext)
+  const { targetRole, currentRole, additionalRoles } = normalizeOnboardingContext(settings?.onboardingContext)
 
   return (
     <ContentContainer
@@ -31,7 +31,11 @@ export default async function JobHuntPage() {
           <DiscoveredJobs jobs={jobs} watches={watches} />
         </div>
         <aside className="space-y-6 lg:sticky lg:top-6">
-          <RoleAliasesInput initialRoles={additionalRoles} />
+          <ScanSettingsDialog
+            targetRole={targetRole}
+            currentRole={currentRole}
+            additionalRoles={additionalRoles}
+          />
           <Watchlist watches={watches} />
         </aside>
       </div>

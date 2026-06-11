@@ -286,6 +286,36 @@ export async function scanCompany(watchId: string): Promise<ScanResult> {
   return { ok: true, found: listings.length, matched: matched.length, newJobs: newJobs.length }
 }
 
+// ── saveScanParameters ───────────────────────────────────────────────────────
+
+export async function saveScanParameters(input: {
+  targetRole: string
+  currentRole: string
+  additionalRoles: string[]
+}): Promise<void> {
+  const { profile } = await requireProfile()
+
+  const existing = await prisma.userSettings.findUnique({
+    where: { profileId: profile.id },
+    select: { onboardingContext: true },
+  })
+  const current = normalizeOnboardingContext(existing?.onboardingContext)
+  const updated = {
+    ...current,
+    targetRole: input.targetRole.trim(),
+    currentRole: input.currentRole.trim(),
+    additionalRoles: input.additionalRoles,
+  }
+
+  await prisma.userSettings.upsert({
+    where: { profileId: profile.id },
+    create: { profileId: profile.id, onboardingContext: updated },
+    update: { onboardingContext: updated },
+  })
+
+  revalidatePath('/dashboard/job-hunt')
+}
+
 // ── scanAll ───────────────────────────────────────────────────────────────────
 
 type ScanAllResult =
