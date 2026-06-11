@@ -46,7 +46,7 @@ export function createChatTools(profileId: string) {
         "Fetch detailed data for a section of the user's profile. Use when you need more depth than the profile overview provides.",
       inputSchema: zodSchema(
         z.object({
-          section: z.enum(['skills', 'experience', 'projects', 'education', 'certifications']),
+          section: z.enum(['skills', 'experience', 'projects', 'education', 'certifications', 'tools']),
         }),
       ),
       execute: async ({ section }) => {
@@ -131,6 +131,10 @@ export function createChatTools(profileId: string) {
                   tags: parseJsonField<string[]>(c.tags, []),
                 })),
               )
+          case 'tools':
+            return prisma.tool
+              .findMany({ where: { profileId }, orderBy: [{ category: 'asc' }, { name: 'asc' }] })
+              .then(rows => rows.map(t => ({ name: t.name, category: t.category })))
         }
       },
     }),
@@ -317,6 +321,18 @@ export function createChatTools(profileId: string) {
           currentValue: z.string().describe('The current value'),
           proposedValue: z.string().describe('The proposed new value'),
           rationale: z.string().describe('Why this change improves the profile'),
+        }),
+      ),
+    }),
+
+    propose_tool_create: tool({
+      description:
+        "Propose adding a new tool, platform, or software to the user's profile. Use when the user wants to add a tool that doesn't yet exist in their tools list. The user must confirm before it is applied.",
+      inputSchema: zodSchema(
+        z.object({
+          name: z.string().describe('Tool or platform name (e.g. "Workato", "Figma", "dbt")'),
+          category: z.string().optional().describe('Category label (e.g. "AI/Automation", "Design", "Data")'),
+          rationale: z.string().describe('Why this tool should be added to the profile'),
         }),
       ),
     }),

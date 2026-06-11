@@ -7,7 +7,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { cn } from '@/lib/utils'
 import { patchCVSectionData } from '@/modules/cv/actions'
-import { patchProfileField } from '@/modules/profile/actions'
+import { patchProfileField, createTool } from '@/modules/profile/actions'
 import { updateBlock } from '@/modules/interview-prep/actions'
 import { ToolConfirmationCard } from './tool-confirmation-card'
 import { FeedbackSubmissionCard } from './feedback-submission-card'
@@ -22,6 +22,9 @@ function buildWriteAction(toolName: string, args: Record<string, unknown>): (() 
   }
   if (toolName === 'propose_profile_update') {
     return () => patchProfileField(args.field as string, args.proposedValue as string)
+  }
+  if (toolName === 'propose_tool_create') {
+    return async () => { await createTool({ name: args.name as string, category: args.category as string | undefined }) }
   }
   if (toolName === 'propose_prep_note_update') {
     return () => updateBlock(
