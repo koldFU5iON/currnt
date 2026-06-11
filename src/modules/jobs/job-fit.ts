@@ -72,11 +72,11 @@ export async function assessJobFit(jobId: string): Promise<AssessJobFitResult> {
 
 Be honest and concrete. Overclaiming the candidate's fit makes them waste an interview slot; understating loses them an opportunity they could land. Calibrate the rating against real-world hiring bars:
 
-- 0–2 (unlikely): missing core requirements; would be rejected at first screen.
-- 3–4 (weak): partial overlap; would need an exceptional cover letter to advance.
+- 0–2 (reach): missing core requirements; would be rejected at first screen.
+- 3–4 (possible): partial overlap; would need an exceptional cover letter to advance.
 - 5–6 (stretch): meets most requirements but has a meaningful gap; viable with strong story.
-- 7–8 (good): strong baseline match; can credibly compete in interviews.
-- 9–10 (excellent): unusually well-aligned across role, level, and stack.
+- 7–8 (solid): strong baseline match; can credibly compete in interviews.
+- 9–10 (standout): unusually well-aligned across role, level, and stack.
 
 Ground your justification in specific evidence from both sides — name technologies, scope, level — rather than generic praise.${hasGoals ? '\n\nWhen a # Career Goals section is provided, populate trajectoryNote with one or two sentences on how this role aligns or diverges from the candidate\'s stated direction. Omit the field entirely when no goals are provided.' : ''}`
 
@@ -136,7 +136,7 @@ ${job.jobDescription}`
   revalidatePath('/dashboard/job-applications')
   revalidatePath(`/dashboard/job-applications/view/${jobId}`)
 
-  if (['stretch', 'good', 'excellent'].includes(fit.label)) {
+  if (['stretch', 'solid', 'standout'].includes(fit.label)) {
     analyseJob(profile.id, jobId).catch(err =>
       console.error('[assessJobFit] background analysis failed', err),
     )

@@ -319,7 +319,7 @@ export function CvEditor({ cv }: Props) {
               {(() => {
                 const fit = cv.jobApplication.jobFit as JobFit | null
                 if (!fit) return null
-                const gaugeColor = { unlikely: 'bg-blue-400', weak: 'bg-amber-300', stretch: 'bg-amber-500', good: 'bg-orange-500', excellent: 'bg-red-500' }[fit.label]
+                const gaugeColor = { reach: 'bg-blue-400', possible: 'bg-amber-300', stretch: 'bg-amber-500', solid: 'bg-orange-500', standout: 'bg-red-500' }[fit.label]
                 return (
                   <div className="mt-3">
                     <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Job Fit</p>

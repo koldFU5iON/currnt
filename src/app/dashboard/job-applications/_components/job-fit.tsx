@@ -26,19 +26,19 @@ type JobFitProps = {
 }
 
 const FLAME_STYLES: Record<JobFitType['label'], string> = {
-  unlikely: 'fill-blue-400 text-blue-400',
-  weak: 'fill-amber-200 text-amber-300',
-  stretch: 'fill-amber-400 text-amber-500',
-  good: 'fill-orange-500 text-orange-600',
-  excellent: 'fill-red-500 text-red-600',
+  reach:    'fill-blue-400 text-blue-400',
+  possible: 'fill-amber-200 text-amber-300',
+  stretch:  'fill-amber-400 text-amber-500',
+  solid:    'fill-orange-500 text-orange-600',
+  standout: 'fill-red-500 text-red-600',
 }
 
 const PILL_TEXT_STYLES: Record<JobFitType['label'], string> = {
-  unlikely: 'text-blue-400',
-  weak: 'text-amber-300',
-  stretch: 'text-amber-500',
-  good: 'text-orange-600',
-  excellent: 'text-red-600',
+  reach:    'text-blue-400',
+  possible: 'text-amber-300',
+  stretch:  'text-amber-500',
+  solid:    'text-orange-600',
+  standout: 'text-red-600',
 }
 
 export function JobFit({ jobId, jobFit, canAssess = true, hasLLMKey = true, company, jdSnippet }: JobFitProps) {
@@ -179,11 +179,11 @@ type FitDetailProps = {
 }
 
 const GAUGE_COLORS: Record<JobFitType['label'], string> = {
-  unlikely: 'bg-blue-400',
-  weak: 'bg-amber-300',
-  stretch: 'bg-amber-500',
-  good: 'bg-orange-500',
-  excellent: 'bg-red-500',
+  reach:    'bg-blue-400',
+  possible: 'bg-amber-300',
+  stretch:  'bg-amber-500',
+  solid:    'bg-orange-500',
+  standout: 'bg-red-500',
 }
 
 function FitDetail({ jobFit, hasLLMKey, canAssess, onReassess, jobId, company, jdSnippet }: FitDetailProps) {

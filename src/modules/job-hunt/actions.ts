@@ -466,11 +466,11 @@ export async function scoreDiscoveredJob(jobId: string): Promise<ScoreResult> {
   const featureInstructions = `You are an experienced career coach assessing whether a candidate is a strong fit for a role.
 
 Be honest and concrete. Calibrate the rating against real-world hiring bars:
-- 0–2 (unlikely): missing core requirements.
-- 3–4 (weak): partial overlap.
+- 0–2 (reach): missing core requirements.
+- 3–4 (possible): partial overlap.
 - 5–6 (stretch): meets most requirements but has a meaningful gap.
-- 7–8 (good): strong baseline match.
-- 9–10 (excellent): unusually well-aligned.`
+- 7–8 (solid): strong baseline match.
+- 9–10 (standout): unusually well-aligned.`
 
   const system = composeSystem(rules, settings?.writingBrief ?? null, featureInstructions)
 

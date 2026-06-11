@@ -74,7 +74,7 @@ export const APPLICATION_SOURCE_LABEL: Record<ApplicationSourceType, string> = {
 
 export type JobFit = {
   rating: number
-  label: "unlikely" | "weak" | "stretch" | "good" | "excellent"
+  label: "reach" | "possible" | "stretch" | "solid" | "standout"
   justification: string
   trajectoryNote?: string
   notesUsed?: boolean
