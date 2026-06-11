@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
-import { RotateCcw, Download, MessageSquare, Loader2, X } from 'lucide-react'
+import { RotateCcw, Download, MessageSquare, Loader2, RefreshCw, X } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { usePageContext, useWorkspaceContext } from '@/lib/context/page-context'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
@@ -51,6 +52,7 @@ export function CvEditor({ cv }: Props) {
   const [jobPanelOpen, setJobPanelOpen] = useState(false)
 
   const { openPanel } = usePageContext()
+  const router = useRouter()
   useWorkspaceContext({
     type: 'cv',
     cvId: cv.id,
@@ -243,6 +245,13 @@ export function CvEditor({ cv }: Props) {
                 Job ▸
               </button>
             )}
+            <button
+              onClick={() => router.refresh()}
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
+              title="Reload CV from server"
+            >
+              <RefreshCw className="size-3.5" />
+            </button>
           </div>
           </div>
         </div>

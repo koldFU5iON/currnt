@@ -107,6 +107,7 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
   const [expanded, setExpanded] = useState(false)
   const [modelSaving, startModelSave] = useTransition()
   const bottomRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Restore prior session lazily (client-only — avoids SSR issues)
@@ -163,6 +164,13 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [context])
+
+  useEffect(() => {
+    if (open) {
+      // Small rAF so the panel has finished its CSS transition before focusing
+      requestAnimationFrame(() => inputRef.current?.focus())
+    }
+  }, [open])
 
   useEffect(() => {
     return () => {
@@ -369,6 +377,7 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
       <div className="border-t p-3">
         <div className="relative">
           <Textarea
+            ref={inputRef}
             value={input}
             onChange={e => setInput(e.target.value)}
             placeholder="Ask your coach…"

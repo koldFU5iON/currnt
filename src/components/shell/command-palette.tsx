@@ -12,6 +12,7 @@ import {
   CommandList,
 } from "@/components/ui/command"
 import { mainNav } from "@/lib/nav-menu"
+import { usePageContext } from "@/lib/context/page-context"
 
 type SettingsItem = {
   destination: string
@@ -33,6 +34,7 @@ type CommandPaletteProps = {
 
 export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const router = useRouter()
+  const { togglePanel } = usePageContext()
 
   const go = (href: string) => {
     onOpenChange(false)
@@ -44,6 +46,15 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       <CommandInput placeholder="Search or jump to…" />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
+        <CommandGroup heading="Actions">
+          <CommandItem
+            value="AI Coach open assistant"
+            onSelect={() => { onOpenChange(false); togglePanel() }}
+          >
+            <Sparkles />
+            <span>AI Coach</span>
+          </CommandItem>
+        </CommandGroup>
         <CommandGroup heading="Navigation">
           {mainNav.map((item) => (
             <CommandItem
