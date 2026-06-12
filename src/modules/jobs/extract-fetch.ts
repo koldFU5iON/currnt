@@ -100,15 +100,14 @@ async function renderWithPuppeteer(url: string): Promise<string> {
   try {
     const page = await browser.newPage()
     await page.setRequestInterception(true)
-    page.on('request', async (req) => {
+    page.on('request', (req) => {
       const reqUrl = req.url()
       if (!reqUrl.startsWith('http://') && !reqUrl.startsWith('https://')) {
         req.abort()
         return
       }
       try {
-        const safe = await isSafeUrl(reqUrl)
-        if (!safe) { req.abort(); return }
+        if (!isSafeHostname(new URL(reqUrl).hostname)) { req.abort(); return }
       } catch { req.abort(); return }
       req.continue()
     })
@@ -138,11 +137,13 @@ export async function fetchPageContent(url: string): Promise<FetchResult> {
       headers: FETCH_HEADERS,
       signal: AbortSignal.timeout(12_000),
     })
-    if (res.url && res.url !== url) {
-      if (!(await isSafeUrl(res.url))) {
-        return { ok: false, error: 'Invalid URL — only public HTTPS job pages are supported.' }
+    try {
+      if (res.url && new URL(res.url).hostname !== new URL(url).hostname) {
+        if (!(await isSafeUrl(res.url))) {
+          return { ok: false, error: 'Invalid URL — only public HTTPS job pages are supported.' }
+        }
       }
-    }
+    } catch { /* unparseable URLs — skip redirect check */ }
     if (!res.ok) {
       return {
         ok: false,
