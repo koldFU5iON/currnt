@@ -53,7 +53,7 @@ export default async function Page() {
         </aside>
 
         {/* Centre column — experience workspace */}
-        <div className="flex min-h-[600px] flex-col xl:sticky xl:top-6 xl:h-[calc(100vh-6rem)]">
+        <div className="flex min-h-[600px] min-w-0 flex-col xl:sticky xl:top-6 xl:h-[calc(100vh-6rem)]">
           <ExperienceWorkspace profile={profile} />
         </div>
 
