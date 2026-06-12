@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { Menu, Pencil, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { updateExperienceDetails } from '@/modules/profile/actions'
 import {
@@ -84,10 +84,10 @@ export function ExperienceFrontmatter({
       {/* Options dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger
-          className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          className="rounded px-2 py-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           aria-label="Experience options"
         >
-          <MoreHorizontal size={14} />
+          <Menu size={15} />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
           <DropdownMenuItem onClick={onEditClick}>
