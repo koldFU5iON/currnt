@@ -29,6 +29,8 @@ type ChatSettings = {
 
 const IDLE_TIMEOUT_MS = 10 * 60 * 1000
 const SESSION_STORAGE_KEY = 'chat-session-messages'
+// Must match HISTORY_WINDOW in src/app/api/chat/stream/route.ts
+const HISTORY_WINDOW = 20
 
 type SavedMessage = { id: string; role: 'user' | 'assistant'; text: string }
 
@@ -260,6 +262,16 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
   const activeModel = settings?.chatModel ?? settings?.llmModel ?? ''
   const modelOptions = settings?.availableModels ?? []
 
+  // Count substantive turns (exclude nav markers injected on page change)
+  const turnCount = messages.filter(m => {
+    if (m.role !== 'user' && m.role !== 'assistant') return false
+    const text = m.parts?.filter(isTextUIPart).map(p => p.text).join('') ?? ''
+    return !text.startsWith('[navigated to ')
+  }).length
+  const windowFill = Math.min(turnCount / HISTORY_WINDOW, 1)
+  const windowFull = turnCount >= HISTORY_WINDOW
+  const showContextBar = turnCount >= 6
+
   if (!open) return null
 
   return (
@@ -378,6 +390,28 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
         )}
         <div ref={bottomRef} />
       </div>
+
+      {showContextBar && (
+        <div className="shrink-0 border-t px-3 py-1.5">
+          <div className="mb-1 flex items-center justify-between text-[10px] text-muted-foreground">
+            <span>
+              {windowFull ? `Last ${HISTORY_WINDOW} turns` : `${turnCount} / ${HISTORY_WINDOW} turns`}
+            </span>
+            {windowFull && (
+              <span className="text-amber-500">older context summarised</span>
+            )}
+          </div>
+          <div className="h-0.5 overflow-hidden rounded-full bg-muted">
+            <div
+              className={cn(
+                'h-full rounded-full transition-all duration-500',
+                windowFill >= 0.8 ? 'bg-amber-500' : 'bg-primary/50',
+              )}
+              style={{ width: `${windowFill * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="border-t p-3">
         <div className="relative">
