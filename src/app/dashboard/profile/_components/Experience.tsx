@@ -255,7 +255,7 @@ function ExperienceCard({ onAdd }: { onAdd: () => void }) {
 
 // ── Experience add/edit dialog ────────────────────────────────────────────────
 
-function ExperienceDialog({
+export function ExperienceDialog({
   open, onOpenChange, onSave,
 }: {
   open: boolean

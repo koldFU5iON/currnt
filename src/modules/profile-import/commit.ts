@@ -6,6 +6,7 @@ import { normalize } from "@/modules/profile/duplicate-detect"
 import { revalidatePath } from "next/cache"
 import { buildCommitPlan, type ExistingProfileState } from "./plan"
 import type { ExtractedProfile } from "./schema"
+import { buildImportSummary } from "./summary-builder"
 
 export type CommitResult = {
   created: { experiences: number; education: number; certifications: number; skills: number; contactFields: number }
@@ -50,7 +51,7 @@ export async function commitImportedProfile(payload: ExtractedProfile): Promise<
           endDate: e.endDate ?? undefined,
           location: e.location ?? undefined,
           remote: e.remote,
-          summary: e.summary ?? "",
+          summary: e.summary || buildImportSummary({ activities: e.activities }),
           tags: "[]",
           activities: {
             create: e.activities.map((a, i) => ({

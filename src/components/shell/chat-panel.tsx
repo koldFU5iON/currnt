@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState, useTransition } from 'react'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport, isTextUIPart, type UIMessage } from 'ai'
-import { Sparkles, X, Send, Bot, SquarePen, Maximize2, Minimize2, FileText, Briefcase, Mail, ClipboardList } from 'lucide-react'
+import { Sparkles, X, Send, Bot, SquarePen, Maximize2, Minimize2, FileText, Briefcase, Mail, ClipboardList, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -88,6 +88,11 @@ const CONTEXT_META: Record<
     icon: ClipboardList,
     label: (ctx) =>
       `Interview prep${ctx.type === 'interview_prep' && ctx.company ? ` · ${ctx.company}` : ''}`,
+  },
+  profile: {
+    icon: User,
+    label: (ctx) =>
+      `Profile${ctx.type === 'profile' && ctx.activeExperienceName ? ` · ${ctx.activeExperienceName}` : ''}`,
   },
 }
 

@@ -331,6 +331,7 @@ export async function deleteCompetency(id: string) {
 type ProjectData = {
   name: string
   description: string
+  experienceId?: string
   url?: string
   repoUrl?: string
   startDate?: Date
@@ -342,10 +343,20 @@ type ProjectData = {
 
 export async function createProject(data: ProjectData) {
   const { profile } = await requireProfile()
-  const { highlights, tags, ...rest } = data
+  const { highlights, tags, experienceId, ...rest } = data
+
+  if (experienceId) {
+    const experience = await prisma.experience.findFirst({
+      where: { id: experienceId, profileId: profile.id },
+      select: { id: true },
+    })
+    if (!experience) throw new Error('Experience not found')
+  }
+
   const project = await prisma.project.create({
     data: {
       ...rest,
+      experienceId,
       profileId: profile.id,
       highlights: JSON.stringify(highlights ?? []),
       tags: JSON.stringify(tags ?? []),
@@ -365,6 +376,16 @@ export async function updateProject(id: string, data: ProjectData) {
       ...(highlights !== undefined ? { highlights: JSON.stringify(highlights) } : {}),
       ...(tags !== undefined ? { tags: JSON.stringify(tags) } : {}),
     },
+  })
+  revalidatePath('/dashboard/profile')
+  return project
+}
+
+export async function updateProjectNotes(id: string, notes: string) {
+  const { profile } = await requireProfile()
+  const project = await prisma.project.update({
+    where: { id, profileId: profile.id },
+    data: { notes },
   })
   revalidatePath('/dashboard/profile')
   return project
