@@ -28,17 +28,9 @@ export function NoteEditor({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const mountedRef = useRef(true)
   const viewRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    return () => {
-      mountedRef.current = false
-      if (debounceRef.current) clearTimeout(debounceRef.current)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (isEditing) textareaRef.current?.focus()
-  }, [isEditing])
+  const latestContent = useRef(content)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const latestSave = useRef<(value: string) => Promise<void>>(async () => {})
 
   const save = useCallback(
     async (value: string) => {
@@ -52,6 +44,29 @@ export function NoteEditor({
     },
     [onSave, onSaveStateChange],
   )
+
+  useEffect(() => {
+    latestContent.current = content
+  }, [content])
+
+  useEffect(() => {
+    latestSave.current = save
+  }, [save])
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+        debounceRef.current = null
+        void latestSave.current(latestContent.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (isEditing) textareaRef.current?.focus()
+  }, [isEditing])
 
   function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     const value = e.target.value

@@ -53,7 +53,7 @@ export function ProjectsPanel({
 
   async function handleDelete(id: string) {
     const prev = projects
-    setProjects(p => p.filter(p => p.id !== id))
+    setProjects(prev => prev.filter(item => item.id !== id))
     try { await deleteProject(id) } catch { setProjects(prev) }
   }
 
