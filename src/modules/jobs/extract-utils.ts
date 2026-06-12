@@ -57,3 +57,26 @@ export function formatSalaryBand(baseSalary: unknown): string | undefined {
   if (typeof sal.value === 'number') return `${sym}${abbrevAmount(sal.value)}`
   return undefined
 }
+
+export const COMPLETE_THRESHOLD = 0.65
+
+export function scoreCompleteness(data: ExtractedJob): number {
+  let score = 0
+  if (data.title)          score += 0.25
+  if (data.company)        score += 0.25
+  if (data.jobDescription) score += 0.40
+  if (data.location || data.salaryBand || data.datePublished || data.jobNumber) score += 0.10
+  return score
+}
+
+export function mergeExtractedJob(base: ExtractedJob, overlay: ExtractedJob): ExtractedJob {
+  return {
+    title:          base.title          ?? overlay.title,
+    company:        base.company        ?? overlay.company,
+    location:       base.location       ?? overlay.location,
+    jobDescription: base.jobDescription ?? overlay.jobDescription,
+    jobNumber:      base.jobNumber      ?? overlay.jobNumber,
+    datePublished:  base.datePublished  ?? overlay.datePublished,
+    salaryBand:     base.salaryBand     ?? overlay.salaryBand,
+  }
+}
