@@ -331,6 +331,7 @@ export async function deleteCompetency(id: string) {
 type ProjectData = {
   name: string
   description: string
+  experienceId?: string
   url?: string
   repoUrl?: string
   startDate?: Date
@@ -365,6 +366,16 @@ export async function updateProject(id: string, data: ProjectData) {
       ...(highlights !== undefined ? { highlights: JSON.stringify(highlights) } : {}),
       ...(tags !== undefined ? { tags: JSON.stringify(tags) } : {}),
     },
+  })
+  revalidatePath('/dashboard/profile')
+  return project
+}
+
+export async function updateProjectNotes(id: string, notes: string) {
+  const { profile } = await requireProfile()
+  const project = await prisma.project.update({
+    where: { id, profileId: profile.id },
+    data: { notes },
   })
   revalidatePath('/dashboard/profile')
   return project
