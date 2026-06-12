@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { updateExperienceDetails } from '@/modules/profile/actions'
@@ -99,10 +99,12 @@ function InlineField({
 }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(value)
+  const [prevValue, setPrevValue] = useState(value)
 
-  useEffect(() => {
+  if (value !== prevValue) {
+    setPrevValue(value)
     if (!editing) setDraft(value)
-  }, [value, editing])
+  }
 
   async function handleBlur() {
     setEditing(false)

@@ -29,7 +29,6 @@ export function NoteEditor({
   const mountedRef = useRef(true)
   const viewRef = useRef<HTMLDivElement>(null)
   const latestContent = useRef(content)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const latestSave = useRef<(value: string) => Promise<void>>(async () => {})
 
   const save = useCallback(

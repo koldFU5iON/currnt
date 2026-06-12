@@ -2,7 +2,7 @@ import { expect, test } from 'vitest'
 import { buildProfileSummary } from './profile-summary'
 import type { FullProfile } from '@/app/types/profile'
 
-function makeProfile(overrides: Partial<FullProfile> = {}): FullProfile {
+function makeProfile(overrides: Record<string, unknown> = {}): FullProfile {
   return {
     id: 'p1', userId: 'u1',
     name: 'Devon Stanton', headline: 'Senior Engineer',
@@ -31,7 +31,7 @@ test('includes top 6 skills by yearsOfExperience', () => {
     id: `s${i}`, profileId: 'p1', name: `Skill${i}`, category: 'Tech',
     level: 'Advanced', yearsOfExperience: i, tags: [], createdAt: new Date(), updatedAt: new Date(),
   }))
-  const result = buildProfileSummary(makeProfile({ skills: skills as any }))
+  const result = buildProfileSummary(makeProfile({ skills }))
   expect(result).toContain('Skill7')
   expect(result).toContain('Skill6')
   expect(result).not.toContain('Skill0')
@@ -45,7 +45,7 @@ test('formats experience as role @ company (year–year)', () => {
     location: null, remote: false, summary: '', tags: [], activities: [],
     notesUpdatedAt: null, createdAt: new Date(), updatedAt: new Date(),
   }]
-  const result = buildProfileSummary(makeProfile({ experiences: experiences as any }))
+  const result = buildProfileSummary(makeProfile({ experiences }))
   expect(result).toContain('Lead Engineer @ Acme (2021–present)')
 })
 
@@ -55,12 +55,12 @@ test('includes education when present', () => {
     field: null, startDate: new Date('2008-09-01'), endDate: new Date('2011-06-01'),
     grade: null, tags: [], createdAt: new Date(), updatedAt: new Date(),
   }]
-  const result = buildProfileSummary(makeProfile({ educations: educations as any }))
+  const result = buildProfileSummary(makeProfile({ educations }))
   expect(result).toContain('BSc Computer Science, Leeds')
 })
 
 test('handles empty profile gracefully', () => {
-  const result = buildProfileSummary(makeProfile({ name: null } as any))
+  const result = buildProfileSummary(makeProfile({ name: null }))
   expect(typeof result).toBe('string')
   expect(result.length).toBeGreaterThan(0)
 })
