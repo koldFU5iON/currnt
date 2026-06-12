@@ -99,6 +99,19 @@ async function renderWithPuppeteer(url: string): Promise<string> {
   })
   try {
     const page = await browser.newPage()
+    await page.setRequestInterception(true)
+    page.on('request', async (req) => {
+      const reqUrl = req.url()
+      if (!reqUrl.startsWith('http://') && !reqUrl.startsWith('https://')) {
+        req.abort()
+        return
+      }
+      try {
+        const safe = await isSafeUrl(reqUrl)
+        if (!safe) { req.abort(); return }
+      } catch { req.abort(); return }
+      req.continue()
+    })
     await page.setUserAgent(UA)
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 20_000 })
     return await page.content()
@@ -116,17 +129,20 @@ const FETCH_HEADERS = {
 }
 
 export async function fetchPageContent(url: string): Promise<FetchResult> {
+  if (!(await isSafeUrl(url))) {
+    return { ok: false, error: 'Invalid URL — only public HTTPS job pages are supported.' }
+  }
   let html: string
   try {
     const res = await fetch(url, {
       headers: FETCH_HEADERS,
       signal: AbortSignal.timeout(12_000),
     })
-    try {
-      if (!isSafeHostname(new URL(res.url).hostname)) {
+    if (res.url && res.url !== url) {
+      if (!(await isSafeUrl(res.url))) {
         return { ok: false, error: 'Invalid URL — only public HTTPS job pages are supported.' }
       }
-    } catch { /* unparseable final URL — proceed */ }
+    }
     if (!res.ok) {
       return {
         ok: false,
