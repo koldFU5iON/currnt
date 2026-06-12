@@ -93,9 +93,9 @@ async function renderWithPuppeteer(url: string): Promise<string> {
   const executablePath = await getChromiumPath()
   const browser = await puppeteer.launch({
     args: chromium.args,
-    defaultViewport: chromium.defaultViewport,
+    defaultViewport: { width: 1280, height: 800 },
     executablePath,
-    headless: chromium.headless,
+    headless: 'shell' as const,
   })
   try {
     const page = await browser.newPage()
