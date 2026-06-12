@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { toast } from 'sonner'
 import { ChevronDown, ChevronUp, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -29,6 +30,7 @@ export function ActivitiesTray({ experienceId, initialActivities }: Props) {
   const [kind, setKind] = useState<RoleActivityKindType>(RoleActivityKind.Responsibility)
   const [description, setDescription] = useState('')
   const [impact, setImpact] = useState('')
+  const [saving, setSaving] = useState(false)
 
   const responsibilities = activities.filter(a => a.kind === RoleActivityKind.Responsibility)
   const achievements = activities.filter(a => a.kind === RoleActivityKind.Achievement)
@@ -48,6 +50,7 @@ export function ActivitiesTray({ experienceId, initialActivities }: Props) {
     setDescription(a.description)
     setImpact(a.impact ?? '')
     setFormVisible(true)
+    setExpanded(true)
   }
 
   function closeForm() {
@@ -56,20 +59,35 @@ export function ActivitiesTray({ experienceId, initialActivities }: Props) {
   }
 
   async function handleSave() {
-    if (!description.trim()) return
+    if (!description.trim() || saving) return
+    setSaving(true)
     const data = { kind, description: description.trim(), impact: impact.trim() || undefined }
     try {
       if (editing) {
         const updated = await updateActivity(editing.id, data)
+        const updatedActivity: RoleActivity = {
+          ...updated,
+          kind: updated.kind as RoleActivityKindType,
+          tags: [],
+        }
         setActivities(prev =>
-          prev.map(a => a.id === editing.id ? updated as unknown as RoleActivity : a)
+          prev.map(a => a.id === editing.id ? updatedActivity : a)
         )
       } else {
         const created = await createActivity(experienceId, data)
-        setActivities(prev => [...prev, created as unknown as RoleActivity])
+        const newActivity: RoleActivity = {
+          ...created,
+          kind: created.kind as RoleActivityKindType,
+          tags: [],
+        }
+        setActivities(prev => [...prev, newActivity])
       }
       closeForm()
-    } catch {}
+    } catch {
+      toast.error('Failed to save activity. Please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function handleDelete(id: string) {
@@ -82,8 +100,18 @@ export function ActivitiesTray({ experienceId, initialActivities }: Props) {
     <div className="shrink-0 border-t">
       {/* Header row — always visible */}
       <div
+        role="button"
+        tabIndex={0}
         className="flex cursor-pointer items-center gap-2 px-3 py-2 transition-colors hover:bg-muted/50"
         onClick={() => setExpanded(v => !v)}
+        onKeyDown={e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            setExpanded(v => !v)
+          }
+        }}
+        aria-expanded={expanded}
+        aria-label="Toggle activities"
       >
         <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           Activities
@@ -162,7 +190,7 @@ export function ActivitiesTray({ experienceId, initialActivities }: Props) {
                 <Button variant="secondary" size="sm" className="h-6 text-xs" onClick={closeForm}>
                   Cancel
                 </Button>
-                <Button size="sm" className="h-6 text-xs" onClick={handleSave}>
+                <Button size="sm" className="h-6 text-xs" onClick={handleSave} disabled={saving}>
                   {editing ? 'Save' : 'Add'}
                 </Button>
               </div>
