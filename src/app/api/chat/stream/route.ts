@@ -44,7 +44,11 @@ export async function POST(request: Request) {
 
   const systemPrompt = await buildSystemPrompt(profileId, ctxParsed.data)
 
-  const modelMessages = await convertToModelMessages(messages)
+  const allModelMessages = await convertToModelMessages(messages)
+  // Cap history sent to the model. Long-term context is preserved via ChatMemory
+  // summaries already injected into the system prompt by buildSystemPrompt.
+  const HISTORY_WINDOW = 20
+  const modelMessages = allModelMessages.slice(-HISTORY_WINDOW)
 
   const result = streamText({
     model: resolvedChat.languageModel,
@@ -53,6 +57,30 @@ export async function POST(request: Request) {
     tools: createChatTools(profileId),
     stopWhen: stepCountIs(5),
     maxOutputTokens: 2048,
+    // Anthropic-specific cost optimisations: cache the system prompt (~10% cost
+    // on repeated turns) and auto-compact the conversation when it grows large,
+    // keeping a synthesised brief instead of raw tool results.
+    providerOptions: resolvedChat.provider === 'anthropic'
+      ? {
+          anthropic: {
+            cacheControl: { type: 'ephemeral' },
+            contextManagement: {
+              edits: [
+                {
+                  type: 'compact_20260112' as const,
+                  trigger: { type: 'input_tokens' as const, value: 8000 },
+                  instructions:
+                    'Compress the conversation into a concise working brief. ' +
+                    'Preserve: key facts about the user\'s background, ' +
+                    'any CV or job description content already discussed, ' +
+                    'decisions or feedback given, and outstanding action items. ' +
+                    'Drop raw document blobs — keep only the synthesised insights.',
+                },
+              ],
+            },
+          },
+        }
+      : undefined,
     onFinish: ({ totalUsage }) => {
       after(async () => {
         await prisma.llmUsageLog
