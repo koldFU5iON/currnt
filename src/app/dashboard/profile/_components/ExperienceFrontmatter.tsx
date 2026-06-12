@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { updateExperienceDetails } from '@/modules/profile/actions'
@@ -100,6 +100,10 @@ function InlineField({
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(value)
 
+  useEffect(() => {
+    if (!editing) setDraft(value)
+  }, [value, editing])
+
   async function handleBlur() {
     setEditing(false)
     if (draft.trim() && draft !== value) await onSave(draft.trim())
@@ -125,8 +129,17 @@ function InlineField({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-label={`Edit ${label}`}
       className="group flex cursor-pointer flex-col gap-0.5"
       onClick={() => setEditing(true)}
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          setEditing(true)
+        }
+      }}
     >
       <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
         {label}
