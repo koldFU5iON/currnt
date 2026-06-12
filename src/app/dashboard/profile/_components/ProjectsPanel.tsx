@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { createProject, deleteProject } from '@/modules/profile/actions'
@@ -35,13 +36,19 @@ export function ProjectsPanel({
         description: '',
         experienceId,
       })
-      const project = created as unknown as Project
+      const project: Project = {
+        ...created,
+        highlights: JSON.parse(created.highlights ?? '[]') as string[],
+        tags: JSON.parse(created.tags ?? '[]') as string[],
+      }
       setProjects(prev => [...prev, project])
       setAddingNew(false)
       setNewName('')
       onProjectCreated(project)
       onSelect(created.id)
-    } catch {}
+    } catch {
+      toast.error('Failed to create project. Please try again.')
+    }
   }
 
   async function handleDelete(id: string) {
@@ -62,6 +69,7 @@ export function ProjectsPanel({
           className="h-4 w-4"
           onClick={() => setAddingNew(true)}
           aria-label="Add project"
+          disabled={addingNew}
         >
           <Plus size={10} />
         </Button>
@@ -71,6 +79,9 @@ export function ProjectsPanel({
         {projects.map(project => (
           <div
             key={project.id}
+            role="button"
+            tabIndex={0}
+            aria-label={`Select project ${project.name}`}
             className={cn(
               'group relative cursor-pointer rounded px-1.5 py-1 text-[11px] leading-snug transition-colors',
               selectedProjectId === project.id
@@ -78,6 +89,12 @@ export function ProjectsPanel({
                 : 'border border-transparent text-muted-foreground hover:bg-muted',
             )}
             onClick={() => onSelect(project.id)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onSelect(project.id)
+              }
+            }}
           >
             <span className="block break-words pr-4">{project.name}</span>
             <Button
