@@ -152,5 +152,11 @@ function formatPageContext(ctx: PageContext): string {
         `${ctx.status ? ` (${ctx.status})` : ''}\n` +
         `Job ID: ${ctx.jobId} — use this with get_job_application to fetch the full description, fit score, and notes`
       )
+    case 'profile':
+      return (
+        `User is editing their career profile${ctx.activeExperienceName ? ` — currently on experience: "${ctx.activeExperienceName}"` : ''}\n` +
+        `Profile summary: ${ctx.profileSummary}` +
+        (ctx.activeExperienceId ? `\nActive experience ID: ${ctx.activeExperienceId}` : '')
+      )
   }
 }
