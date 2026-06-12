@@ -71,12 +71,12 @@ export function scoreCompleteness(data: ExtractedJob): number {
 
 export function mergeExtractedJob(base: ExtractedJob, overlay: ExtractedJob): ExtractedJob {
   return {
-    title:          base.title          ?? overlay.title,
-    company:        base.company        ?? overlay.company,
-    location:       base.location       ?? overlay.location,
-    jobDescription: base.jobDescription ?? overlay.jobDescription,
-    jobNumber:      base.jobNumber      ?? overlay.jobNumber,
-    datePublished:  base.datePublished  ?? overlay.datePublished,
-    salaryBand:     base.salaryBand     ?? overlay.salaryBand,
+    title:          base.title          || overlay.title,
+    company:        base.company        || overlay.company,
+    location:       base.location       || overlay.location,
+    jobDescription: base.jobDescription || overlay.jobDescription,
+    jobNumber:      base.jobNumber      || overlay.jobNumber,
+    datePublished:  base.datePublished  || overlay.datePublished,
+    salaryBand:     base.salaryBand     || overlay.salaryBand,
   }
 }
