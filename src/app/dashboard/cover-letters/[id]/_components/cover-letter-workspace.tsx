@@ -261,6 +261,19 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
             panelOpen && 'opacity-50'
           )}
         >
+          {(() => {
+            const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0
+            const wordCountColor =
+              wordCount === 0 ? 'text-muted-foreground' :
+              wordCount < 400 ? 'text-destructive' :
+              wordCount <= 600 ? 'text-emerald-600 dark:text-emerald-400' :
+              'text-amber-500'
+            return wordCount > 0 && (
+              <p className={`mb-2 text-right text-xs ${wordCountColor}`}>
+                {wordCount} words {wordCount < 400 ? '· aim for 400–600' : wordCount > 600 ? '· consider trimming' : '· good length'}
+              </p>
+            )
+          })()}
           <div className="flex w-full max-w-[794px] flex-1 flex-col rounded-md bg-background p-5 shadow-sm">
             {!showEditor && content === '' ? (
               <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 text-center">
@@ -395,9 +408,9 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
                     <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                       Full description
                     </p>
-                    <p className="whitespace-pre-wrap text-xs text-muted-foreground">
-                      {job.jobDescription}
-                    </p>
+                    <div className="prose prose-xs dark:prose-invert max-w-none text-xs [&_*]:text-muted-foreground [&_li]:my-0">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{job.jobDescription}</ReactMarkdown>
+                    </div>
                   </div>
                 )}
               </>
@@ -406,9 +419,9 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
                 <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                   Job Description
                 </p>
-                <p className="whitespace-pre-wrap text-xs text-muted-foreground">
-                  {job.jobDescription}
-                </p>
+                <div className="prose prose-xs dark:prose-invert max-w-none text-xs [&_*]:text-muted-foreground [&_li]:my-0">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{job.jobDescription}</ReactMarkdown>
+                </div>
               </div>
             ) : (
               <p className="text-xs text-muted-foreground">
