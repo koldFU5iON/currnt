@@ -27,9 +27,9 @@ export function NoteEditor({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const mountedRef = useRef(true)
+  const viewRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    mountedRef.current = true
     return () => {
       mountedRef.current = false
       if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -58,7 +58,10 @@ export function NoteEditor({
     setContent(value)
     onSaveStateChange?.('idle')
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => void save(value), 1500)
+    debounceRef.current = setTimeout(() => {
+      debounceRef.current = null
+      void save(value)
+    }, 1500)
   }
 
   function handleBlur() {
@@ -68,6 +71,7 @@ export function NoteEditor({
       debounceRef.current = null
       void save(content)
     }
+    setTimeout(() => viewRef.current?.focus(), 0)
   }
 
   return (
@@ -83,12 +87,18 @@ export function NoteEditor({
         />
       ) : (
         <div
+          ref={viewRef}
           role="button"
           tabIndex={0}
           onClick={() => setIsEditing(true)}
-          onKeyDown={e => { if (e.key === 'Enter') setIsEditing(true) }}
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setIsEditing(true)
+            }
+          }}
           className="h-full cursor-text overflow-y-auto p-4"
-          aria-label="Click to edit"
+          aria-label="Edit note"
         >
           {content ? (
             <div className="prose prose-sm dark:prose-invert max-w-none">
