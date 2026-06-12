@@ -51,13 +51,7 @@ export async function commitImportedProfile(payload: ExtractedProfile): Promise<
           endDate: e.endDate ?? undefined,
           location: e.location ?? undefined,
           remote: e.remote,
-          summary: e.summary || buildImportSummary({
-            role: e.role,
-            company: e.company,
-            startDate: new Date(e.startDate),
-            endDate: e.endDate ? new Date(e.endDate) : null,
-            activities: e.activities,
-          }),
+          summary: e.summary || buildImportSummary({ activities: e.activities }),
           tags: "[]",
           activities: {
             create: e.activities.map((a, i) => ({

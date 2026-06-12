@@ -1,14 +1,6 @@
 type Activity = { kind: string; description: string }
 
-type ExperienceInput = {
-  role: string
-  company: string
-  startDate: Date
-  endDate: Date | null
-  activities: Activity[]
-}
-
-export function buildImportSummary(exp: ExperienceInput): string {
+export function buildImportSummary(exp: { activities: Activity[] }): string {
   if (exp.activities.length === 0) return ''
 
   const responsibilities = exp.activities.filter(a => a.kind === 'responsibility')

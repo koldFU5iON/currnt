@@ -2,22 +2,12 @@ import { expect, test } from 'vitest'
 import { buildImportSummary } from './summary-builder'
 
 test('returns empty string when no activities', () => {
-  const result = buildImportSummary({
-    role: 'Engineer',
-    company: 'Acme',
-    startDate: new Date('2021-01-01'),
-    endDate: null,
-    activities: [],
-  })
+  const result = buildImportSummary({ activities: [] })
   expect(result).toBe('')
 })
 
 test('builds responsibilities section', () => {
   const result = buildImportSummary({
-    role: 'Engineer',
-    company: 'Acme',
-    startDate: new Date('2021-01-01'),
-    endDate: null,
     activities: [
       { kind: 'responsibility', description: 'Led platform team' },
       { kind: 'responsibility', description: 'Owned CI/CD pipeline' },
@@ -30,10 +20,6 @@ test('builds responsibilities section', () => {
 
 test('builds achievements section', () => {
   const result = buildImportSummary({
-    role: 'Engineer',
-    company: 'Acme',
-    startDate: new Date('2021-01-01'),
-    endDate: null,
     activities: [
       { kind: 'achievement', description: 'Reduced deploy time 70%' },
     ],
@@ -45,10 +31,6 @@ test('builds achievements section', () => {
 
 test('includes both sections when both kinds present', () => {
   const result = buildImportSummary({
-    role: 'Engineer',
-    company: 'Acme',
-    startDate: new Date('2021-01-01'),
-    endDate: null,
     activities: [
       { kind: 'responsibility', description: 'Led team' },
       { kind: 'achievement', description: 'Shipped feature' },
