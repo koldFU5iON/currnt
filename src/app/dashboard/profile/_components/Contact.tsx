@@ -3,7 +3,18 @@
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { AlertTriangleIcon, Check, Globe, Link2, Mail, MapPin, Pencil, Phone, X } from "lucide-react"
+import {
+  AlertTriangleIcon,
+  Check,
+  ExternalLink,
+  Globe,
+  Link2,
+  Mail,
+  MapPin,
+  Pencil,
+  Phone,
+  X,
+} from "lucide-react"
 import { updateContactField, type ContactField } from "@/modules/profile/actions"
 
 type ContactBlockProps = {
@@ -19,9 +30,15 @@ type EditableFieldProps = {
   field: ContactField
   value?: string
   label: string
+  isLink?: boolean
 }
 
-function EditableField({ icon, field, value, label }: EditableFieldProps) {
+function toHref(value: string) {
+  if (value.startsWith('http://') || value.startsWith('https://')) return value
+  return `https://${value}`
+}
+
+function EditableField({ icon, field, value, label, isLink }: EditableFieldProps) {
   const [editing, setEditing] = useState(false)
   const [current, setCurrent] = useState(value)
   const [draft, setDraft] = useState(value ?? '')
@@ -47,7 +64,13 @@ function EditableField({ icon, field, value, label }: EditableFieldProps) {
 
   if (editing) {
     return (
-      <div className="flex items-center gap-2 px-1 py-1">
+      // onBlur on the container: save when focus leaves the whole edit group
+      <div
+        className="flex items-center gap-2 px-1 py-1"
+        onBlur={e => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node)) handleSave()
+        }}
+      >
         <span className="text-muted-foreground shrink-0">{icon}</span>
         <Input
           className="h-7 text-sm py-0"
@@ -74,18 +97,44 @@ function EditableField({ icon, field, value, label }: EditableFieldProps) {
     <div
       role="button"
       tabIndex={0}
-      className="group flex items-center gap-2 px-1 py-1.5 rounded cursor-pointer hover:bg-accent/60 transition-colors"
+      className="group flex min-w-0 items-center gap-2 px-1 py-1.5 rounded cursor-pointer hover:bg-accent/60 transition-colors"
       onClick={() => setEditing(true)}
       onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setEditing(true) } }}
       aria-label={`Edit ${label}`}
     >
       <span className="text-muted-foreground shrink-0">{icon}</span>
-      {error
-        ? <span className="text-xs text-destructive">Failed to save</span>
-        : current
-          ? <span className="text-sm">{current}</span>
-          : <AlertTriangleIcon size={14} className="text-amber-500" aria-label={`${label} not set`} />
-      }
+
+      {/* External link button — shown for URL fields when a value exists */}
+      {isLink && current && (
+        <a
+          href={toHref(current)}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={e => e.stopPropagation()}
+          className="shrink-0 text-muted-foreground transition-colors hover:text-primary"
+          aria-label={`Open ${label}`}
+          tabIndex={0}
+        >
+          <ExternalLink size={12} />
+        </a>
+      )}
+
+      <div className="min-w-0 flex-1">
+        {error
+          ? <span className="text-xs text-destructive">Failed to save</span>
+          : current
+            ? (
+              <span
+                className="block truncate text-sm"
+                title={current}
+              >
+                {current}
+              </span>
+            )
+            : <AlertTriangleIcon size={14} className="text-amber-500" aria-label={`${label} not set`} />
+        }
+      </div>
+
       <Pencil size={11} className="ml-auto opacity-0 group-hover:opacity-40 transition-opacity shrink-0" />
     </div>
   )
@@ -96,8 +145,8 @@ export function ContactBlock({ contact }: { contact: ContactBlockProps }) {
     <div className="ml-2 mt-2 space-y-0.5">
       <EditableField icon={<Mail size={14} />} field="email" value={contact.email} label="Email" />
       <EditableField icon={<Phone size={14} />} field="phone" value={contact.phone} label="Phone" />
-      <EditableField icon={<Link2 size={14} />} field="linkedIn" value={contact.profile} label="LinkedIn" />
-      <EditableField icon={<Globe size={14} />} field="website" value={contact.site} label="Website" />
+      <EditableField icon={<Link2 size={14} />} field="linkedIn" value={contact.profile} label="LinkedIn" isLink />
+      <EditableField icon={<Globe size={14} />} field="website" value={contact.site} label="Website" isLink />
       <EditableField icon={<MapPin size={14} />} field="location" value={contact.location} label="Location" />
     </div>
   )

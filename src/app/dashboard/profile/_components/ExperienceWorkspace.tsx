@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useWorkspaceContext } from '@/lib/context/page-context'
@@ -19,6 +19,7 @@ import { ExperienceFrontmatter } from './ExperienceFrontmatter'
 import { ActivitiesTray } from './ActivitiesTray'
 import { ProjectsPanel } from './ProjectsPanel'
 import { ExperienceDialog } from './Experience'
+import { EditExperienceDialog, DeleteExperienceDialog } from './ExperienceManageDialogs'
 
 type ActiveContext =
   | { type: 'experience' }
@@ -37,7 +38,36 @@ export function ExperienceWorkspace({ profile }: Props) {
   )
   const [activeContext, setActiveContext] = useState<ActiveContext>({ type: 'experience' })
   const [addOpen, setAddOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
   const [saveState, setSaveState] = useState<SaveState>('idle')
+
+  // Tab bar scroll state
+  const tabBarRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+
+  function updateScrollState() {
+    const el = tabBarRef.current
+    if (!el) return
+    setCanScrollLeft(el.scrollLeft > 0)
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1)
+  }
+
+  useEffect(() => {
+    const el = tabBarRef.current
+    if (!el) return
+    updateScrollState()
+    el.addEventListener('scroll', updateScrollState)
+    const ro = new ResizeObserver(updateScrollState)
+    ro.observe(el)
+    return () => {
+      el.removeEventListener('scroll', updateScrollState)
+      ro.disconnect()
+    }
+  }, [])
+
+  useEffect(() => { updateScrollState() }, [experiences])
 
   const selectedExperience = experiences.find(e => e.id === selectedExperienceId)
   const experienceProjects = allProjects.filter(
@@ -88,6 +118,28 @@ export function ExperienceWorkspace({ profile }: Props) {
     setAllProjects(prev => [...prev, project])
   }
 
+  function handleExperienceDeleted() {
+    const remaining = experiences.filter(e => e.id !== selectedExperienceId)
+    setExperiences(remaining)
+    setDeleteOpen(false)
+    selectExperience(remaining[0]?.id ?? '')
+    router.refresh()
+  }
+
+  function handleExperienceUpdated(data: {
+    company: string
+    role: string
+    location?: string
+    remote: boolean
+    startDate: Date
+    endDate?: Date
+  }) {
+    setExperiences(prev =>
+      prev.map(e => (e.id === selectedExperienceId ? { ...e, ...data } : e)),
+    )
+    router.refresh()
+  }
+
   const noteKey =
     selectedExperienceId +
     '-' +
@@ -129,26 +181,65 @@ export function ExperienceWorkspace({ profile }: Props) {
   return (
     <div className="flex flex-1 flex-col overflow-hidden rounded-xl border">
       {/* Tab bar */}
-      <div className="flex shrink-0 overflow-x-auto border-b bg-muted/50">
-        {experiences.map(exp => (
-          <button
-            key={exp.id}
-            type="button"
-            onClick={() => selectExperience(exp.id)}
-            className={cn(
-              'whitespace-nowrap border-b-2 px-3 py-2 text-xs transition-colors',
-              exp.id === selectedExperienceId
-                ? '-mb-px border-primary bg-background font-semibold text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground',
-            )}
-          >
-            {exp.company} · {new Date(exp.startDate).getFullYear()}
-          </button>
-        ))}
+      <div className="flex shrink-0 items-stretch border-b bg-muted/50">
+        {/* Left scroll arrow */}
+        <button
+          type="button"
+          onClick={() => tabBarRef.current?.scrollBy({ left: -200, behavior: 'smooth' })}
+          className={cn(
+            'shrink-0 border-r px-1.5 text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground',
+            !canScrollLeft && 'pointer-events-none opacity-0',
+          )}
+          aria-label="Scroll tabs left"
+          tabIndex={canScrollLeft ? 0 : -1}
+        >
+          <ChevronLeft size={13} />
+        </button>
+
+        {/* Scrollable tabs */}
+        <div
+          ref={tabBarRef}
+          className="flex min-w-0 flex-1 overflow-x-auto"
+          style={{ scrollbarWidth: 'none' }}
+        >
+          {experiences.map(exp => (
+            <button
+              key={exp.id}
+              type="button"
+              onClick={() => selectExperience(exp.id)}
+              className={cn(
+                'whitespace-nowrap border-b-2 px-3 py-2 text-xs transition-colors',
+                exp.id === selectedExperienceId
+                  ? '-mb-px border-primary bg-background font-semibold text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {exp.company} · {new Date(exp.startDate).getFullYear()}
+            </button>
+          ))}
+        </div>
+
+        {/* Right scroll arrow */}
+        <button
+          type="button"
+          onClick={() => tabBarRef.current?.scrollBy({ left: 200, behavior: 'smooth' })}
+          className={cn(
+            'shrink-0 border-l px-1.5 text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground',
+            !canScrollRight && 'pointer-events-none opacity-0',
+          )}
+          aria-label="Scroll tabs right"
+          tabIndex={canScrollRight ? 0 : -1}
+        >
+          <ChevronRight size={13} />
+        </button>
+
+        <div className="w-px shrink-0 bg-border" />
+
+        {/* Add button — always visible */}
         <button
           type="button"
           onClick={() => setAddOpen(true)}
-          className="ml-auto whitespace-nowrap px-3 py-2 text-xs text-muted-foreground hover:text-foreground"
+          className="shrink-0 whitespace-nowrap px-3 py-2 text-xs text-muted-foreground hover:text-foreground"
         >
           + Add
         </button>
@@ -161,6 +252,8 @@ export function ExperienceWorkspace({ profile }: Props) {
           saveState={saveState}
           projectName={selectedProject?.name}
           onBack={() => setActiveContext({ type: 'experience' })}
+          onEditClick={() => setEditOpen(true)}
+          onDeleteClick={() => setDeleteOpen(true)}
         />
       )}
 
@@ -198,11 +291,29 @@ export function ExperienceWorkspace({ profile }: Props) {
         )}
       </div>
 
-      {addOpen && experiences.length > 0 && (
+      {addOpen && (
         <ExperienceDialog
           open={addOpen}
           onOpenChange={setAddOpen}
           onSave={handleAddExperience}
+        />
+      )}
+
+      {selectedExperience && editOpen && (
+        <EditExperienceDialog
+          experience={selectedExperience}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          onSaved={handleExperienceUpdated}
+        />
+      )}
+
+      {selectedExperience && deleteOpen && (
+        <DeleteExperienceDialog
+          experience={selectedExperience}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          onDeleted={handleExperienceDeleted}
         />
       )}
     </div>

@@ -2,8 +2,16 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { updateExperienceDetails } from '@/modules/profile/actions'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import type { ExperienceWithActivities } from '@/app/types/profile'
 import type { SaveState } from './NoteEditor'
 
@@ -12,6 +20,8 @@ type Props = {
   saveState: SaveState
   projectName?: string
   onBack?: () => void
+  onEditClick?: () => void
+  onDeleteClick?: () => void
 }
 
 const fmtDate = (d: Date) =>
@@ -28,7 +38,14 @@ function getDetailsFields(exp: ExperienceWithActivities) {
   }
 }
 
-export function ExperienceFrontmatter({ experience, saveState, projectName, onBack }: Props) {
+export function ExperienceFrontmatter({
+  experience,
+  saveState,
+  projectName,
+  onBack,
+  onEditClick,
+  onDeleteClick,
+}: Props) {
   const router = useRouter()
 
   if (projectName !== undefined) {
@@ -53,14 +70,39 @@ export function ExperienceFrontmatter({ experience, saveState, projectName, onBa
     )
   }
 
-  async function saveField(field: keyof ReturnType<typeof getDetailsFields>, value: string | boolean) {
+  async function saveField(
+    field: keyof ReturnType<typeof getDetailsFields>,
+    value: string | boolean,
+  ) {
     const current = getDetailsFields(experience)
     await updateExperienceDetails(experience.id, { ...current, [field]: value })
     router.refresh()
   }
 
   return (
-    <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 border-b bg-muted/30 px-3 py-2 text-xs">
+    <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-b bg-muted/30 px-3 py-2 text-xs">
+      {/* Options dropdown */}
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          aria-label="Experience options"
+        >
+          <MoreHorizontal size={14} />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          <DropdownMenuItem onClick={onEditClick}>
+            <Pencil size={13} className="mr-2" /> Edit details
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            className="text-destructive focus:text-destructive"
+            onClick={onDeleteClick}
+          >
+            <Trash2 size={13} className="mr-2" /> Delete experience
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
       <InlineField
         label="Company"
         value={experience.company}
@@ -122,7 +164,10 @@ function InlineField({
           value={draft}
           onChange={e => setDraft(e.target.value)}
           onBlur={handleBlur}
-          onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
+          onKeyDown={e => {
+            if (e.key === 'Enter') e.currentTarget.blur()
+            if (e.key === 'Escape') { setDraft(value); setEditing(false) }
+          }}
           className="border-b border-primary bg-transparent text-xs font-semibold outline-none"
         />
       </div>
