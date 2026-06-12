@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { RotateCcw, Download, MessageSquare, Loader2, RefreshCw, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -341,9 +343,9 @@ export function CvEditor({ cv }: Props) {
                   <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                     Job Description
                   </p>
-                  <p className="whitespace-pre-wrap text-xs text-muted-foreground">
-                    {cv.jobApplication.jobDescription}
-                  </p>
+                  <div className="prose prose-xs dark:prose-invert max-w-none text-xs [&_*]:text-muted-foreground [&_li]:my-0">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{cv.jobApplication.jobDescription}</ReactMarkdown>
+                  </div>
                 </div>
               )}
               <div className="mt-auto border-t pt-3">
