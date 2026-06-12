@@ -80,6 +80,7 @@ model Experience {
   profile      Profile           @relation(fields: [profileId], references: [id], onDelete: Cascade)
   activities RoleActivity[]
   skills     ExperienceSkill[]
+  projects   Project[]
 
   @@index([profileId])
 }
@@ -103,24 +104,28 @@ model RoleActivity {
 }
 
 model Project {
-  id          String    @id @default(cuid())
-  profileId   String
-  name        String
-  description String
-  url         String?
-  repoUrl     String?
-  startDate   DateTime?
-  endDate     DateTime?
-  status      String    @default("active")
-  highlights  String    @default("[]")
-  tags        String    @default("[]")
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  profileId    String
+  experienceId String?
+  name         String
+  description  String
+  notes        String    @default("")
+  url          String?
+  repoUrl      String?
+  startDate    DateTime?
+  endDate      DateTime?
+  status       String    @default("active")
+  highlights   String    @default("[]")
+  tags         String    @default("[]")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  profile Profile        @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  skills  ProjectSkill[]
+  profile    Profile     @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  experience Experience? @relation(fields: [experienceId], references: [id], onDelete: SetNull)
+  skills     ProjectSkill[]
 
   @@index([profileId])
+  @@index([experienceId])
 }
 
 model Education {
