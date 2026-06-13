@@ -40,6 +40,7 @@ export default async function JobHuntPage() {
     <ContentContainer
       title="Job Hunt"
       description="Scan companies and job boards, then review matched roles."
+      fullWidth
     >
       <SearchCriteriaBar initial={searchCriteria} />
 
