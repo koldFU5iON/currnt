@@ -22,14 +22,33 @@ model CompanyWatch {
   @@index([profileId, status])
 }
 
+// provider values: 'remotive' | 'remoteok' | 'adzuna' | 'jsearch'
+// 'web-search' is reserved for Issue #216 (agentic sweep — not yet implemented)
+model JobBoardSource {
+  id            String    @id @default(cuid())
+  profileId     String
+  provider      String
+  enabled       Boolean   @default(true)
+  lastScannedAt DateTime?
+  createdAt     DateTime  @default(now())
+
+  profile        Profile         @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  discoveredJobs DiscoveredJob[]
+
+  @@unique([profileId, provider])
+  @@index([profileId])
+}
+
 model DiscoveredJob {
   id               String    @id @default(cuid())
-  watchId          String
+  watchId          String?
+  boardSourceId    String?
   profileId        String
   externalId       String
   title            String
   company          String
   location         String?
+  salary           String?
   url              String?
   postedAt         DateTime?
   description      String?
@@ -37,14 +56,17 @@ model DiscoveredJob {
   fitLabel         String?
   fitJustification String?
   status           String    @default("new")
-  importedJobId    String?   // soft-link to JobApplication.id — no FK, intentional (avoids back-relation on JobApplication)
+  importedJobId    String?
   createdAt        DateTime  @default(now())
 
-  watch   CompanyWatch @relation(fields: [watchId], references: [id], onDelete: Cascade)
-  profile Profile      @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  watch       CompanyWatch?   @relation(fields: [watchId], references: [id], onDelete: Cascade)
+  boardSource JobBoardSource? @relation(fields: [boardSourceId], references: [id], onDelete: Cascade)
+  profile     Profile         @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@unique([watchId, externalId])
+  @@unique([boardSourceId, externalId])
   @@index([profileId])
   @@index([profileId, status])
   @@index([watchId])
+  @@index([boardSourceId])
 }
