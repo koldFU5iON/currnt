@@ -1,8 +1,6 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
 import { RotateCcw, Download, MessageSquare, Loader2, RefreshCw, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
