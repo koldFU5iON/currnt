@@ -351,6 +351,18 @@ export function createChatTools(profileId: string) {
       ),
     }),
 
+    propose_cover_letter_update: tool({
+      description:
+        'Propose a full replacement of a cover letter\'s content for the user to review and confirm. Call get_cover_letter first to read the current content.',
+      inputSchema: zodSchema(
+        z.object({
+          letterId: z.string().describe('The ID of the cover letter to update'),
+          proposedContent: z.string().describe('The full proposed markdown content for the cover letter'),
+          rationale: z.string().describe('Brief explanation of what changed and why'),
+        }),
+      ),
+    }),
+
     propose_prep_note_update: tool({
       description:
         'Propose an update to a block in an interview prep note. The user must confirm before it is applied. Call get_interview_prep first to get the noteId and blockId.',

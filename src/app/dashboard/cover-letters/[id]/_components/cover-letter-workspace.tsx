@@ -45,6 +45,19 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
     }
   }, [])
 
+  useEffect(() => {
+    function handleCoverLetterUpdated(e: Event) {
+      const detail = (e as CustomEvent<{ letterId: string; proposedContent: string }>).detail
+      if (detail.letterId !== letter.id) return
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      setContent(detail.proposedContent)
+      setSaveState('saved')
+      if (detail.proposedContent.trim()) setShowEditor(true)
+    }
+    window.addEventListener('cover-letter-updated', handleCoverLetterUpdated)
+    return () => window.removeEventListener('cover-letter-updated', handleCoverLetterUpdated)
+  }, [letter.id])
+
   const save = useCallback(async (value: string) => {
     setSaveState('saving')
     try {
