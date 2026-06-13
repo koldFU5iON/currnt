@@ -1,4 +1,6 @@
 import * as z from 'zod'
+import { Readability } from '@mozilla/readability'
+import { parseHTML } from 'linkedom'
 import { requireProfile } from '@/lib/session'
 import { completeStructured } from '@/modules/llm/client'
 import { LLMError } from '@/modules/llm/errors'
@@ -31,6 +33,18 @@ export function stripHtmlToText(html: string): string {
     .slice(0, MAX_CHARS)
 }
 
+export function extractReadableContent(html: string): string {
+  try {
+    const { document } = parseHTML(html)
+    const reader = new Readability(document as unknown as Document)
+    const article = reader.parse()
+    if (article?.textContent) {
+      return article.textContent.replace(/\s+/g, ' ').trim().slice(0, MAX_CHARS)
+    }
+  } catch { /* fall through to regex stripper */ }
+  return stripHtmlToText(html)
+}
+
 export async function extractWithLLM(html: string): Promise<ExtractionResult> {
   let profileId: string
   try {
@@ -43,7 +57,7 @@ export async function extractWithLLM(html: string): Promise<ExtractionResult> {
     }
   }
 
-  const text = stripHtmlToText(html)
+  const text = extractReadableContent(html)
   const prompt = `Extract the job posting details from the following webpage text. Return only what is explicitly present — do not infer or invent values.\n\n${text}`
 
   try {

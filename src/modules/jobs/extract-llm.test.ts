@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { stripHtmlToText, ExtractedJobLLMSchema } from './extract-llm'
+import { stripHtmlToText, ExtractedJobLLMSchema, extractReadableContent } from './extract-llm'
 
 describe('stripHtmlToText', () => {
   it('removes script and style tags and their content', () => {
@@ -51,5 +51,42 @@ describe('ExtractedJobLLMSchema', () => {
 
   it('accepts an empty object (all fields optional)', () => {
     expect(ExtractedJobLLMSchema.safeParse({}).success).toBe(true)
+  })
+})
+
+describe('extractReadableContent', () => {
+  it('returns text containing the main content', () => {
+    const body = 'We are looking for a talented senior software engineer to join our growing team. ' +
+      'You will work on challenging distributed systems problems and collaborate with passionate ' +
+      'engineers committed to building excellent products that users love and rely on every day. ' +
+      'Strong TypeScript and React skills are essential for success in this role.'
+    const html = `
+      <html><head><title>Engineer at Acme</title></head>
+      <body>
+        <nav>Home About Jobs Contact Blog Careers Press</nav>
+        <main>
+          <h1>Senior Software Engineer</h1>
+          <p>${body}</p>
+          <h2>Requirements</h2>
+          <ul><li>5+ years TypeScript</li><li>React experience</li></ul>
+        </main>
+        <footer>© 2024 Acme Inc. All rights reserved. Privacy Policy Terms of Service.</footer>
+      </body></html>
+    `
+    const result = extractReadableContent(html)
+    expect(result).toContain('Senior Software Engineer')
+    expect(result.length).toBeGreaterThan(50)
+  })
+
+  it('falls back gracefully when Readability cannot parse the page', () => {
+    const html = '<html><body><div id="root"></div></body></html>'
+    const result = extractReadableContent(html)
+    expect(typeof result).toBe('string')
+    expect(result.length).toBeLessThanOrEqual(12_000)
+  })
+
+  it('truncates output to 12000 characters', () => {
+    const html = `<html><body><main><p>${'word '.repeat(5_000)}</p></main></body></html>`
+    expect(extractReadableContent(html).length).toBeLessThanOrEqual(12_000)
   })
 })
