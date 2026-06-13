@@ -12,7 +12,7 @@ import { SearchCriteriaBar } from './_components/search-criteria-bar'
 import { JobBoardSources } from './_components/job-board-sources'
 
 export default async function JobHuntPage() {
-  const { profile: _profile } = await requireProfile()
+  await requireProfile()
 
   const [watches, jobs, boardSources, searchData, keyStatus] = await Promise.all([
     getWatchlist(),
@@ -25,7 +25,6 @@ export default async function JobHuntPage() {
   const { targetRole, currentRole, additionalRoles } = normalizeOnboardingContext(searchData.onboardingContext)
   const searchCriteria = normalizeJobHuntSearch(searchData.jobHuntSearch)
 
-  // Auto-seed roles from onboarding if user hasn't set search criteria yet
   if (searchCriteria.roles.length === 0 && targetRole) {
     searchCriteria.roles = [targetRole, ...additionalRoles].filter(Boolean)
   }
