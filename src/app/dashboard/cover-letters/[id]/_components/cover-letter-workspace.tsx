@@ -16,6 +16,7 @@ import { JobAnalysisSchema } from '@/modules/jobs/schema'
 import type { CoverLetterWithJob } from '@/modules/cover-letters/queries'
 import type { ReviewOutput } from '@/modules/writing-guide/schema'
 import { ReviewResults } from '@/app/dashboard/cover-letters/[id]/review/_components/review-results'
+import { MarkdownProse } from '@/components/ui/markdown-prose'
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 type ReviewState =
@@ -421,9 +422,7 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
                     <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                       Full description
                     </p>
-                    <div className="prose prose-xs dark:prose-invert max-w-none text-xs [&_*]:text-muted-foreground [&_li]:my-0">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{job.jobDescription}</ReactMarkdown>
-                    </div>
+                    <MarkdownProse content={job.jobDescription} />
                   </div>
                 )}
               </>
@@ -432,9 +431,7 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
                 <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                   Job Description
                 </p>
-                <div className="prose prose-xs dark:prose-invert max-w-none text-xs [&_*]:text-muted-foreground [&_li]:my-0">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{job.jobDescription}</ReactMarkdown>
-                </div>
+                <MarkdownProse content={job.jobDescription} />
               </div>
             ) : (
               <p className="text-xs text-muted-foreground">

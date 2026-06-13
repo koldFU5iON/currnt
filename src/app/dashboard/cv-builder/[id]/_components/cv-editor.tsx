@@ -1,8 +1,6 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
 import { RotateCcw, Download, MessageSquare, Loader2, RefreshCw, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -31,6 +29,7 @@ import { CertificationBlock } from './blocks/certification-block'
 import { SkillsBlock } from './blocks/skills-block'
 import { ToolsBlock } from './blocks/tools-block'
 import { LanguagesBlock } from './blocks/languages-block'
+import { MarkdownProse } from '@/components/ui/markdown-prose'
 import type { CVDocumentContent, CVSection } from '@/modules/cv/schema'
 import type { JobFit } from '@/app/types/job-application'
 
@@ -343,9 +342,7 @@ export function CvEditor({ cv }: Props) {
                   <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                     Job Description
                   </p>
-                  <div className="prose prose-xs dark:prose-invert max-w-none text-xs [&_*]:text-muted-foreground [&_li]:my-0">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{cv.jobApplication.jobDescription}</ReactMarkdown>
-                  </div>
+                  <MarkdownProse content={cv.jobApplication.jobDescription} />
                 </div>
               )}
               <div className="mt-auto border-t pt-3">

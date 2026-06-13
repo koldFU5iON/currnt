@@ -116,6 +116,15 @@ export function ExperienceWorkspace({ profile }: Props) {
 
   function handleProjectCreated(project: Project) {
     setAllProjects(prev => [...prev, project])
+    router.refresh()
+  }
+
+  function handleProjectDeleted(projectId: string) {
+    setAllProjects(prev => prev.filter(p => p.id !== projectId))
+    if (activeContext.type === 'project' && activeContext.projectId === projectId) {
+      setActiveContext({ type: 'experience' })
+    }
+    router.refresh()
   }
 
   function handleExperienceDeleted() {
@@ -281,12 +290,13 @@ export function ExperienceWorkspace({ profile }: Props) {
         {selectedExperience && (
           <ProjectsPanel
             experienceId={selectedExperienceId}
-            initialProjects={experienceProjects}
+            projects={experienceProjects}
             selectedProjectId={
               activeContext.type === 'project' ? activeContext.projectId : null
             }
             onSelect={selectProject}
             onProjectCreated={handleProjectCreated}
+            onProjectDeleted={handleProjectDeleted}
           />
         )}
       </div>
