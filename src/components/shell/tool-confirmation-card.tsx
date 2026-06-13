@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { Check, X, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 type Props = {
   toolName: string
@@ -18,6 +20,7 @@ const TOOL_LABELS: Record<string, string> = {
   propose_tool_create: 'Add tool to profile',
   propose_cv_update: 'Update CV section',
   propose_prep_note_update: 'Update prep note',
+  propose_cover_letter_update: 'Update cover letter',
   submit_feedback: 'Submit feedback',
 }
 
@@ -33,6 +36,11 @@ export function ToolConfirmationCard({ toolName, args, onAccept, onReject, write
       if (toolName === 'propose_cv_update') {
         window.dispatchEvent(new CustomEvent('cv-section-updated', {
           detail: { sectionId: args.sectionId, proposedData: args.proposedData },
+        }))
+      }
+      if (toolName === 'propose_cover_letter_update') {
+        window.dispatchEvent(new CustomEvent('cover-letter-updated', {
+          detail: { letterId: args.letterId, proposedContent: args.proposedContent },
         }))
       }
       onAccept()
@@ -54,7 +62,17 @@ export function ToolConfirmationCard({ toolName, args, onAccept, onReject, write
           {String(args.currentValue ?? args.currentContent)}
         </div>
       )}
+      {toolName === 'propose_cover_letter_update' && args.proposedContent != null && (
+        <div className="mb-3 max-h-64 overflow-y-auto rounded-md border border-border bg-muted/30 px-3 py-2 text-xs">
+          <div className="prose prose-xs dark:prose-invert max-w-none">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {String(args.proposedContent)}
+            </ReactMarkdown>
+          </div>
+        </div>
+      )}
       {(() => {
+        if (toolName === 'propose_cover_letter_update') return null
         const display = args.proposedValue ?? args.proposedContent ??
           (args.name != null ? `${args.name}${args.category ? ` · ${args.category}` : ''}` : undefined)
         return display !== undefined ? (
