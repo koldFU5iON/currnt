@@ -1,7 +1,7 @@
 'use server'
 
 import type { ExtractionResult, ExtractedJob } from './extract-utils'
-import { decode, td, formatSalaryBand } from './extract-utils'
+import { decode, td, formatSalaryBand, scoreCompleteness, mergeExtractedJob, COMPLETE_THRESHOLD } from './extract-utils'
 import {
   linkedInJobId, extractLinkedIn,
   greenhouseFromUrl, greenhouseFromHtml, extractGreenhouse,
@@ -10,66 +10,8 @@ import {
   ashbyFromUrl, extractAshby,
   workdayFromUrl, extractWorkday,
 } from './extract-ats'
-import { lookup as dnsLookup } from 'dns/promises'
+import { isSafeUrl, fetchPageContent } from './extract-fetch'
 import { extractWithLLM } from './extract-llm'
-
-// ── SSRF guard ────────────────────────────────────────────────────────────────
-// Three-layer defence: scheme check → hostname/IP blocklist → DNS resolution.
-// DNS resolution catches rebinding attacks and alternate IP encodings (e.g.
-// decimal 2130706433 → 127.0.0.1) that bypass pure string matching.
-// The post-fetch redirect check (res.url) closes the redirect-hop gap.
-
-function isPrivateIp(ip: string): boolean {
-  if (ip.includes(':')) {
-    // Bare IPv6 (brackets already stripped by caller)
-    const h = ip.toLowerCase()
-    return (
-      h === '::1' || h === '::' ||
-      h.startsWith('fc') || h.startsWith('fd') ||   // ULA fc00::/7
-      h.startsWith('fe80') ||                        // link-local fe80::/10
-      h.startsWith('::ffff:127.') ||                 // IPv4-mapped loopback
-      h.startsWith('::ffff:10.') ||                  // IPv4-mapped RFC-1918
-      h.startsWith('::ffff:192.168.') ||
-      /^::ffff:172\.(1[6-9]|2[0-9]|3[01])\./.test(h)
-    )
-  }
-  return (
-    ip === '0.0.0.0' ||
-    /^127\./.test(ip) ||
-    /^10\./.test(ip) ||
-    /^192\.168\./.test(ip) ||
-    /^172\.(1[6-9]|2[0-9]|3[01])\./.test(ip) ||
-    /^169\.254\./.test(ip)
-  )
-}
-
-function isSafeHostname(hostname: string): boolean {
-  const h = hostname.toLowerCase()
-  // URL.hostname wraps IPv6 literals in brackets — strip them before IP check
-  const bare = h.startsWith('[') && h.endsWith(']') ? h.slice(1, -1) : h
-  if (bare.includes(':')) return !isPrivateIp(bare)   // IPv6 literal in URL
-  return !(
-    h === 'localhost' ||
-    h.endsWith('.local') ||
-    h.endsWith('.internal') ||
-    h === 'metadata.google.internal' ||
-    isPrivateIp(h)
-  )
-}
-
-async function isSafeUrl(raw: string): Promise<boolean> {
-  let parsed: URL
-  try { parsed = new URL(raw) } catch { return false }
-  if (parsed.protocol !== 'https:') return false
-  if (!isSafeHostname(parsed.hostname)) return false
-  // DNS resolution: normalises alternate encodings and catches rebinding
-  try {
-    const addrs = await dnsLookup(parsed.hostname, { all: true })
-    return !addrs.some(a => isPrivateIp(a.address))
-  } catch {
-    return false   // unresolvable hostname → reject
-  }
-}
 
 export async function extractJobFromUrl(url: string): Promise<ExtractionResult> {
   if (!(await isSafeUrl(url))) {
@@ -77,70 +19,120 @@ export async function extractJobFromUrl(url: string): Promise<ExtractionResult> 
   }
 
   // ── Tier 1: ATS routing (no HTML fetch) ──────────────────────────────────
+  let accumulated: ExtractedJob = {}
+
   const linkedInId = linkedInJobId(url)
-  if (linkedInId) return extractLinkedIn(linkedInId)
+  if (linkedInId) {
+    const result = await extractLinkedIn(linkedInId)
+    if (!result.ok) return result
+    const score = scoreCompleteness(result.data)
+    if (score >= COMPLETE_THRESHOLD) return result
+    accumulated = mergeExtractedJob(accumulated, result.data)
+  }
 
-  const siteOverride = matchSiteOverride(url)
-  if (siteOverride) return extractGreenhouse(siteOverride.board, siteOverride.jobId)
+  if (Object.keys(accumulated).every(k => !accumulated[k as keyof ExtractedJob])) {
+    const siteOverride = matchSiteOverride(url)
+    if (siteOverride) {
+      const result = await extractGreenhouse(siteOverride.board, siteOverride.jobId)
+      if (!result.ok) return result
+      const score = scoreCompleteness(result.data)
+      if (score >= COMPLETE_THRESHOLD) return result
+      accumulated = mergeExtractedJob(accumulated, result.data)
+    }
+  }
 
-  const directGh = greenhouseFromUrl(url)
-  if (directGh) return extractGreenhouse(directGh.board, directGh.jobId)
+  if (Object.keys(accumulated).every(k => !accumulated[k as keyof ExtractedJob])) {
+    const directGh = greenhouseFromUrl(url)
+    if (directGh) {
+      const result = await extractGreenhouse(directGh.board, directGh.jobId)
+      if (!result.ok) return result
+      const score = scoreCompleteness(result.data)
+      if (score >= COMPLETE_THRESHOLD) return result
+      accumulated = mergeExtractedJob(accumulated, result.data)
+    }
+  }
 
-  const lever = leverFromUrl(url)
-  if (lever) return extractLever(lever.company, lever.jobId)
+  if (Object.keys(accumulated).every(k => !accumulated[k as keyof ExtractedJob])) {
+    const lever = leverFromUrl(url)
+    if (lever) {
+      const result = await extractLever(lever.company, lever.jobId)
+      if (!result.ok) return result
+      const score = scoreCompleteness(result.data)
+      if (score >= COMPLETE_THRESHOLD) return result
+      accumulated = mergeExtractedJob(accumulated, result.data)
+    }
+  }
 
-  const ashby = ashbyFromUrl(url)
-  if (ashby) return extractAshby(ashby.company, ashby.jobSlug)
+  if (Object.keys(accumulated).every(k => !accumulated[k as keyof ExtractedJob])) {
+    const ashby = ashbyFromUrl(url)
+    if (ashby) {
+      const result = await extractAshby(ashby.company, ashby.jobSlug)
+      if (!result.ok) return result
+      const score = scoreCompleteness(result.data)
+      if (score >= COMPLETE_THRESHOLD) return result
+      accumulated = mergeExtractedJob(accumulated, result.data)
+    }
+  }
 
-  const workday = workdayFromUrl(url)
-  if (workday) {
-    const result = await extractWorkday(workday.subdomain, workday.tenant, workday.group, workday.jobId)
-    if (result) return result
-    // null = API unavailable, fall through to HTML fetch
+  if (Object.keys(accumulated).every(k => !accumulated[k as keyof ExtractedJob])) {
+    const workday = workdayFromUrl(url)
+    if (workday) {
+      const result = await extractWorkday(workday.subdomain, workday.tenant, workday.group, workday.jobId)
+      if (result) {
+        if (!result.ok) return result
+        const score = scoreCompleteness(result.data)
+        if (score >= COMPLETE_THRESHOLD) return result
+        accumulated = mergeExtractedJob(accumulated, result.data)
+      }
+      // null = API unavailable, fall through to HTML fetch
+    }
   }
 
   // ── Tier 2: HTML fetch + structural parse ─────────────────────────────────
-  let html: string
-  try {
-    const res = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
-        'Accept': 'text/html,application/xhtml+xml',
-        'Accept-Language': 'en-US,en;q=0.9',
-      },
-      signal: AbortSignal.timeout(12_000),
-    })
-    // Re-check the final URL after any redirects to block redirect-hop SSRF
-    try {
-      if (!isSafeHostname(new URL(res.url).hostname)) {
-        return { ok: false, error: 'Invalid URL — only public HTTPS job pages are supported.' }
-      }
-    } catch { /* unparseable final URL — proceed */ }
-    if (!res.ok) {
-      return {
-        ok: false,
-        error: `Could not reach that page — it may block automated access (${res.status}). Try pasting the details manually.`,
-      }
+  const fetchResult = await fetchPageContent(url)
+  if (!fetchResult.ok) {
+    // If ATS gave us something partial, return it; otherwise return the fetch error
+    if (accumulated.title || accumulated.company || accumulated.jobDescription) {
+      return { ok: true, data: accumulated }
     }
-    html = await res.text()
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Network error'
-    return { ok: false, error: `Could not reach that URL: ${msg}` }
+    return fetchResult
   }
+
+  const { html } = fetchResult
 
   const embeddedGh = greenhouseFromHtml(url, html)
   if (embeddedGh) {
     const ghResult = await extractGreenhouse(embeddedGh.board, embeddedGh.jobId)
-    if (ghResult.ok) return ghResult
+    if (ghResult.ok) {
+      accumulated = mergeExtractedJob(accumulated, ghResult.data)
+    }
   }
 
-  const extracted = fromJsonLd(html) ?? fromMetaTags(html)
-  if (extracted.title || extracted.company || extracted.jobDescription) {
-    return { ok: true, data: extracted }
+  const jsonLdData = fromJsonLd(html)
+  if (jsonLdData) {
+    accumulated = mergeExtractedJob(accumulated, jsonLdData)
+  }
+
+  const metaData = fromMetaTags(html)
+  accumulated = mergeExtractedJob(accumulated, metaData)
+
+  if (scoreCompleteness(accumulated) >= COMPLETE_THRESHOLD) {
+    return { ok: true, data: accumulated }
   }
 
   // ── Tier 3: LLM extraction ────────────────────────────────────────────────
-  return extractWithLLM(html)
+  const llmResult = await extractWithLLM(html)
+  if (llmResult.ok) {
+    accumulated = mergeExtractedJob(accumulated, llmResult.data)
+  }
+
+  if (accumulated.title || accumulated.company || accumulated.jobDescription) {
+    return { ok: true, data: accumulated }
+  }
+
+  // Return LLM error if we have one, otherwise a generic fallback
+  if (!llmResult.ok) return llmResult
+  return { ok: false, error: 'Could not extract job details — try pasting manually.' }
 }
 
 // ── JSON-LD JobPosting ────────────────────────────────────────────────────────
