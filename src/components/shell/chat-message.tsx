@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 import { patchCVSectionData } from '@/modules/cv/actions'
 import { patchProfileField, createTool } from '@/modules/profile/actions'
 import { updateBlock } from '@/modules/interview-prep/actions'
+import { updateCoverLetterContent } from '@/modules/cover-letters/actions'
 import { ToolConfirmationCard } from './tool-confirmation-card'
 import { FeedbackSubmissionCard } from './feedback-submission-card'
 
@@ -31,6 +32,12 @@ function buildWriteAction(toolName: string, args: Record<string, unknown>): (() 
       args.noteId as string,
       args.blockId as string,
       { content: args.proposedContent as string },
+    )
+  }
+  if (toolName === 'propose_cover_letter_update') {
+    return () => updateCoverLetterContent(
+      args.letterId as string,
+      args.proposedContent as string,
     )
   }
   return undefined
