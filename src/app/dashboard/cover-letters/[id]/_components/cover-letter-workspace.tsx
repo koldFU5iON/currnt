@@ -49,6 +49,7 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
     function handleCoverLetterUpdated(e: Event) {
       const detail = (e as CustomEvent<{ letterId: string; proposedContent: string }>).detail
       if (detail.letterId !== letter.id) return
+      if (debounceRef.current) clearTimeout(debounceRef.current)
       setContent(detail.proposedContent)
       setSaveState('saved')
       if (detail.proposedContent.trim()) setShowEditor(true)
