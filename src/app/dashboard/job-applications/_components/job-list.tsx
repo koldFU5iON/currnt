@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
-import { Archive, Plus, SearchIcon, X } from "lucide-react"
+import { Archive, ListPlus, Plus, SearchIcon, X } from "lucide-react"
 import {
   APPLICATION_STATUS_LABEL,
   ApplicationStatus,
@@ -28,6 +28,7 @@ import { toast } from "sonner"
 import { JobGroup } from "./job-group"
 import { EditJobDialog } from "./edit-job-dialog"
 import { CreateJobSheet } from "./create-job-sheet"
+import { BatchCaptureDialog } from "./batch-capture-dialog"
 import { archiveJobApplication, bulkArchiveJobApplications } from "@/modules/jobs/mutations"
 
 type ViewMode = 'grouped' | 'all'
@@ -60,6 +61,7 @@ export function JobList({ jobs, hasLLMKey, openCreate, initialCreateUrl }: {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [editing, setEditing] = useState<Job | null>(null)
   const [creating, setCreating] = useState(openCreate ?? false)
+  const [batching, setBatching] = useState(false)
   // Per-row in-flight label so the user sees "Archiving…" the instant they click,
   // not after the server roundtrip + revalidate finishes.
   const [busyRows, setBusyRows] = useState<Map<string, string>>(new Map())
@@ -304,6 +306,7 @@ export function JobList({ jobs, hasLLMKey, openCreate, initialCreateUrl }: {
         onFilterChange={changeFilter}
         onSortChange={changeSort}
         onCreateOpen={() => setCreating(true)}
+        onBatchOpen={() => setBatching(true)}
       />
       <Separator className="my-3" />
 
@@ -378,6 +381,8 @@ export function JobList({ jobs, hasLLMKey, openCreate, initialCreateUrl }: {
         onOpenChange={setCreating}
         initialUrl={initialCreateUrl}
       />
+
+      <BatchCaptureDialog open={batching} onOpenChange={setBatching} />
     </div>
   )
 }
@@ -397,6 +402,7 @@ type ToolBarProps = {
   onFilterChange: (f: FilterState) => void
   onSortChange: (s: SortState) => void
   onCreateOpen: () => void
+  onBatchOpen: () => void
 }
 
 function ToolBar({
@@ -414,6 +420,7 @@ function ToolBar({
   onFilterChange,
   onSortChange,
   onCreateOpen,
+  onBatchOpen,
 }: ToolBarProps) {
   return (
     <div className="flex flex-col space-y-1">
@@ -444,6 +451,11 @@ function ToolBar({
         )}
 
         <div className="flex-1" />
+
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={onBatchOpen}>
+          <ListPlus size={16} />
+          Batch Add
+        </Button>
 
         <Button size="sm" className="gap-1.5" onClick={onCreateOpen}>
           <Plus size={16} />
