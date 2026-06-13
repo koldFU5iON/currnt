@@ -1,7 +1,8 @@
 // src/modules/job-hunt/board-sources/queries.ts
 import { prisma } from '@/lib/db'
 import { requireProfile } from '@/lib/session'
-import { BOARD_PROVIDERS } from './schema'
+import { decrypt } from '@/lib/encryption'
+import { BOARD_PROVIDERS, normalizeJobBoardApiKeys } from './schema'
 
 export async function ensureBoardSources(profileId: string): Promise<void> {
   await Promise.all(
@@ -33,5 +34,25 @@ export async function getJobHuntSearch() {
   return {
     jobHuntSearch: settings?.jobHuntSearch ?? null,
     onboardingContext: settings?.onboardingContext ?? null,
+  }
+}
+
+export async function getJobBoardKeyStatus(): Promise<{
+  adzunaConfigured: boolean
+  jSearchConfigured: boolean
+}> {
+  const { profile } = await requireProfile()
+  const settings = await prisma.userSettings.findUnique({
+    where: { profileId: profile.id },
+    select: { jobBoardApiKeys: true },
+  })
+  const keys = normalizeJobBoardApiKeys(settings?.jobBoardApiKeys)
+  let jSearchOk = false
+  if (keys.jsearch) {
+    try { decrypt(keys.jsearch); jSearchOk = true } catch { /* corrupt key */ }
+  }
+  return {
+    adzunaConfigured: !!(process.env.ADZUNA_APP_ID && process.env.ADZUNA_APP_KEY),
+    jSearchConfigured: jSearchOk,
   }
 }
