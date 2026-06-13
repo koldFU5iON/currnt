@@ -10,6 +10,7 @@ import { normalizeOnboardingContext } from '@/modules/onboarding/schema'
 import { loadWritingRules, composeSystem } from '@/modules/llm/prompt-context'
 import { JobFitSchema } from '@/modules/jobs/schema'
 import { discoverAts } from './ats-discovery'
+import { scanBoardSource } from './board-sources/actions'
 import { getAdapter } from './adapters/index'
 import { buildKeywords, matchesProfile, matchesLocation, type ProfileFilterData } from './profile-filter'
 import {
@@ -318,122 +319,46 @@ export async function saveScanParameters(input: {
 
 // ── scanAll ───────────────────────────────────────────────────────────────────
 
-type ScanAllResult =
-  | { ok: true; scanned: number; newJobs: number; failed: number }
-  | { ok: false; error: string }
-
-export async function scanAll(): Promise<ScanAllResult> {
+export async function scanAll(): Promise<
+  { ok: true; scanned: number; newJobs: number; failed: number } | { ok: false; error: string }
+> {
   const { profile } = await requireProfile()
 
-  const watches = await prisma.companyWatch.findMany({
-    where: { profileId: profile.id, status: 'active' },
-  })
-
-  if (watches.length === 0) return { ok: true, scanned: 0, newJobs: 0, failed: 0 }
-
-  const [settings, experiences, skills, profileRow] = await Promise.all([
-    prisma.userSettings.findUnique({
-      where: { profileId: profile.id },
-      select: { onboardingContext: true },
+  const [watches, boardSources] = await Promise.all([
+    prisma.companyWatch.findMany({
+      where: { profileId: profile.id, status: 'active', boardSlug: { not: null } },
+      select: { id: true },
     }),
-    prisma.experience.findMany({
-      where: { profileId: profile.id },
-      select: { role: true },
-    }),
-    prisma.skill.findMany({
-      where: { profileId: profile.id },
-      select: { name: true },
-    }),
-    prisma.profile.findUnique({
-      where: { id: profile.id },
-      select: { headline: true },
+    prisma.jobBoardSource.findMany({
+      where: { profileId: profile.id, enabled: true },
+      select: { id: true },
     }),
   ])
 
-  const context = normalizeOnboardingContext(settings?.onboardingContext)
-  const filterData: ProfileFilterData = {
-    targetRole: context.targetRole,
-    currentRole: context.currentRole,
-    headline: profileRow?.headline ?? '',
-    experienceRoles: experiences.map((e) => e.role),
-    skillNames: skills.map((s) => s.name),
-    additionalRoles: context.additionalRoles,
-  }
-  const keywords = buildKeywords(filterData)
-
-  let totalNewJobs = 0
+  let scanned = 0
+  let newJobs = 0
   let failed = 0
 
-  for (const watch of watches) {
-    if (!watch.boardSlug || watch.atsProvider === 'unknown') {
-      failed++
-      continue
-    }
+  const companyResults = await Promise.allSettled(
+    watches.map((w) => scanCompany(w.id)),
+  )
+  for (const r of companyResults) {
+    if (r.status === 'rejected' || !r.value.ok) { failed++; continue }
+    scanned++
+    newJobs += r.value.newJobs
+  }
 
-    const adapter = getAdapter(watch.atsProvider)
-    if (!adapter) {
-      failed++
-      continue
-    }
-
-    let listings
-    try {
-      listings = await adapter.fetchJobList(watch.boardSlug)
-    } catch {
-      failed++
-      continue
-    }
-
-    const matched = listings.filter((j) =>
-      matchesProfile(j.title, keywords) &&
-      matchesLocation(j.location, watch.searchLocations, watch.includeRemote)
-    )
-
-    const withDescriptions = await Promise.all(
-      matched.map(async (listing) => {
-        try {
-          const description = await adapter.fetchDescription(watch.boardSlug!, listing.externalId)
-          return { ...listing, description }
-        } catch {
-          return { ...listing, description: null }
-        }
-      }),
-    )
-
-    const existing = await prisma.discoveredJob.findMany({
-      where: { watchId: watch.id, profileId: profile.id },
-      select: { externalId: true },
-    })
-    const existingIds = new Set(existing.map((e) => e.externalId))
-    const newJobs = withDescriptions.filter((j) => !existingIds.has(j.externalId))
-
-    if (newJobs.length > 0) {
-      await prisma.discoveredJob.createMany({
-        data: newJobs.map((j) => ({
-          watchId: watch.id,
-          profileId: profile.id,
-          externalId: j.externalId,
-          title: j.title,
-          company: watch.name,
-          location: j.location,
-          url: j.url,
-          postedAt: j.postedAt,
-          description: j.description,
-          status: 'new',
-        })),
-      })
-    }
-
-    await prisma.companyWatch.updateMany({
-      where: { id: watch.id, profileId: profile.id },
-      data: { lastScannedAt: new Date() },
-    })
-
-    totalNewJobs += newJobs.length
+  const boardResults = await Promise.allSettled(
+    boardSources.map((s) => scanBoardSource(s.id)),
+  )
+  for (const r of boardResults) {
+    if (r.status === 'rejected' || !r.value.ok) { failed++; continue }
+    scanned++
+    newJobs += r.value.newJobs
   }
 
   revalidatePath('/dashboard/job-hunt')
-  return { ok: true, scanned: watches.length, newJobs: totalNewJobs, failed }
+  return { ok: true, scanned, newJobs, failed }
 }
 
 // ── scoreDiscoveredJob ────────────────────────────────────────────────────────
