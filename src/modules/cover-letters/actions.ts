@@ -72,6 +72,7 @@ export async function updateCoverLetterContent(id: string, content: string): Pro
   })
 
   if (updated.count === 0) throw new Error('Cover letter not found')
+  revalidatePath(`/dashboard/cover-letters/${id}`)
 }
 
 export async function deleteCoverLetter(id: string): Promise<void> {
