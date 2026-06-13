@@ -4,6 +4,7 @@ import {
   JobHuntSearchCriteriaSchema,
   BoardJobListingSchema,
   normalizeJobHuntSearch,
+  normalizeJobBoardApiKeys,
 } from './schema'
 
 describe('BOARD_PROVIDERS', () => {
@@ -12,6 +13,7 @@ describe('BOARD_PROVIDERS', () => {
     expect(BOARD_PROVIDERS).toContain('remoteok')
     expect(BOARD_PROVIDERS).toContain('adzuna')
     expect(BOARD_PROVIDERS).toContain('jsearch')
+    expect(BOARD_PROVIDERS).toHaveLength(4)
   })
 })
 
@@ -84,10 +86,32 @@ describe('BoardJobListingSchema', () => {
       title: 'Engineer',
       company: 'Co',
       location: null,
-      url: 'https://x.com',
+      url: null,
       postedAt: null,
       salary: null,
     })
     expect(r.success).toBe(true)
+  })
+
+  it('rejects listing missing required fields', () => {
+    const r = BoardJobListingSchema.safeParse({ externalId: '1' })
+    expect(r.success).toBe(false)
+  })
+})
+
+describe('normalizeJobBoardApiKeys', () => {
+  it('returns empty object for null', () => {
+    const result = normalizeJobBoardApiKeys(null)
+    expect(result).toEqual({})
+  })
+
+  it('preserves jsearch key', () => {
+    const result = normalizeJobBoardApiKeys({ jsearch: 'encrypted-key-abc' })
+    expect(result.jsearch).toBe('encrypted-key-abc')
+  })
+
+  it('ignores unknown keys', () => {
+    const result = normalizeJobBoardApiKeys({ jsearch: 'key', unknownProvider: 'xxx' })
+    expect(result).not.toHaveProperty('unknownProvider')
   })
 })

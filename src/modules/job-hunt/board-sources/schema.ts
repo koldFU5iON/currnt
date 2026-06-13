@@ -11,7 +11,7 @@ export const JobHuntSearchCriteriaSchema = z.object({
   roles: z.array(z.string()),
   locations: z.array(z.string()),
   datePosted: z.enum(DATE_POSTED_OPTIONS),
-  minSalary: z.number().nullable(),
+  minSalary: z.number().min(0).nullable(),
 })
 export type JobHuntSearchCriteria = z.infer<typeof JobHuntSearchCriteriaSchema>
 
@@ -32,7 +32,7 @@ export const BoardJobListingSchema = z.object({
   title: z.string(),
   company: z.string(),
   location: z.string().nullable(),
-  url: z.string(),
+  url: z.string().url().nullable(),
   postedAt: z.date().nullable(),
   salary: z.string().nullable(),
 })
