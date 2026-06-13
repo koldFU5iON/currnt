@@ -11,20 +11,21 @@ import { cn } from '@/lib/utils'
 
 type Props = {
   experienceId: string
-  initialProjects: Project[]
+  projects: Project[]
   selectedProjectId: string | null
   onSelect: (projectId: string) => void
   onProjectCreated: (project: Project) => void
+  onProjectDeleted: (projectId: string) => void
 }
 
 export function ProjectsPanel({
   experienceId,
-  initialProjects,
+  projects,
   selectedProjectId,
   onSelect,
   onProjectCreated,
+  onProjectDeleted,
 }: Props) {
-  const [projects, setProjects] = useState(initialProjects)
   const [addingNew, setAddingNew] = useState(false)
   const [newName, setNewName] = useState('')
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -42,7 +43,6 @@ export function ProjectsPanel({
         highlights: JSON.parse(created.highlights ?? '[]') as string[],
         tags: JSON.parse(created.tags ?? '[]') as string[],
       }
-      setProjects(prev => [...prev, project])
       setAddingNew(false)
       setNewName('')
       onProjectCreated(project)
@@ -53,9 +53,12 @@ export function ProjectsPanel({
   }
 
   async function handleDelete(id: string) {
-    const prev = projects
-    setProjects(prev => prev.filter(item => item.id !== id))
-    try { await deleteProject(id) } catch { setProjects(prev) }
+    try {
+      await deleteProject(id)
+      onProjectDeleted(id)
+    } catch {
+      toast.error('Failed to delete project. Please try again.')
+    }
   }
 
   const panel = (

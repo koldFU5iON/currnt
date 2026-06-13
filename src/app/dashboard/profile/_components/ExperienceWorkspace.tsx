@@ -118,6 +118,10 @@ export function ExperienceWorkspace({ profile }: Props) {
     setAllProjects(prev => [...prev, project])
   }
 
+  function handleProjectDeleted(projectId: string) {
+    setAllProjects(prev => prev.filter(p => p.id !== projectId))
+  }
+
   function handleExperienceDeleted() {
     const remaining = experiences.filter(e => e.id !== selectedExperienceId)
     setExperiences(remaining)
@@ -281,12 +285,13 @@ export function ExperienceWorkspace({ profile }: Props) {
         {selectedExperience && (
           <ProjectsPanel
             experienceId={selectedExperienceId}
-            initialProjects={experienceProjects}
+            projects={experienceProjects}
             selectedProjectId={
               activeContext.type === 'project' ? activeContext.projectId : null
             }
             onSelect={selectProject}
             onProjectCreated={handleProjectCreated}
+            onProjectDeleted={handleProjectDeleted}
           />
         )}
       </div>
