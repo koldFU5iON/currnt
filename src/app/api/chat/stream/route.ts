@@ -68,7 +68,7 @@ export async function POST(request: Request) {
               edits: [
                 {
                   type: 'compact_20260112' as const,
-                  trigger: { type: 'input_tokens' as const, value: 8000 },
+                  trigger: { type: 'input_tokens' as const, value: 50000 },
                   instructions:
                     'Compress the conversation into a concise working brief. ' +
                     'Preserve: key facts about the user\'s background, ' +
