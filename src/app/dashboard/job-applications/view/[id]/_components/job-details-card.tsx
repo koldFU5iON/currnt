@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { APPLICATION_SOURCE_LABEL, type Job } from "@/app/types/job-application"
 import { MapPin } from "lucide-react"
-import { MarkdownProse } from "./markdown-prose"
+import { MarkdownProse } from "@/components/ui/markdown-prose"
 
 export function JobDetailsCard({ job }: { job: Job }) {
   const countries = Array.isArray(job.countries) ? job.countries : []

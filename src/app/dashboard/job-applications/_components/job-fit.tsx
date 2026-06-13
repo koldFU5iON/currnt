@@ -8,7 +8,7 @@ import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "@/components/
 import { Separator } from "@/components/ui/separator"
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import { Button } from "@/components/ui/button"
-import { MarkdownProse } from "@/app/dashboard/job-applications/view/[id]/_components/markdown-prose"
+import { MarkdownProse } from "@/components/ui/markdown-prose"
 import type { JobFit as JobFitType } from "@/app/types/job-application"
 import { assessJobFit } from "@/modules/jobs/job-fit"
 import { notifyUsageUpdated } from "@/lib/usage-events"

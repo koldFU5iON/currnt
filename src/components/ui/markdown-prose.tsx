@@ -5,7 +5,6 @@ import remarkGfm from 'remark-gfm'
 import type { Components } from 'react-markdown'
 
 const components: Components = {
-  // Remap heading levels so markdown h1/h2 can't override the page h1
   h1: ({ children }) => <h3 className="text-base font-semibold mt-5 mb-2 text-foreground">{children}</h3>,
   h2: ({ children }) => <h4 className="text-sm font-semibold mt-4 mb-1.5 text-foreground">{children}</h4>,
   h3: ({ children }) => <h5 className="text-sm font-medium mt-3 mb-1 text-foreground">{children}</h5>,
