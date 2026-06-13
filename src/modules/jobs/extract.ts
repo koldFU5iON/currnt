@@ -24,20 +24,20 @@ export async function extractJobFromUrl(url: string): Promise<ExtractionResult> 
   const linkedInId = linkedInJobId(url)
   if (linkedInId) {
     const result = await extractLinkedIn(linkedInId)
-    if (!result.ok) return result
-    const score = scoreCompleteness(result.data)
-    if (score >= COMPLETE_THRESHOLD) return result
-    accumulated = mergeExtractedJob(accumulated, result.data)
+    if (result.ok) {
+      if (scoreCompleteness(result.data) >= COMPLETE_THRESHOLD) return result
+      accumulated = mergeExtractedJob(accumulated, result.data)
+    }
   }
 
   if (Object.keys(accumulated).every(k => !accumulated[k as keyof ExtractedJob])) {
     const siteOverride = matchSiteOverride(url)
     if (siteOverride) {
       const result = await extractGreenhouse(siteOverride.board, siteOverride.jobId)
-      if (!result.ok) return result
-      const score = scoreCompleteness(result.data)
-      if (score >= COMPLETE_THRESHOLD) return result
-      accumulated = mergeExtractedJob(accumulated, result.data)
+      if (result.ok) {
+        if (scoreCompleteness(result.data) >= COMPLETE_THRESHOLD) return result
+        accumulated = mergeExtractedJob(accumulated, result.data)
+      }
     }
   }
 
@@ -45,10 +45,10 @@ export async function extractJobFromUrl(url: string): Promise<ExtractionResult> 
     const directGh = greenhouseFromUrl(url)
     if (directGh) {
       const result = await extractGreenhouse(directGh.board, directGh.jobId)
-      if (!result.ok) return result
-      const score = scoreCompleteness(result.data)
-      if (score >= COMPLETE_THRESHOLD) return result
-      accumulated = mergeExtractedJob(accumulated, result.data)
+      if (result.ok) {
+        if (scoreCompleteness(result.data) >= COMPLETE_THRESHOLD) return result
+        accumulated = mergeExtractedJob(accumulated, result.data)
+      }
     }
   }
 
@@ -56,10 +56,10 @@ export async function extractJobFromUrl(url: string): Promise<ExtractionResult> 
     const lever = leverFromUrl(url)
     if (lever) {
       const result = await extractLever(lever.company, lever.jobId)
-      if (!result.ok) return result
-      const score = scoreCompleteness(result.data)
-      if (score >= COMPLETE_THRESHOLD) return result
-      accumulated = mergeExtractedJob(accumulated, result.data)
+      if (result.ok) {
+        if (scoreCompleteness(result.data) >= COMPLETE_THRESHOLD) return result
+        accumulated = mergeExtractedJob(accumulated, result.data)
+      }
     }
   }
 
@@ -67,10 +67,10 @@ export async function extractJobFromUrl(url: string): Promise<ExtractionResult> 
     const ashby = ashbyFromUrl(url)
     if (ashby) {
       const result = await extractAshby(ashby.company, ashby.jobSlug)
-      if (!result.ok) return result
-      const score = scoreCompleteness(result.data)
-      if (score >= COMPLETE_THRESHOLD) return result
-      accumulated = mergeExtractedJob(accumulated, result.data)
+      if (result.ok) {
+        if (scoreCompleteness(result.data) >= COMPLETE_THRESHOLD) return result
+        accumulated = mergeExtractedJob(accumulated, result.data)
+      }
     }
   }
 
@@ -78,13 +78,11 @@ export async function extractJobFromUrl(url: string): Promise<ExtractionResult> 
     const workday = workdayFromUrl(url)
     if (workday) {
       const result = await extractWorkday(workday.subdomain, workday.tenant, workday.group, workday.jobId)
-      if (result) {
-        if (!result.ok) return result
-        const score = scoreCompleteness(result.data)
-        if (score >= COMPLETE_THRESHOLD) return result
+      if (result?.ok) {
+        if (scoreCompleteness(result.data) >= COMPLETE_THRESHOLD) return result
         accumulated = mergeExtractedJob(accumulated, result.data)
       }
-      // null = API unavailable, fall through to HTML fetch
+      // null or ok:false = API unavailable, fall through to HTML fetch
     }
   }
 
