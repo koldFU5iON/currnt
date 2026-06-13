@@ -137,7 +137,8 @@ function formatPageContext(ctx: PageContext): string {
     case 'cover_letter':
       return (
         `User is working on a cover letter${ctx.company ? ` for ${ctx.company}` : ''}\n` +
-        `Letter ID: ${ctx.letterId} — use this with get_cover_letter to fetch full content`
+        `Letter ID: ${ctx.letterId} — use this with get_cover_letter to fetch full content\n` +
+        `Use propose_cover_letter_update to propose changes. The user will see a full markdown preview and must confirm before the change is applied.`
       )
     case 'interview_prep':
       return (
