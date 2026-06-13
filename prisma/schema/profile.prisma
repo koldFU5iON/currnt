@@ -36,6 +36,7 @@ model Profile {
   chatMemories          ChatMemory[]
   companyWatches CompanyWatch[]
   discoveredJobs DiscoveredJob[]
+  jobBoardSources JobBoardSource[]
 }
 
 model Skill {

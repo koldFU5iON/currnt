@@ -22,12 +22,12 @@ export function SyncAllButton() {
       const failedSuffix = failed > 0 ? ` · ${failed} failed` : ''
       if (newJobs > 0) {
         toast.success(
-          `Scanned ${scanned} compan${scanned === 1 ? 'y' : 'ies'} · ${newJobs} new role${newJobs === 1 ? '' : 's'} found${failedSuffix}`
+          `Scanned ${scanned} source${scanned === 1 ? '' : 's'} · ${newJobs} new role${newJobs === 1 ? '' : 's'} found${failedSuffix}`
         )
       } else if (failed > 0 && failed === scanned) {
-        toast.error('All scans failed — check ATS configuration')
+        toast.error('All scans failed — check configuration')
       } else {
-        toast.success(`Scanned ${scanned} compan${scanned === 1 ? 'y' : 'ies'} · no new roles${failedSuffix}`)
+        toast.success(`Scanned ${scanned} source${scanned === 1 ? '' : 's'} · no new roles${failedSuffix}`)
       }
       router.refresh()
     })

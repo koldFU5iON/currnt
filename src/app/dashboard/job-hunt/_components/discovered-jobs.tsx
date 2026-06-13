@@ -1,24 +1,31 @@
 'use client'
 
 import { useState } from 'react'
-import type { CompanyWatch } from '@prisma/client'
 import { JobQueueRow } from './job-queue-row'
-import type { DiscoveredJobWithWatch as BaseJob } from './job-queue-row'
+import type { DiscoveredJobWithWatch } from './job-queue-row'
 
-type DiscoveredJobWithWatch = BaseJob & { watchId: string }
+type FilterTab = 'all' | 'company' | 'board' | 'scored'
+
+const TABS: { value: FilterTab; label: string }[] = [
+  { value: 'all',     label: 'All' },
+  { value: 'company', label: 'Company' },
+  { value: 'board',   label: 'Boards' },
+  { value: 'scored',  label: 'Scored' },
+]
 
 type Props = {
   jobs: DiscoveredJobWithWatch[]
-  watches: CompanyWatch[]
 }
 
-export function DiscoveredJobs({ jobs, watches }: Props) {
+export function DiscoveredJobs({ jobs }: Props) {
+  const [tab, setTab] = useState<FilterTab>('all')
   const [showIgnored, setShowIgnored] = useState(false)
-  const [filterWatchId, setFilterWatchId] = useState<string>('all')
 
   const visible = jobs.filter((j) => {
     if (!showIgnored && j.status === 'ignored') return false
-    if (filterWatchId !== 'all' && j.watchId !== filterWatchId) return false
+    if (tab === 'company') return j.watch != null
+    if (tab === 'board')   return j.boardSource != null
+    if (tab === 'scored')  return j.fitLabel != null
     return true
   })
 
@@ -33,32 +40,38 @@ export function DiscoveredJobs({ jobs, watches }: Props) {
             {pendingCount > 0 ? `${pendingCount} waiting for review` : 'No roles pending review'}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          {watches.length > 1 && (
-            <select
-              className="text-xs border rounded-md px-2 py-1 bg-background text-muted-foreground"
-              value={filterWatchId}
-              onChange={(e) => setFilterWatchId(e.target.value)}
-            >
-              <option value="all">All companies</option>
-              {watches.map((w) => (
-                <option key={w.id} value={w.id}>{w.name}</option>
-              ))}
-            </select>
-          )}
+        <button
+          className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+          onClick={() => setShowIgnored((v) => !v)}
+        >
+          {showIgnored ? 'Hide ignored' : 'Show ignored'}
+        </button>
+      </div>
+
+      <div className="flex gap-1 mb-3 border-b">
+        {TABS.map((t) => (
           <button
-            className="text-xs text-muted-foreground underline-offset-2 hover:underline"
-            onClick={() => setShowIgnored((v) => !v)}
+            key={t.value}
+            onClick={() => setTab(t.value)}
+            className={`px-3 py-1.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              tab === t.value
+                ? 'border-foreground text-foreground'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
           >
-            {showIgnored ? 'Hide ignored' : 'Show ignored'}
+            {t.label}
           </button>
-        </div>
+        ))}
       </div>
 
       {visible.length === 0 ? (
         <div className="rounded-lg border border-dashed px-6 py-10 text-center">
           <p className="text-sm text-muted-foreground">
-            No roles found yet. Scan a watched company to discover matching roles.
+            {tab === 'company'
+              ? 'No company roles found yet. Scan a watched company to discover matching roles.'
+              : tab === 'board'
+              ? 'No board roles found yet. Enable a job board source and click Scan.'
+              : 'No roles found yet.'}
           </p>
         </div>
       ) : (
