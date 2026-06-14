@@ -17,7 +17,7 @@ export default async function CoverLetterPage({ params }: Props) {
     : null
 
   return (
-    <>
+    <div className="flex h-full flex-col">
       {jobAssets && (
         <JobContextNav
           jobId={jobAssets.jobId}
@@ -30,6 +30,6 @@ export default async function CoverLetterPage({ params }: Props) {
         />
       )}
       <CoverLetterWorkspace letter={letter} />
-    </>
+    </div>
   )
 }

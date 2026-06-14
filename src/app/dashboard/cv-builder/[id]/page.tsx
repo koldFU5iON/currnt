@@ -18,7 +18,7 @@ export default async function CVEditorPage({ params }: Props) {
     : null
 
   return (
-    <>
+    <div className="flex h-full flex-col">
       {jobAssets && (
         <JobContextNav
           jobId={jobAssets.jobId}
@@ -31,6 +31,6 @@ export default async function CVEditorPage({ params }: Props) {
         />
       )}
       <CvEditor cv={{ ...cv, profileName: cv.profile.name }} />
-    </>
+    </div>
   )
 }
