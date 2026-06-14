@@ -13,8 +13,8 @@ interface Props {
 }
 
 function fitStrengthLabel(rating: number): string {
-  if (rating >= 80) return "Strong match"
-  if (rating >= 60) return "Good match"
+  if (rating >= 8) return "Strong match"
+  if (rating >= 6) return "Good match"
   return "Partial match"
 }
 
@@ -57,7 +57,7 @@ export function JobSidebar({ job, hasLLMKey }: Props) {
           />
           {job.jobFit && (
             <p className="text-xs text-muted-foreground">
-              {fitStrengthLabel(job.jobFit.rating * 10)}
+              {fitStrengthLabel(job.jobFit.rating)}
             </p>
           )}
         </CardContent>
