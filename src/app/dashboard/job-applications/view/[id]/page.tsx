@@ -36,7 +36,7 @@ export default async function ViewJobPage({
       <div className="grid flex-1 grid-cols-[200px_1fr_1fr] overflow-hidden">
         <JobSidebar job={job} hasLLMKey={hasLLMKey} />
         <JobDescriptionPane jobDescription={job.jobDescription} />
-        <JobNotesPane notes={job.notes} />
+        <JobNotesPane jobId={job.id} notes={job.notes} notesIncludeInFit={job.notesIncludeInFit} />
       </div>
     </div>
   )
