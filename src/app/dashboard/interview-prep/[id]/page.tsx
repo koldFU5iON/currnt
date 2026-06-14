@@ -18,7 +18,7 @@ export default async function InterviewPrepWorkspacePage({ params }: Props) {
     : null
 
   return (
-    <>
+    <div className="flex h-full flex-col">
       {jobAssets && (
         <JobContextNav
           jobId={jobAssets.jobId}
@@ -31,6 +31,6 @@ export default async function InterviewPrepWorkspacePage({ params }: Props) {
         />
       )}
       <PrepWorkspace session={session} />
-    </>
+    </div>
   )
 }
