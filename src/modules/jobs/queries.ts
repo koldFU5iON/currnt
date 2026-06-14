@@ -211,6 +211,7 @@ export async function getActiveJobsForNav(profileId: string): Promise<ActiveJobF
       status: { in: ['interviewing', 'in-progress'] },
     },
     orderBy: { lastUpdated: 'desc' },
+    take: 10,
     select: { id: true, title: true, company: true, status: true },
   })
   return jobs as ActiveJobForNav[]

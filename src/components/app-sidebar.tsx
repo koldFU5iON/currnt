@@ -88,7 +88,9 @@ export function AppSidebar({ activeJobs }: { activeJobs: ActiveJobForNav[] }) {
           <SidebarGroupContent>
             <SidebarMenu>
               {activeJobs.length === 0 ? (
-                <p className="px-3 py-2 text-xs text-muted-foreground">No active jobs</p>
+                <SidebarMenuItem>
+                  <p className="px-3 py-2 text-xs text-muted-foreground">No active jobs</p>
+                </SidebarMenuItem>
               ) : (
                 activeJobs.map(job => <ActiveJobMenuItem key={job.id} job={job} />)
               )}
@@ -127,11 +129,11 @@ function ActiveJobMenuItem({ job }: { job: ActiveJobForNav }) {
   return (
     <SidebarMenuItem>
       <Link href={`/dashboard/job-applications/view/${job.id}`}>
-        <SidebarMenuButton isActive={isActive} tooltip={`${job.company ?? ''} — ${job.title}`}>
+        <SidebarMenuButton isActive={isActive} tooltip={job.company ? `${job.company} — ${job.title}` : job.title}>
           <span className="min-w-0 flex-1 truncate text-xs">
             {job.company ? `${job.company} · ` : ''}{job.title}
           </span>
-          <span className={cn('shrink-0 rounded px-1 py-0.5 text-[10px] font-medium capitalize', statusColour)}>
+          <span className={cn('shrink-0 rounded px-1 py-0.5 text-[10px] font-medium', statusColour)}>
             {job.status === 'interviewing' ? 'interview' : 'progress'}
           </span>
         </SidebarMenuButton>
