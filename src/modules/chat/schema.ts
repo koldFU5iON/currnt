@@ -18,6 +18,7 @@ export const PageContextSchema = z.discriminatedUnion('type', [
     type: z.literal('cover_letter'),
     letterId: z.string(),
     company: z.string().optional(),
+    braindump: z.string().optional(),
   }),
   z.object({
     type: z.literal('interview_prep'),

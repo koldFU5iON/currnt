@@ -26,6 +26,7 @@ type ReviewState =
   | { status: 'error'; message: string }
 
 export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob }) {
+  const BRAINDUMP_KEY = `cover-letter-braindump-${letter.id}`
   const [content, setContent] = useState(letter.content)
   const [mode, setMode] = useState<'markdown' | 'preview'>('markdown')
   const [saveState, setSaveState] = useState<SaveState>('idle')
@@ -34,6 +35,8 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
   const [reviewPanelOpen, setReviewPanelOpen] = useState(false)
   const [reviewState, setReviewState] = useState<ReviewState>({ status: 'idle' })
   const [showEditor, setShowEditor] = useState(letter.content !== '')
+  const [braindump, setBraindump] = useState('')
+  const [showBraindump, setShowBraindump] = useState(false)
   const isMobile = useIsMobile()
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -45,6 +48,16 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
   }, [])
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(BRAINDUMP_KEY)
+      if (saved) {
+        setBraindump(saved)
+        setShowBraindump(true)
+      }
+    } catch {}
+  }, [BRAINDUMP_KEY])
 
   useEffect(() => {
     function handleCoverLetterUpdated(e: Event) {
@@ -84,6 +97,11 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
     setShowEditor(true)
   }
 
+  function handleBraindumpChange(value: string) {
+    setBraindump(value)
+    try { localStorage.setItem(BRAINDUMP_KEY, value) } catch {}
+  }
+
   const job = letter.jobApplication
   const analysis = job?.jobAnalysis
     ? JobAnalysisSchema.safeParse(job.jobAnalysis).data ?? null
@@ -96,6 +114,7 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
     type: 'cover_letter',
     letterId: letter.id,
     company: company ?? undefined,
+    braindump: braindump.trim() || undefined,
   })
 
   const saveLabel =
@@ -288,7 +307,8 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
               </p>
             )
           })()}
-          <div className="flex w-full max-w-[794px] flex-1 flex-col rounded-md bg-background p-5 shadow-sm">
+          <div className="flex w-full max-w-[794px] flex-1 flex-col gap-4">
+            <div className="flex flex-1 flex-col rounded-md bg-background p-5 shadow-sm">
             {!showEditor && content === '' ? (
               <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 text-center">
                 <p className="text-sm font-semibold">No cover letter yet</p>
@@ -328,6 +348,41 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
                 </ReactMarkdown>
               </div>
             )}
+            </div>
+
+            {/* Brain dump — persistent raw notes the AI uses as context */}
+            <div className="rounded-md border border-dashed border-border bg-background shadow-sm">
+              <button
+                type="button"
+                onClick={() => setShowBraindump(v => !v)}
+                className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-xs text-muted-foreground hover:text-foreground"
+              >
+                <span className="font-medium">✦ Brain dump</span>
+                <span className="text-muted-foreground/60">— raw notes for the AI coach</span>
+                <span className="ml-auto">{showBraindump ? '▲' : '▼'}</span>
+              </button>
+              {showBraindump && (
+                <div className="border-t border-border/50 px-4 pb-4 pt-3">
+                  <textarea
+                    value={braindump}
+                    onChange={e => handleBraindumpChange(e.target.value)}
+                    rows={5}
+                    className="w-full resize-none bg-transparent text-sm leading-relaxed outline-none placeholder:text-muted-foreground/40"
+                    placeholder={
+                      "Jot down anything on your mind — why this role caught your eye, a story that proves your fit, " +
+                      "what resonates about the company, salary expectations, concerns, questions… " +
+                      "The AI coach will use this as context when you ask for help drafting or refining. " +
+                      "It won't appear in the letter itself."
+                    }
+                  />
+                  {braindump.trim() && (
+                    <p className="mt-1 text-[10px] text-muted-foreground/50">
+                      Saved locally · visible to AI coach only
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
