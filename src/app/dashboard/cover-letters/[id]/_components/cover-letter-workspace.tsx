@@ -53,7 +53,9 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
     try {
       const saved = localStorage.getItem(BRAINDUMP_KEY)
       if (saved) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setBraindump(saved)
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setShowBraindump(true)
       }
     } catch {}
