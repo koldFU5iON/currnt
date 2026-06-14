@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Archive, ListPlus, Plus, SearchIcon, X } from "lucide-react"
 import {
   APPLICATION_STATUS_LABEL,
@@ -66,12 +66,26 @@ export function JobList({ jobs, hasLLMKey, openCreate, initialCreateUrl }: {
   // not after the server roundtrip + revalidate finishes.
   const [busyRows, setBusyRows] = useState<Map<string, string>>(new Map())
 
-  // ⌘J / Ctrl+J opens the create sheet from anywhere on the page.
+  // Stable ref so the keydown handler always sees the latest archive callback
+  // without re-attaching the listener on every selection change.
+  const bulkArchiveRef = useRef(handleBulkArchive)
+  useEffect(() => { bulkArchiveRef.current = handleBulkArchive })
+
+  // ⌘J / Ctrl+J — open create sheet. E — archive selection (guards against input focus).
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key.toLowerCase() === 'j' && (e.metaKey || e.ctrlKey)) {
+      if (e.metaKey || e.ctrlKey) {
+        if (e.key.toLowerCase() === 'j') {
+          e.preventDefault()
+          setCreating(true)
+        }
+        return
+      }
+      const tag = (e.target as HTMLElement).tagName.toLowerCase()
+      if (tag === 'input' || tag === 'textarea' || (e.target as HTMLElement).isContentEditable) return
+      if (e.key.toLowerCase() === 'e' && !e.shiftKey && !e.altKey) {
         e.preventDefault()
-        setCreating(true)
+        bulkArchiveRef.current()
       }
     }
     document.addEventListener('keydown', onKeyDown)
@@ -442,6 +456,9 @@ function ToolBar({
             <Button variant="default" size="sm" onClick={onBulkArchive} className="gap-1.5">
               <Archive size={14} />
               Archive ({selectedCount})
+              <kbd className="ml-0.5 hidden items-center rounded border bg-background/20 px-1.5 font-mono text-[10px] font-medium sm:inline-flex">
+                E
+              </kbd>
             </Button>
             <Button variant="ghost" size="sm" onClick={onClearSelection} className="gap-1.5">
               <X size={14} />

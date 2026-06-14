@@ -53,6 +53,9 @@ const s = StyleSheet.create({
   section: {
     marginBottom: 10,
   },
+  sectionCompact: {
+    marginBottom: 3,
+  },
   sectionHeadingWrap: {
     borderBottomWidth: 1,
     borderBottomColor: '#000000',
@@ -201,8 +204,12 @@ export function CVPDFDocument({ cv }: { cv: CVWithMeta }) {
           const label = SECTION_LABELS[section.type]
           const isFirst = !seenTypes.has(section.type)
           seenTypes.add(section.type)
+          // Compact sections (certs, skills rows, languages) that stack without a
+          // sub-heading get much tighter spacing than full sections like experience.
+          const COMPACT_TYPES = new Set(['certification', 'skills', 'tools', 'languages'])
+          const compact = !isFirst && COMPACT_TYPES.has(section.type)
           return (
-            <View key={i} style={s.section}>
+            <View key={i} style={compact ? s.sectionCompact : s.section}>
               {isFirst && label ? <SectionHeading label={label} /> : null}
               <SectionBody section={section} />
             </View>
