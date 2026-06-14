@@ -13,9 +13,16 @@ vi.mock('@/lib/db', () => ({
         ],
         experiences: [{ role: 'Staff Engineer', company: 'Stripe' }],
         settings: {
-          onboardingContext: {
-            targetRole: 'Principal Engineer',
-            industries: 'fintech',
+          searchProfile: {
+            roles: ['Principal Engineer'],
+            careerGoals: 'fintech',
+            preferredName: '',
+            currentRole: '',
+            countries: [],
+            remotePreference: '',
+            salaryBand: null,
+            pivotContext: '',
+            extraContext: '',
           },
         },
       }),
