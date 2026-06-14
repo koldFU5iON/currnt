@@ -46,7 +46,7 @@ import { cn } from "@/lib/utils"
 import { usePageContext } from "@/lib/context/page-context"
 import type { ActiveJobForNav } from "@/modules/jobs/queries"
 
-export function AppSidebar({ activeJobs }: { activeJobs: ActiveJobForNav[] }) {
+export function AppSidebar({ activeJobs, suggestionCount }: { activeJobs: ActiveJobForNav[]; suggestionCount: number }) {
   return (
     <Sidebar collapsible="icon" variant="sidebar">
       <SidebarHeader>
@@ -76,7 +76,11 @@ export function AppSidebar({ activeJobs }: { activeJobs: ActiveJobForNav[] }) {
             <SidebarGroupContent>
               <SidebarMenu>
                 {group.items.map((item) => (
-                  <NavMenuItem key={item.destination} {...item} />
+                  <NavMenuItem
+                    key={item.destination}
+                    {...item}
+                    badge={item.destination === '/dashboard/search-context' && suggestionCount > 0 ? suggestionCount : undefined}
+                  />
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>
@@ -175,7 +179,7 @@ function FeedbackButton() {
   )
 }
 
-function NavMenuItem({ destination, label, Icon }: NavItem) {
+function NavMenuItem({ destination, label, Icon, badge }: NavItem & { badge?: number }) {
   const pathname = usePathname()
   const isActive =
     destination === "/dashboard"
@@ -188,6 +192,11 @@ function NavMenuItem({ destination, label, Icon }: NavItem) {
         <SidebarMenuButton isActive={isActive} tooltip={label}>
           <Icon />
           <span>{label}</span>
+          {badge && badge > 0 && (
+            <span className="ml-auto flex h-4 w-4 items-center justify-center rounded-full bg-violet-500 text-[9px] font-bold text-white">
+              {badge}
+            </span>
+          )}
         </SidebarMenuButton>
       </Link>
     </SidebarMenuItem>
