@@ -1,32 +1,24 @@
+import Link from 'next/link'
 import { ContentContainer } from '@/app/components/ContentContainer'
 import { requireProfile } from '@/lib/session'
-import { normalizeOnboardingContext } from '@/modules/onboarding/schema'
 import { getWatchlist, getDiscoveredJobs } from '@/modules/job-hunt/queries'
-import { getBoardSources, getJobHuntSearch, getJobBoardKeyStatus } from '@/modules/job-hunt/board-sources/queries'
-import { normalizeJobHuntSearch } from '@/modules/job-hunt/board-sources/schema'
+import { getBoardSources, getSearchCriteriaForScanner, getJobBoardKeyStatus } from '@/modules/job-hunt/board-sources/queries'
 import { Watchlist } from './_components/watchlist'
 import { DiscoveredJobs } from './_components/discovered-jobs'
-import { ScanSettingsDialog } from './_components/scan-settings-dialog'
-import { SearchCriteriaBar } from './_components/search-criteria-bar'
 import { JobBoardSources } from './_components/job-board-sources'
+import { Settings2 } from 'lucide-react'
+import { buttonVariants } from '@/components/ui/button'
 
 export default async function JobHuntPage() {
   await requireProfile()
 
-  const [watches, jobs, boardSources, searchData, keyStatus] = await Promise.all([
+  const [watches, jobs, boardSources, criteria, keyStatus] = await Promise.all([
     getWatchlist(),
     getDiscoveredJobs(),
     getBoardSources(),
-    getJobHuntSearch(),
+    getSearchCriteriaForScanner(),
     getJobBoardKeyStatus(),
   ])
-
-  const { targetRole, currentRole, additionalRoles } = normalizeOnboardingContext(searchData.onboardingContext)
-  const searchCriteria = normalizeJobHuntSearch(searchData.jobHuntSearch)
-
-  if (searchCriteria.roles.length === 0 && targetRole) {
-    searchCriteria.roles = [targetRole, ...additionalRoles].filter(Boolean)
-  }
 
   const availableProviders = new Set<string>([
     'remotive',
@@ -35,21 +27,41 @@ export default async function JobHuntPage() {
     ...(keyStatus.jSearchConfigured ? ['jsearch'] : []),
   ])
 
+  const hasCriteria = criteria.roles.length > 0 || criteria.countries.length > 0
+
   return (
     <ContentContainer
       title="Job Hunt"
       description="Scan companies and job boards, then review matched roles."
       fullWidth
     >
-      <SearchCriteriaBar initial={searchCriteria} />
+      {/* Search criteria summary */}
+      <div className="rounded-lg border bg-card px-4 py-3 mb-4 flex items-center justify-between gap-4">
+        <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+          {criteria.roles.length > 0 && (
+            <span><span className="text-muted-foreground text-xs uppercase tracking-wide mr-1.5">Roles</span>{criteria.roles.join(', ')}</span>
+          )}
+          {criteria.countries.length > 0 && (
+            <span><span className="text-muted-foreground text-xs uppercase tracking-wide mr-1.5">Countries</span>{criteria.countries.join(', ')}</span>
+          )}
+          {criteria.remotePreference && (
+            <span><span className="text-muted-foreground text-xs uppercase tracking-wide mr-1.5">Remote</span>{criteria.remotePreference}</span>
+          )}
+          {!hasCriteria && (
+            <span className="text-muted-foreground text-sm">No search criteria set yet</span>
+          )}
+        </div>
+        <Link
+          href="/dashboard/search-context"
+          className={buttonVariants({ variant: 'outline', size: 'sm' })}
+        >
+          <Settings2 className="size-3.5 mr-1.5" />
+          Edit search context
+        </Link>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[280px_280px_1fr] gap-6 items-start">
         <aside className="space-y-6 lg:sticky lg:top-6">
-          <ScanSettingsDialog
-            targetRole={targetRole}
-            currentRole={currentRole}
-            additionalRoles={additionalRoles}
-          />
           <Watchlist watches={watches} />
         </aside>
 
