@@ -22,6 +22,7 @@ type Props = {
   onBack?: () => void
   onEditClick?: () => void
   onDeleteClick?: () => void
+  onFieldSaved?: (field: keyof ReturnType<typeof getDetailsFields>, value: string | boolean) => void
 }
 
 const fmtDate = (d: Date) =>
@@ -45,6 +46,7 @@ export function ExperienceFrontmatter({
   onBack,
   onEditClick,
   onDeleteClick,
+  onFieldSaved,
 }: Props) {
   const router = useRouter()
 
@@ -76,6 +78,7 @@ export function ExperienceFrontmatter({
   ) {
     const current = getDetailsFields(experience)
     await updateExperienceDetails(experience.id, { ...current, [field]: value })
+    onFieldSaved?.(field, value)
     router.refresh()
   }
 
