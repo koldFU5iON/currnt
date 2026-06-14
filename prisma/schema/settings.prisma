@@ -21,6 +21,10 @@ model UserSettings {
   onboardingContext     Json?
   /// Universal search criteria for Job Hunt page. Shape: JobHuntSearchCriteria in src/modules/job-hunt/board-sources/schema.ts
   jobHuntSearch     Json?
+  /// Unified search profile replacing onboardingContext + jobHuntSearch. Shape: SearchProfile in src/modules/search-profile/schema.ts
+  searchProfile     Json?
+  /// Pending context suggestions from AI features. Shape: SearchSuggestion[] in src/modules/search-profile/schema.ts
+  searchSuggestions Json?
   /// Encrypted API keys for paid job board sources. Shape: { jsearch?: string }
   jobBoardApiKeys   Json?
   writingBrief          String?
