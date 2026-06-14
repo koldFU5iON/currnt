@@ -19,7 +19,8 @@ import { requireProfile } from '@/lib/session'
 import { completeStructured } from '@/modules/llm/client'
 import { LLMError, type LLMErrorKind } from '@/modules/llm/errors'
 import { buildProfileSnapshot, serializeProfileForLLM } from '@/modules/profile/snapshot'
-import { normalizeOnboardingContext } from '@/modules/onboarding/schema'
+import { normalizeSearchProfile } from '@/modules/search-profile/schema'
+import { emitSuggestion } from '@/modules/search-profile/actions'
 import { loadWritingRules, composeSystem, type WritingContext } from '@/modules/llm/prompt-context'
 import { JobFitSchema, type JobFit } from './schema'
 import { analyseJob } from '@/modules/cv/analyse-job'
@@ -57,15 +58,22 @@ export async function assessJobFit(jobId: string): Promise<AssessJobFitResult> {
     buildProfileSnapshot(profile.id),
     prisma.userSettings.findUnique({
       where: { profileId: profile.id },
-      select: { onboardingContext: true, writingBrief: true },
+      select: { searchProfile: true, writingBrief: true },
     }),
     loadWritingRules(),
   ])
 
   const writingCtx: WritingContext = { rules, brief: settings?.writingBrief ?? null }
-  const context = normalizeOnboardingContext(settings?.onboardingContext)
-  const hasGoals =
-    !!(context.targetRole || context.industries || context.workPreferences || context.extraContext)
+  const context = normalizeSearchProfile(settings?.searchProfile)
+  const hasGoals = !!(
+    context.roles.length > 0 ||
+    context.careerGoals ||
+    context.pivotContext ||
+    context.extraContext ||
+    context.remotePreference ||
+    context.countries.length > 0 ||
+    context.salaryBand
+  )
   const hasNotes = job.notesIncludeInFit && !!job.notes?.trim()
 
   const featureInstructions = `You are an experienced career coach assessing whether a candidate is a strong fit for a role.
@@ -78,7 +86,7 @@ Be honest and concrete. Overclaiming the candidate's fit makes them waste an int
 - 7–8 (solid): strong baseline match; can credibly compete in interviews.
 - 9–10 (standout): unusually well-aligned across role, level, and stack.
 
-Ground your justification in specific evidence from both sides — name technologies, scope, level — rather than generic praise.${hasGoals ? '\n\nWhen a # Career Goals section is provided, populate trajectoryNote with one or two sentences on how this role aligns or diverges from the candidate\'s stated direction. Omit the field entirely when no goals are provided.' : ''}`
+Ground your justification in specific evidence from both sides — name technologies, scope, level — rather than generic praise.${hasGoals ? '\n\nWhen a # Search context section is provided, populate trajectoryNote with 1–2 sentences covering: (1) how the role aligns or diverges from the candidate\'s stated direction, (2) any location or remote-working mismatch, and (3) whether salary appears within band if visible in the JD. Omit the field entirely when no search context is provided.' : ''}`
 
   const system = composeSystem(writingCtx.rules, writingCtx.brief, featureInstructions)
 
@@ -93,11 +101,19 @@ ${serializeProfileForLLM(snapshot)}
 ${job.jobDescription}`
 
   if (hasGoals) {
-    userPrompt += '\n\n# Career Goals\n'
-    if (context.targetRole)      userPrompt += `\n**Target role:** ${context.targetRole}`
-    if (context.industries)      userPrompt += `\n**Industries:** ${context.industries}`
-    if (context.workPreferences) userPrompt += `\n**Work preferences:** ${context.workPreferences}`
-    if (context.extraContext)    userPrompt += `\n**Additional context:** ${context.extraContext}`
+    userPrompt += '\n\n# Search context\n'
+    if (context.roles.length > 0)     userPrompt += `\n**Target roles:** ${context.roles.join(', ')}`
+    if (context.remotePreference)      userPrompt += `\n**Remote preference:** ${context.remotePreference}`
+    if (context.countries.length > 0)  userPrompt += `\n**Countries:** ${context.countries.join(', ')}`
+    if (context.salaryBand) {
+      const { min, max, currency } = context.salaryBand
+      const range = [min && `${currency} ${min.toLocaleString()}`, max && `${currency} ${max.toLocaleString()}`]
+        .filter(Boolean).join('–')
+      if (range) userPrompt += `\n**Salary band:** ${range}`
+    }
+    if (context.careerGoals)           userPrompt += `\n**Career goals:** ${context.careerGoals}`
+    if (context.pivotContext)          userPrompt += `\n**Career change context:** ${context.pivotContext}`
+    if (context.extraContext)          userPrompt += `\n**Additional context:** ${context.extraContext}`
   }
 
   if (hasNotes) {
@@ -126,6 +142,36 @@ ${job.jobDescription}`
       return { ok: false, error: err.kind, message: err.message }
     }
     throw err
+  }
+
+  // Emit suggestion if job notes reveal a salary floor not yet in searchProfile
+  if (hasNotes && !context.salaryBand && job.notes) {
+    const salaryMatch = job.notes.match(/(?:not worth|minimum|below|less than)[^\d]*(\d[\d,]+)/i)
+    if (salaryMatch) {
+      const floor = Number(salaryMatch[1].replace(/,/g, ''))
+      if (!isNaN(floor) && floor > 0) {
+        emitSuggestion(profile.id, {
+          field: 'salaryBand',
+          suggestedValue: { min: floor, max: null, currency: 'GBP' },
+          reason: `You noted a salary floor around ${floor.toLocaleString()} while reviewing ${job.company ?? 'this role'}.`,
+          source: 'job-fit',
+        }).catch(() => { /* non-critical */ })
+      }
+    }
+  }
+
+  // Emit suggestion if job title is a new role type
+  if (job.title && context.roles.length > 0) {
+    const titleLower = job.title.toLowerCase()
+    const alreadyTracked = context.roles.some((r) => titleLower.includes(r.toLowerCase()) || r.toLowerCase().includes(titleLower))
+    if (!alreadyTracked) {
+      emitSuggestion(profile.id, {
+        field: 'roles',
+        suggestedValue: [...context.roles, job.title],
+        reason: `You applied to "${job.title}" which isn't in your target roles list.`,
+        source: 'job-fit',
+      }).catch(() => { /* non-critical */ })
+    }
   }
 
   await prisma.jobApplication.update({
