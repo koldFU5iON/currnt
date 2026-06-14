@@ -87,12 +87,18 @@ export async function getActiveJobs(): Promise<Job[]> {
         take: 1,
         orderBy: { updatedAt: 'desc' },
       },
+      interviewPrepSessions: {
+        select: { id: true },
+        take: 1,
+        orderBy: { createdAt: 'desc' },
+      },
     },
   })
   return jobs.map(j => ({
     ...j,
     cvDocumentId: j.cvDocuments[0]?.id ?? null,
     coverLetterDocumentId: j.coverLetters[0]?.id ?? null,
+    interviewPrepSessionId: j.interviewPrepSessions[0]?.id ?? null,
   })) as Job[]
 }
 
@@ -117,8 +123,98 @@ export async function getJobApplicationById(id: string): Promise<Job | null> {
   const { profile } = await requireProfile()
   const job = await prisma.jobApplication.findFirst({
     where: { id, profileId: profile.id },
+    include: {
+      cvDocuments: {
+        select: { id: true },
+        take: 1,
+        orderBy: { createdAt: 'desc' },
+      },
+      coverLetters: {
+        select: { id: true },
+        take: 1,
+        orderBy: { updatedAt: 'desc' },
+      },
+      interviewPrepSessions: {
+        select: { id: true },
+        take: 1,
+        orderBy: { createdAt: 'desc' },
+      },
+    },
   })
-  return job as Job | null
+  if (!job) return null
+  return {
+    ...job,
+    cvDocumentId: job.cvDocuments[0]?.id ?? null,
+    coverLetterDocumentId: job.coverLetters[0]?.id ?? null,
+    interviewPrepSessionId: job.interviewPrepSessions[0]?.id ?? null,
+  } as Job
+}
+
+export type JobAssets = {
+  jobId: string
+  company: string | null
+  title: string
+  cvDocumentId: string | null
+  coverLetterDocumentId: string | null
+  interviewPrepSessionId: string | null
+}
+
+/** Lightweight query for the cross-tool nav bar. Returns null if not found or not owned by profileId. */
+export async function getJobAssets(jobId: string, profileId: string): Promise<JobAssets | null> {
+  const job = await prisma.jobApplication.findFirst({
+    where: { id: jobId, profileId },
+    select: {
+      id: true,
+      company: true,
+      title: true,
+      cvDocuments: {
+        select: { id: true },
+        take: 1,
+        orderBy: { createdAt: 'desc' },
+      },
+      coverLetters: {
+        select: { id: true },
+        take: 1,
+        orderBy: { updatedAt: 'desc' },
+      },
+      interviewPrepSessions: {
+        select: { id: true },
+        take: 1,
+        orderBy: { createdAt: 'desc' },
+      },
+    },
+  })
+  if (!job) return null
+  return {
+    jobId: job.id,
+    company: job.company,
+    title: job.title,
+    cvDocumentId: job.cvDocuments[0]?.id ?? null,
+    coverLetterDocumentId: job.coverLetters[0]?.id ?? null,
+    interviewPrepSessionId: job.interviewPrepSessions[0]?.id ?? null,
+  }
+}
+
+export type ActiveJobForNav = {
+  id: string
+  title: string
+  company: string | null
+  status: ApplicationStatusType
+}
+
+/** Slim list of interviewing/in-progress jobs for the cross-tool nav bar. */
+export async function getActiveJobsForNav(profileId: string): Promise<ActiveJobForNav[]> {
+  const jobs = await prisma.jobApplication.findMany({
+    where: {
+      profileId,
+      archivedAt: null,
+      status: { in: ['interviewing', 'in-progress'] },
+    },
+    orderBy: { lastUpdated: 'desc' },
+    take: 10,
+    select: { id: true, title: true, company: true, status: true },
+  })
+  return jobs as ActiveJobForNav[]
 }
 
 export async function getArchivedJobs(): Promise<Job[]> {
@@ -137,11 +233,17 @@ export async function getArchivedJobs(): Promise<Job[]> {
         take: 1,
         orderBy: { updatedAt: 'desc' },
       },
+      interviewPrepSessions: {
+        select: { id: true },
+        take: 1,
+        orderBy: { createdAt: 'desc' },
+      },
     },
   })
   return jobs.map(j => ({
     ...j,
     cvDocumentId: j.cvDocuments[0]?.id ?? null,
     coverLetterDocumentId: j.coverLetters[0]?.id ?? null,
+    interviewPrepSessionId: j.interviewPrepSessions[0]?.id ?? null,
   })) as Job[]
 }

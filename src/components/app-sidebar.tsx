@@ -35,15 +35,18 @@ import Link from "next/link"
 import { useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { authClient, useSession } from "@/lib/auth-client"
-import { mainNav, type NavItem } from "@/lib/nav-menu"
+import { navGroups, type NavItem } from "@/lib/nav-menu"
 import { brand } from "@/lib/brand"
 import { FeedbackDrawer } from "@/app/components/FeedbackDrawer"
 import { Wordmark } from "@/components/brand/wordmark"
 import { CurrntIcon } from "@/components/brand/icon"
 import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog"
 import { Support } from "./support"
+import { cn } from "@/lib/utils"
+import { usePageContext } from "@/lib/context/page-context"
+import type { ActiveJobForNav } from "@/modules/jobs/queries"
 
-export function AppSidebar() {
+export function AppSidebar({ activeJobs }: { activeJobs: ActiveJobForNav[] }) {
   return (
     <Sidebar collapsible="icon" variant="sidebar">
       <SidebarHeader>
@@ -67,13 +70,30 @@ export function AppSidebar() {
       <SidebarSeparator />
 
       <SidebarContent>
+        {navGroups.map((group) => (
+          <SidebarGroup key={group.label}>
+            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => (
+                  <NavMenuItem key={item.destination} {...item} />
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
+
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>Active Jobs</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainNav.map((item) => (
-                <NavMenuItem key={item.destination} {...item} />
-              ))}
+              {activeJobs.length === 0 ? (
+                <SidebarMenuItem>
+                  <p className="px-3 py-2 text-xs text-muted-foreground">No active jobs</p>
+                </SidebarMenuItem>
+              ) : (
+                activeJobs.map(job => <ActiveJobMenuItem key={job.id} job={job} />)
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -90,6 +110,35 @@ export function AppSidebar() {
 
       <SidebarRail />
     </Sidebar>
+  )
+}
+
+function ActiveJobMenuItem({ job }: { job: ActiveJobForNav }) {
+  const pathname = usePathname()
+  const { context } = usePageContext()
+  // highlight if on this job's hub page OR if the page context has this job's ID
+  const contextJobId = context && 'jobId' in context ? context.jobId : undefined
+  const isActive =
+    pathname.startsWith(`/dashboard/job-applications/view/${job.id}`) ||
+    contextJobId === job.id
+
+  const statusColour = job.status === 'interviewing'
+    ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400'
+    : 'bg-amber-500/20 text-amber-600 dark:text-amber-500'
+
+  return (
+    <SidebarMenuItem>
+      <Link href={`/dashboard/job-applications/view/${job.id}`}>
+        <SidebarMenuButton isActive={isActive} tooltip={job.company ? `${job.company} — ${job.title}` : job.title}>
+          <span className="min-w-0 flex-1 truncate text-xs">
+            {job.company ? `${job.company} · ` : ''}{job.title}
+          </span>
+          <span className={cn('shrink-0 rounded px-1 py-0.5 text-[10px] font-medium', statusColour)}>
+            {job.status === 'interviewing' ? 'interview' : 'progress'}
+          </span>
+        </SidebarMenuButton>
+      </Link>
+    </SidebarMenuItem>
   )
 }
 

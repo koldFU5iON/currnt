@@ -2,8 +2,9 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { requireProfile } from '@/lib/session'
 import { getCoverLetter } from '@/modules/cover-letters/queries'
-import { listActiveJobsForPicker } from '@/modules/jobs/queries'
+import { listActiveJobsForPicker, getJobAssets } from '@/modules/jobs/queries'
 import { getLLMConfigStatus } from '@/modules/llm/client'
+import { JobContextNav } from '@/components/job-context-nav'
 import { GuideClient } from './_components/guide-client'
 
 type Props = { params: Promise<{ id: string }> }
@@ -17,8 +18,23 @@ export default async function GuidePage({ params }: Props) {
   ])
   if (!letter) notFound()
 
+  const jobAssets = letter.jobApplicationId
+    ? await getJobAssets(letter.jobApplicationId, profile.id)
+    : null
+
   return (
     <div className="flex h-full flex-col">
+      {jobAssets && (
+        <JobContextNav
+          jobId={jobAssets.jobId}
+          company={jobAssets.company}
+          title={jobAssets.title}
+          cvDocumentId={jobAssets.cvDocumentId}
+          coverLetterDocumentId={jobAssets.coverLetterDocumentId}
+          interviewPrepSessionId={jobAssets.interviewPrepSessionId}
+          current="cover-letter"
+        />
+      )}
       <div className="flex items-center gap-3 border-b px-4 py-2 text-sm">
         <Link
           href={`/dashboard/cover-letters/${id}`}

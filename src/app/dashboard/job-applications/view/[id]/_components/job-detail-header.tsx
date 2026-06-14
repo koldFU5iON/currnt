@@ -1,36 +1,38 @@
+'use client'
+
+import { useState } from "react"
 import Link from "next/link"
-import { type Job, ApplicationStatus } from "@/app/types/job-application"
-import { ArrowLeft, ClipboardList, SquareArrowOutUpRight } from "lucide-react"
-import { buttonVariants } from "@/components/ui/button"
+import { type Job } from "@/app/types/job-application"
+import { ArrowLeft, Pencil, SquareArrowOutUpRight } from "lucide-react"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { EditJobDialog } from "@/app/dashboard/job-applications/_components/edit-job-dialog"
 
 export function JobDetailHeader({ job }: { job: Job }) {
-  return (
-    <div className="space-y-3">
-      <Link
-        href="/dashboard/job-applications"
-        className="inline-flex items-center gap-1.5 py-1 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        <ArrowLeft size={14} />
-        Back to applications
-      </Link>
+  const [editOpen, setEditOpen] = useState(false)
 
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 space-y-1">
-          <h1 className="text-2xl font-semibold leading-tight md:text-3xl">{job.title}</h1>
-          <p className="text-base text-muted-foreground">{job.company}</p>
+  return (
+    <>
+      <div className="flex items-center justify-between gap-4 border-b bg-background px-4 py-3">
+        <div className="flex min-w-0 items-center gap-4">
+          <Link
+            href="/dashboard/job-applications"
+            className="inline-flex shrink-0 items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <ArrowLeft size={14} />
+            Back
+          </Link>
+          <div className="min-w-0">
+            <h1 className="truncate text-base font-semibold leading-tight">{job.title}</h1>
+            <p className="truncate text-sm text-muted-foreground">{job.company}</p>
+          </div>
         </div>
 
-        <div className="flex shrink-0 gap-2">
-          {(job.status === ApplicationStatus.Applied || job.status === ApplicationStatus.Interviewing) && (
-            <Link
-              href={`/dashboard/interview-prep/new?jobId=${job.id}`}
-              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1.5")}
-            >
-              <ClipboardList size={14} />
-              Prep interview
-            </Link>
-          )}
+        <div className="flex shrink-0 items-center gap-2">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEditOpen(true)}>
+            <Pencil size={13} />
+            Edit
+          </Button>
           {job.url && (
             <a
               href={job.url}
@@ -38,12 +40,14 @@ export function JobDetailHeader({ job }: { job: Job }) {
               rel="noopener noreferrer"
               className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1.5")}
             >
-              <SquareArrowOutUpRight size={14} />
+              <SquareArrowOutUpRight size={13} />
               View listing
             </a>
           )}
         </div>
       </div>
-    </div>
+
+      <EditJobDialog job={job} open={editOpen} onOpenChange={setEditOpen} />
+    </>
   )
 }

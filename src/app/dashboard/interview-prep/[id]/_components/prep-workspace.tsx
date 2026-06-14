@@ -27,7 +27,7 @@ export function PrepWorkspace({ session }: Props) {
   })
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] flex-col overflow-hidden">
+    <div className="flex flex-1 flex-col overflow-hidden">
       {/* Toolbar */}
       <div className="flex shrink-0 items-center justify-end border-b bg-background px-4 py-1.5 print:hidden">
         <Button variant="ghost" size="sm" className="gap-1.5 text-xs" onClick={openPanel}>
