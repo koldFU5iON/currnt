@@ -63,7 +63,7 @@ export async function assessJobFit(jobId: string): Promise<AssessJobFitResult> {
     loadWritingRules(),
   ])
 
-  const writingCtx: WritingContext = { rules, brief: settings?.writingBrief ?? null }
+  const writingCtx: WritingContext = { rules, brief: settings?.writingBrief ?? null, searchProfileSummary: null }
   const context = normalizeSearchProfile(settings?.searchProfile)
   const hasGoals = !!(
     context.roles.length > 0 ||
