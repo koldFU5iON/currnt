@@ -263,6 +263,11 @@ export function ExperienceWorkspace({ profile }: Props) {
           onBack={() => setActiveContext({ type: 'experience' })}
           onEditClick={() => setEditOpen(true)}
           onDeleteClick={() => setDeleteOpen(true)}
+          onFieldSaved={(field, value) => {
+            setExperiences(prev =>
+              prev.map(e => e.id === selectedExperienceId ? { ...e, [field]: value } : e)
+            )
+          }}
         />
       )}
 

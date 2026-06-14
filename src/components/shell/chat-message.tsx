@@ -176,6 +176,18 @@ export function ChatMessage({ message, onToolOutput }: ChatMessageProps) {
               )
             }
 
+            if (state === 'input-streaming' && isWriteTool) {
+              return (
+                <div
+                  key={part.toolCallId}
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground"
+                >
+                  <Loader2 className="size-3 animate-spin" />
+                  {toolName.replace(/^propose_/, '').replace(/_/g, ' ')} — thinking…
+                </div>
+              )
+            }
+
             if ((state === 'input-available' || state === 'input-streaming') && !isWriteTool) {
               return (
                 <div
