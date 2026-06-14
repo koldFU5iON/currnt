@@ -10,14 +10,24 @@ vi.mock('@/lib/db', () => ({
     coverLetterDocument: { findFirst: vi.fn() },
     cVDocument: { findFirst: vi.fn() },
     jobApplication: { findFirst: vi.fn() },
+    userSettings: { findUnique: vi.fn().mockResolvedValue(null) },
   },
+}))
+vi.mock('@/modules/search-profile/actions', () => ({
+  emitSuggestion: vi.fn().mockResolvedValue(undefined),
+}))
+vi.mock('@/modules/search-profile/schema', () => ({
+  normalizeSearchProfile: vi.fn().mockReturnValue({
+    roles: [], countries: [], remotePreference: '', salaryBand: null,
+    preferredName: '', currentRole: '', careerGoals: '', pivotContext: '', extraContext: '',
+  }),
 }))
 vi.mock('@/modules/profile/snapshot', () => ({
   buildProfileSnapshot: vi.fn().mockResolvedValue({}),
   serializeProfileForLLM: vi.fn().mockReturnValue('# Test User'),
 }))
 vi.mock('@/modules/llm/prompt-context', () => ({
-  loadWritingContext: vi.fn().mockResolvedValue({ rules: '', brief: null }),
+  loadWritingContext: vi.fn().mockResolvedValue({ rules: '', brief: null, searchProfileSummary: null }),
   composeSystem: vi.fn().mockReturnValue('system prompt'),
 }))
 vi.mock('@/modules/llm/client', () => ({
