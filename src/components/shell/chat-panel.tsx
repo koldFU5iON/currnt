@@ -69,6 +69,18 @@ function restoreMessages(): UIMessage[] {
   }
 }
 
+function navKey(ctx: PageContext | null): string {
+  if (!ctx) return ''
+  switch (ctx.type) {
+    case 'cv': return `cv:${ctx.cvId}`
+    case 'job_fit': return `job_fit:${ctx.jobId}`
+    case 'cover_letter': return `cover_letter:${ctx.letterId}`
+    case 'interview_prep': return `interview_prep:${ctx.sessionId}`
+    case 'job_application': return `job_application:${ctx.jobId}`
+    case 'profile': return 'profile'
+  }
+}
+
 const CONTEXT_META: Record<
   string,
   { icon: React.ComponentType<{ className?: string }>; label: (ctx: PageContext) => string }
@@ -152,7 +164,7 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
     const prev = prevContextRef.current
     prevContextRef.current = context
     if (!context) return
-    if (JSON.stringify(prev) === JSON.stringify(context)) return
+    if (navKey(prev) === navKey(context)) return
     // Only inject if a conversation is already in progress — no need to pollute a fresh chat
     setMessages(msgs => {
       if (msgs.length === 0) return msgs

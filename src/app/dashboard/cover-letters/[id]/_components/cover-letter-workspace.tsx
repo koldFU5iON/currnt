@@ -35,10 +35,16 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
   const [reviewPanelOpen, setReviewPanelOpen] = useState(false)
   const [reviewState, setReviewState] = useState<ReviewState>({ status: 'idle' })
   const [showEditor, setShowEditor] = useState(letter.content !== '')
-  const [braindump, setBraindump] = useState('')
-  const [showBraindump, setShowBraindump] = useState(false)
+  const [braindump, setBraindump] = useState(() => {
+    try { return localStorage.getItem(BRAINDUMP_KEY) ?? '' } catch { return '' }
+  })
+  const [showBraindump, setShowBraindump] = useState(() => {
+    try { return !!localStorage.getItem(BRAINDUMP_KEY) } catch { return false }
+  })
   const isMobile = useIsMobile()
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const braindumpDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [debouncedBraindump, setDebouncedBraindump] = useState(braindump)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const mountedRef = useRef(true)
 
@@ -46,20 +52,9 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
     return () => {
       mountedRef.current = false
       if (debounceRef.current) clearTimeout(debounceRef.current)
+      if (braindumpDebounceRef.current) clearTimeout(braindumpDebounceRef.current)
     }
   }, [])
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(BRAINDUMP_KEY)
-      if (saved) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setBraindump(saved)
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setShowBraindump(true)
-      }
-    } catch {}
-  }, [BRAINDUMP_KEY])
 
   useEffect(() => {
     function handleCoverLetterUpdated(e: Event) {
@@ -102,6 +97,8 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
   function handleBraindumpChange(value: string) {
     setBraindump(value)
     try { localStorage.setItem(BRAINDUMP_KEY, value) } catch {}
+    if (braindumpDebounceRef.current) clearTimeout(braindumpDebounceRef.current)
+    braindumpDebounceRef.current = setTimeout(() => setDebouncedBraindump(value), 1500)
   }
 
   const job = letter.jobApplication
@@ -116,7 +113,7 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
     type: 'cover_letter',
     letterId: letter.id,
     company: company ?? undefined,
-    braindump: braindump.trim() || undefined,
+    braindump: debouncedBraindump.trim() || undefined,
   })
 
   const saveLabel =
