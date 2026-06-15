@@ -5,6 +5,7 @@ import * as ashby from './ashby'
 import * as successfactors from './successfactors'
 import * as workday from './workday'
 import * as smartrecruiters from './smartrecruiters'
+import * as bamboohr from './bamboohr'
 
 type Adapter = {
   fetchJobList(slug: string): Promise<JobListing[]>
@@ -18,6 +19,7 @@ const ADAPTERS: Record<string, Adapter> = {
   successfactors,
   workday,
   smartrecruiters,
+  bamboohr,
 }
 
 export function getAdapter(provider: string): Adapter | null {

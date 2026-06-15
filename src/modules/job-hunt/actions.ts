@@ -36,7 +36,7 @@ type AddCompanyResult = { ok: true; watchId: string } | { ok: false; error: stri
 
 // Extracts ATS provider + board slug directly from a known ATS URL without
 // any scraping — covers board URLs, careers pages, and specific job links.
-function detectAtsBoardFromUrl(url: string): { provider: 'greenhouse' | 'lever' | 'ashby' | 'successfactors' | 'workday' | 'smartrecruiters'; boardSlug: string } | null {
+function detectAtsBoardFromUrl(url: string): { provider: 'greenhouse' | 'lever' | 'ashby' | 'successfactors' | 'workday' | 'smartrecruiters' | 'bamboohr'; boardSlug: string } | null {
   const gh = url.match(/(?:boards|job-boards)\.greenhouse\.io\/([^/?#]+)/i)
   if (gh) return { provider: 'greenhouse', boardSlug: gh[1] }
   const lv = url.match(/jobs\.lever\.co\/([^/?#]+)/i)
@@ -45,7 +45,8 @@ function detectAtsBoardFromUrl(url: string): { provider: 'greenhouse' | 'lever' 
   if (ash) return { provider: 'ashby', boardSlug: ash[1] }
   // SuccessFactors: subdomain varies (career1–4, performancemanager, etc.)
   // Board identity lives in the company= query param, not the URL path.
-  const sf = url.match(/(?:successfactors|sapsf)\.com.*[?&]company=([^&\s#]+)/i)
+  // Covers .com, .eu, .cn and other regional TLDs.
+  const sf = url.match(/(?:successfactors|sapsf)\.[a-z]+.*[?&]company=([^&\s#]+)/i)
   if (sf) return { provider: 'successfactors', boardSlug: sf[1] }
   // Workday: {company}.{datacenter}.myworkdayjobs.com/{BoardName}
   // boardSlug encodes both subdomain and board: "logitech.wd5/Logitech"
@@ -59,6 +60,10 @@ function detectAtsBoardFromUrl(url: string): { provider: 'greenhouse' | 'lever' 
   if (srDirect && !['oneclick-ui', 'api', 'widget', 'static'].includes(srDirect[1].toLowerCase())) {
     return { provider: 'smartrecruiters', boardSlug: srDirect[1] }
   }
+  // BambooHR: {company}.bamboohr.com/careers/...
+  // boardSlug is the company subdomain.
+  const bhr = url.match(/([a-zA-Z0-9-]+)\.bamboohr\.com/i)
+  if (bhr) return { provider: 'bamboohr', boardSlug: bhr[1].toLowerCase() }
   return null
 }
 
