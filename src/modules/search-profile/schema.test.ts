@@ -4,6 +4,7 @@ import {
   searchProfileHasContent,
   normalizeSuggestions,
   emptySearchProfile,
+  formatSalaryBand,
 } from './schema'
 
 describe('normalizeSearchProfile', () => {
@@ -42,9 +43,11 @@ describe('normalizeSearchProfile', () => {
     expect(normalizeSearchProfile({}).roles).toEqual([])
   })
 
-  it('rejects unknown remotePreference values', () => {
-    const result = normalizeSearchProfile({ remotePreference: 'moonbase' })
+  it('falls back to empty string for unknown remotePreference without discarding other fields', () => {
+    const result = normalizeSearchProfile({ preferredName: 'Devon', roles: ['CTO'], remotePreference: 'moonbase' })
     expect(result.remotePreference).toBe('')
+    expect(result.preferredName).toBe('Devon')
+    expect(result.roles).toEqual(['CTO'])
   })
 })
 
@@ -84,5 +87,23 @@ describe('normalizeSuggestions', () => {
     ]
     expect(normalizeSuggestions(input)).toHaveLength(1)
     expect(normalizeSuggestions(input)[0].id).toBe('1')
+  })
+})
+
+describe('formatSalaryBand', () => {
+  it('formats min and max', () => {
+    expect(formatSalaryBand({ min: 80000, max: 120000, currency: 'GBP' })).toBe('£80,000–£120,000 GBP')
+  })
+
+  it('formats min only', () => {
+    expect(formatSalaryBand({ min: 80000, max: null, currency: 'GBP' })).toBe('£80,000+ GBP')
+  })
+
+  it('formats max only', () => {
+    expect(formatSalaryBand({ min: null, max: 100000, currency: 'USD' })).toBe('$100,000 USD')
+  })
+
+  it('returns currency code when both are null', () => {
+    expect(formatSalaryBand({ min: null, max: null, currency: 'EUR' })).toBe('EUR')
   })
 })
