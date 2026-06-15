@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
-import { Loader2, RefreshCw, Trash2, AlertTriangle, Pencil, MapPin, Clock } from 'lucide-react'
+import { Loader2, RefreshCw, Trash2, AlertTriangle, Pencil, MapPin, Clock, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { daysAgo, formatRelative } from '@/lib/utils'
 import { scanCompany, removeWatch } from '@/modules/job-hunt/actions'
@@ -81,7 +81,7 @@ export function CompanyWatchRow({ watch }: { watch: CompanyWatch }) {
             )}
           </div>
 
-          {/* Line 2: meta — location filters + scan time */}
+          {/* Line 2: meta — location filters + scan time + careers link */}
           <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
             {watch.searchLocations.length > 0 ? (
               <>
@@ -100,7 +100,27 @@ export function CompanyWatchRow({ watch }: { watch: CompanyWatch }) {
               <Clock className="size-3" />
               {scanLabel}
             </span>
+            {(watch.careersUrl || watch.website) && (
+              <a
+                href={watch.careersUrl ?? watch.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 hover:text-foreground transition-colors"
+                onClick={e => e.stopPropagation()}
+              >
+                <ExternalLink className="size-3" />
+                Board
+              </a>
+            )}
           </div>
+
+          {/* Line 3: persistent scan error */}
+          {watch.lastScanError && (
+            <p className="flex items-center gap-1 text-xs text-destructive">
+              <AlertTriangle className="size-3 shrink-0" />
+              {watch.lastScanError}
+            </p>
+          )}
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
