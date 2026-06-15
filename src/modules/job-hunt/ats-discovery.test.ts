@@ -118,6 +118,28 @@ describe('discoverAts', () => {
     expect(result.boardSlug).toBe('logitech.wd5/Logitech')
   })
 
+  it('detects SmartRecruiters from /company/ path in page source without LLM', async () => {
+    const html = '<html><a href="https://jobs.smartrecruiters.com/oneclick-ui/company/Canva/publication/abc">Apply</a></html>'
+    mockFetch.mockResolvedValueOnce({ ok: true, text: async () => html })
+
+    const result = await discoverAts('profile-1', 'https://canva.com')
+
+    expect(mockLLM).not.toHaveBeenCalled()
+    expect(result.provider).toBe('smartrecruiters')
+    expect(result.boardSlug).toBe('Canva')
+  })
+
+  it('detects SmartRecruiters from direct job board URL in page source without LLM', async () => {
+    const html = '<html><a href="https://jobs.smartrecruiters.com/OpenAI/engineer-job-123">Join us</a></html>'
+    mockFetch.mockResolvedValueOnce({ ok: true, text: async () => html })
+
+    const result = await discoverAts('profile-1', 'https://openai.com')
+
+    expect(mockLLM).not.toHaveBeenCalled()
+    expect(result.provider).toBe('smartrecruiters')
+    expect(result.boardSlug).toBe('OpenAI')
+  })
+
   it('detects SAP SuccessFactors from career page URL in HTML without LLM', async () => {
     const html = '<html><a href="https://career4.successfactors.com/careers?company=bentleyprod">Apply</a></html>'
     mockFetch.mockResolvedValueOnce({ ok: true, text: async () => html })

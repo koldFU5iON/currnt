@@ -11,12 +11,13 @@ import { EditWatchSheet } from './edit-watch-sheet'
 import type { CompanyWatch } from '@prisma/client'
 
 const PROVIDER_LABELS: Record<string, string> = {
-  greenhouse:     'Greenhouse',
-  lever:          'Lever',
-  ashby:          'Ashby',
-  successfactors: 'SuccessFactors',
-  workday:        'Workday',
-  unknown:        'Unknown',
+  greenhouse:      'Greenhouse',
+  lever:           'Lever',
+  ashby:           'Ashby',
+  successfactors:  'SuccessFactors',
+  workday:         'Workday',
+  smartrecruiters: 'SmartRecruiters',
+  unknown:         'Unknown',
 }
 
 export function CompanyWatchRow({ watch }: { watch: CompanyWatch }) {

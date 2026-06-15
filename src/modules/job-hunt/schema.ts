@@ -1,7 +1,7 @@
 // src/modules/job-hunt/schema.ts
 import * as z from 'zod'
 
-export const ATS_PROVIDERS = ['greenhouse', 'lever', 'ashby', 'successfactors', 'workday', 'unknown'] as const
+export const ATS_PROVIDERS = ['greenhouse', 'lever', 'ashby', 'successfactors', 'workday', 'smartrecruiters', 'unknown'] as const
 export type AtsProvider = typeof ATS_PROVIDERS[number]
 
 export const COMPANY_WATCH_STATUSES = ['active', 'paused', 'discovery_failed'] as const

@@ -111,6 +111,22 @@ function detectAtsFromHtml(html: string): AtsDiscoveryResult | null {
     reasoning: 'Workday career portal URL found in page source',
   }
 
+  // SmartRecruiters: jobs.smartrecruiters.com/company/{Slug} or jobs.smartrecruiters.com/{Slug}/...
+  const srCompany = html.match(/jobs\.smartrecruiters\.com\/(?:[\w-]+\/)?company\/([a-zA-Z0-9][a-zA-Z0-9_-]+)/i)
+  if (srCompany) return {
+    provider: 'smartrecruiters',
+    boardSlug: srCompany[1],
+    confidence: 0.9,
+    reasoning: 'SmartRecruiters board URL found in page source',
+  }
+  const srDirect = html.match(/jobs\.smartrecruiters\.com\/([a-zA-Z][a-zA-Z0-9_-]+)(?:\/|['"?#\s])/i)
+  if (srDirect && !['oneclick-ui', 'api', 'widget', 'static'].includes(srDirect[1].toLowerCase())) return {
+    provider: 'smartrecruiters',
+    boardSlug: srDirect[1],
+    confidence: 0.85,
+    reasoning: 'SmartRecruiters job URL found in page source',
+  }
+
   return null
 }
 
@@ -162,8 +178,9 @@ Look for:
 - Ashby: jobs.ashbyhq.com links or ashbyhq.com in scripts
 - SAP SuccessFactors: links or scripts referencing successfactors.com or sapsf.com with a company= parameter
 - Workday: links to {company}.{datacenter}.myworkdayjobs.com/{BoardName}
+- SmartRecruiters: links to jobs.smartrecruiters.com/{CompanySlug} or jobs.smartrecruiters.com/company/{CompanySlug}
 
-Extract the board/company slug (e.g. "mongodb" from boards.greenhouse.io/mongodb, "bentleyprod" from successfactors.com/careers?company=bentleyprod, or "logitech.wd5/Logitech" from logitech.wd5.myworkdayjobs.com/Logitech).
+Extract the board/company slug (e.g. "mongodb" from boards.greenhouse.io/mongodb, "bentleyprod" from successfactors.com/careers?company=bentleyprod, "logitech.wd5/Logitech" from logitech.wd5.myworkdayjobs.com/Logitech, or "Canva" from jobs.smartrecruiters.com/Canva).
 
 HTML:
 \`\`\`
