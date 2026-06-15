@@ -87,7 +87,7 @@ export function AppSidebar({ activeJobs, suggestionCount }: { activeJobs: Active
           </SidebarGroup>
         ))}
 
-        <SidebarGroup>
+        <SidebarGroup className="group-data-[collapsible=icon]:hidden">
           <SidebarGroupLabel>Active Jobs</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
