@@ -75,9 +75,19 @@ describe('fetchJobs (JSearch)', () => {
     expect(jobs[0].location).toBe('Remote')
   })
 
-  it('throws on non-ok response', async () => {
+  it('throws key_invalid on 401', async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 401 })
-    await expect(fetchJobs(criteria, 'bad-key')).rejects.toThrow('JSearch returned 401')
+    await expect(fetchJobs(criteria, 'bad-key')).rejects.toThrow('key_invalid')
+  })
+
+  it('throws key_invalid on 403', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 403 })
+    await expect(fetchJobs(criteria, 'bad-key')).rejects.toThrow('key_invalid')
+  })
+
+  it('throws generic error on other non-ok responses', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 503 })
+    await expect(fetchJobs(criteria, 'test-key')).rejects.toThrow('JSearch returned 503')
   })
 
   it('makes separate requests per role', async () => {

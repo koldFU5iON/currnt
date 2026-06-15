@@ -45,7 +45,7 @@ export const ScanResultSchema = z.discriminatedUnion('ok', [
   }),
   z.object({
     ok: z.literal(false),
-    error: z.enum(['not_found', 'no_ats_detected', 'fetch_failed']),
+    error: z.enum(['not_found', 'no_ats_detected', 'fetch_failed', 'key_invalid']),
   }),
 ])
 export type ScanResult = z.infer<typeof ScanResultSchema>

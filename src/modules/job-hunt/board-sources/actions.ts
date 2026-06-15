@@ -62,11 +62,12 @@ export async function scanBoardSource(sourceId: string): Promise<ScanResult> {
 
   const apiKeys = normalizeJobBoardApiKeys(settings?.jobBoardApiKeys)
   const rawJSearchKey = apiKeys.jsearch ?? null
-  const jSearchKey = rawJSearchKey
-    ? (() => { try { return decrypt(rawJSearchKey) } catch { return null } })()
-    : null
+  const jSearchKey = rawJSearchKey ? decrypt(rawJSearchKey) : null
   const apiKey = source.provider === 'jsearch' ? jSearchKey : null
 
+  if (source.provider === 'jsearch' && rawJSearchKey && jSearchKey === null) {
+    return { ok: false, error: 'key_invalid' }
+  }
   if (!adapter.isAvailable(apiKey)) return { ok: false, error: 'no_ats_detected' }
 
   const sp = normalizeSearchProfile(settings?.searchProfile)
@@ -80,7 +81,10 @@ export async function scanBoardSource(sourceId: string): Promise<ScanResult> {
   let listings
   try {
     listings = await adapter.fetchJobs(criteria, apiKey)
-  } catch {
+  } catch (err) {
+    if (err instanceof Error && err.message === 'key_invalid') {
+      return { ok: false, error: 'key_invalid' }
+    }
     return { ok: false, error: 'fetch_failed' }
   }
 

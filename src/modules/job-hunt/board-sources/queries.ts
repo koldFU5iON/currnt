@@ -52,10 +52,7 @@ export async function getJobBoardKeyStatus(): Promise<{
     select: { jobBoardApiKeys: true },
   })
   const keys = normalizeJobBoardApiKeys(settings?.jobBoardApiKeys)
-  let jSearchOk = false
-  if (keys.jsearch) {
-    try { decrypt(keys.jsearch); jSearchOk = true } catch { /* corrupt key */ }
-  }
+  const jSearchOk = !!(keys.jsearch && decrypt(keys.jsearch) !== null)
   return {
     adzunaConfigured: !!(process.env.ADZUNA_APP_ID && process.env.ADZUNA_APP_KEY),
     jSearchConfigured: jSearchOk,

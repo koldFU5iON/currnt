@@ -24,6 +24,7 @@ async function fetchForQuery(
     },
     signal: AbortSignal.timeout(15_000),
   })
+  if (res.status === 401 || res.status === 403) throw new Error('key_invalid')
   if (!res.ok) throw new Error(`JSearch returned ${res.status}`)
   const data = (await res.json()) as { data: unknown[] }
   return (data.data ?? []) as Record<string, unknown>[]
