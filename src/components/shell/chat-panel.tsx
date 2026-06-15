@@ -238,7 +238,6 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
   }
 
   function handleClose() {
-    submitSummarize()
     onClose()
   }
 
