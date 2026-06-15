@@ -476,6 +476,16 @@ export async function ignoreJob(jobId: string): Promise<void> {
   revalidatePath('/dashboard/job-hunt')
 }
 
+// ── removeDiscoveredJob ───────────────────────────────────────────────────────
+
+export async function removeDiscoveredJob(jobId: string): Promise<void> {
+  const { profile } = await requireProfile()
+  await prisma.discoveredJob.deleteMany({
+    where: { id: jobId, profileId: profile.id },
+  })
+  revalidatePath('/dashboard/job-hunt')
+}
+
 // ── retryAtsDiscovery ─────────────────────────────────────────────────────────
 
 type RetryAtsResult = { ok: true; provider: string; boardSlug: string | null } | { ok: false; error: string }
