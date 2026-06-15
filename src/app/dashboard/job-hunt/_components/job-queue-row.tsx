@@ -3,12 +3,12 @@
 import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { MapPin, Clock, ExternalLink, Loader2 } from 'lucide-react'
+import { MapPin, Clock, ExternalLink, Loader2, Trash2 } from 'lucide-react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { daysAgo, formatRelative } from '@/lib/utils'
-import { scoreDiscoveredJob, importJob, ignoreJob } from '@/modules/job-hunt/actions'
+import { scoreDiscoveredJob, importJob, ignoreJob, removeDiscoveredJob } from '@/modules/job-hunt/actions'
 
 const FIT_BADGE_STYLES: Record<string, string> = {
   standout: 'bg-red-100 text-red-800 border-red-200',
@@ -39,6 +39,7 @@ export function JobQueueRow({ job }: { job: DiscoveredJobWithWatch }) {
   const [isScoring, startScore] = useTransition()
   const [isImporting, startImport] = useTransition()
   const [isIgnoring, startIgnore] = useTransition()
+  const [isRemoving, startRemove] = useTransition()
   const router = useRouter()
 
   const days = daysAgo(job.postedAt ?? job.createdAt) ?? 0
@@ -75,7 +76,19 @@ export function JobQueueRow({ job }: { job: DiscoveredJobWithWatch }) {
     })
   }
 
+  function handleRemove() {
+    startRemove(async () => {
+      try {
+        await removeDiscoveredJob(job.id)
+        router.refresh()
+      } catch {
+        toast.error('Failed to remove role')
+      }
+    })
+  }
+
   const isImported = job.status === 'imported'
+  const isIgnored = job.status === 'ignored'
   const isFoundToday = (daysAgo(job.createdAt) ?? 1) === 0
   const isRecentPost = job.postedAt !== null && (daysAgo(job.postedAt) ?? Infinity) < 7
 
@@ -145,7 +158,7 @@ export function JobQueueRow({ job }: { job: DiscoveredJobWithWatch }) {
         )}
       </div>
 
-      {!isImported && (
+      {!isImported && !isIgnored && (
         <div className="flex items-center gap-1.5 shrink-0">
           {!job.fitLabel && (
             <Button size="sm" variant="outline" onClick={handleScore} disabled={isScoring}>
@@ -169,13 +182,46 @@ export function JobQueueRow({ job }: { job: DiscoveredJobWithWatch }) {
         </div>
       )}
 
-      {isImported && job.importedJobId && (
-        <a
-          href={`/dashboard/job-applications/view/${job.importedJobId}`}
-          className={cn(buttonVariants({ size: 'sm', variant: 'outline' }))}
-        >
-          View application
-        </a>
+      {isIgnored && (
+        <div className="flex items-center gap-1.5 shrink-0">
+          <Button size="sm" variant="outline" onClick={handleImport} disabled={isImporting}>
+            {isImporting ? <Loader2 className="size-3.5 animate-spin mr-1" /> : null}
+            {isImporting ? 'Importing…' : 'Import'}
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={handleRemove}
+            disabled={isRemoving}
+            className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+            aria-label="Remove from list"
+          >
+            {isRemoving ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+          </Button>
+        </div>
+      )}
+
+      {isImported && (
+        <div className="flex items-center gap-1.5 shrink-0">
+          {job.importedJobId && (
+            <a
+              href={`/dashboard/job-applications/view/${job.importedJobId}`}
+              className={cn(buttonVariants({ size: 'sm', variant: 'outline' }))}
+            >
+              View application
+            </a>
+          )}
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={handleRemove}
+            disabled={isRemoving}
+            className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+            aria-label="Remove from list"
+          >
+            {isRemoving ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+          </Button>
+        </div>
       )}
     </div>
   )
