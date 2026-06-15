@@ -243,6 +243,11 @@ export async function scanCompany(watchId: string): Promise<ScanResult> {
   try {
     listings = await adapter.fetchJobList(watch.boardSlug)
   } catch {
+    await prisma.companyWatch.updateMany({
+      where: { id: watchId, profileId: profile.id },
+      data: { lastScanError: 'Could not reach job board', lastScannedAt: new Date() },
+    })
+    revalidatePath('/dashboard/job-hunt')
     return { ok: false, error: 'fetch_failed' }
   }
 
@@ -288,7 +293,7 @@ export async function scanCompany(watchId: string): Promise<ScanResult> {
 
   await prisma.companyWatch.updateMany({
     where: { id: watchId, profileId: profile.id },
-    data: { lastScannedAt: new Date() },
+    data: { lastScannedAt: new Date(), lastScanError: null },
   })
 
   revalidatePath('/dashboard/job-hunt')
