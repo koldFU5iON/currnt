@@ -45,6 +45,7 @@ export function BoardSourceRow({
             ? 'JSearch API key not configured — add it in Settings → Job Boards'
             : 'Source not available — check app configuration',
           fetch_failed: 'Could not reach job board. Try again later.',
+          key_invalid: 'API key rejected — check your key in Settings → Job Boards',
         }
         toast.error(messages[result.error] ?? 'Scan failed')
         return
