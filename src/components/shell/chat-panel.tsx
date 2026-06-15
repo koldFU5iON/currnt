@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState, useTransition } from 'react'
 import { useChat } from '@ai-sdk/react'
-import { DefaultChatTransport, isTextUIPart, type UIMessage } from 'ai'
+import { DefaultChatTransport, isTextUIPart, isToolUIPart, type UIMessage } from 'ai'
 import { Sparkles, X, Send, Bot, SquarePen, Maximize2, Minimize2, FileText, Briefcase, Mail, ClipboardList, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -268,8 +268,20 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
   }
 
   const isLoading = status === 'streaming' || status === 'submitted'
-  const lastMessageIsUser = messages.length > 0 && messages[messages.length - 1].role === 'user'
-  const showThinking = isLoading && (messages.length === 0 || lastMessageIsUser)
+  const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null
+  // Suppress the thinking indicator only when the assistant is already visibly producing
+  // content — either streaming text or showing a tool-call spinner in the message body.
+  // This keeps the indicator visible during multi-step gaps (tool completed, next text
+  // not yet started) so users always have a signal that work is in progress.
+  const lastAssistantHasText =
+    lastMessage?.role === 'assistant' &&
+    lastMessage.parts?.some(p => isTextUIPart(p) && p.text.trim().length > 0)
+  const lastAssistantHasActiveToolCall =
+    lastMessage?.role === 'assistant' &&
+    lastMessage.parts?.some(
+      p => isToolUIPart(p) && (p.state === 'input-streaming' || p.state === 'input-available'),
+    )
+  const showThinking = isLoading && !lastAssistantHasText && !lastAssistantHasActiveToolCall
   const activeModel = settings?.chatModel ?? settings?.llmModel ?? ''
   const modelOptions = settings?.availableModels ?? []
 
