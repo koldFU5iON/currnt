@@ -22,7 +22,7 @@ export const navGroups: { label: string; items: NavItem[] }[] = [
     items: [
       { destination: '/dashboard', label: 'Home', Icon: HomeIcon },
       { destination: '/dashboard/profile', label: 'Professional Profile', Icon: UserRound },
-      { destination: '/dashboard/onboarding', label: 'Search Context', Icon: Compass },
+      { destination: '/dashboard/search-context', label: 'Search Context', Icon: Compass },
     ],
   },
   {

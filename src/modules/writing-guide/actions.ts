@@ -6,6 +6,8 @@ import { complete, completeStructured } from '@/modules/llm/client'
 import { LLMError, type LLMErrorKind } from '@/modules/llm/errors'
 import { buildProfileSnapshot, serializeProfileForLLM } from '@/modules/profile/snapshot'
 import { loadWritingContext, composeSystem } from '@/modules/llm/prompt-context'
+import { emitSuggestion } from '@/modules/search-profile/actions'
+import { normalizeSearchProfile } from '@/modules/search-profile/schema'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { CVDocumentContentSchema } from '@/modules/cv/schema'
@@ -137,7 +139,7 @@ export async function analyseRole(letterId: string): Promise<Stage1Result> {
   const userPrompt = buildGeneratePrompt(inputs)
 
   const stagePrompt = await loadPrompt('cl-stage1-analyse.md')
-  const system = composeSystem(writingCtx.rules, writingCtx.brief ?? '', stagePrompt)
+  const system = composeSystem(writingCtx.rules, writingCtx.brief, writingCtx.searchProfileSummary, stagePrompt)
 
   try {
     const result = await completeStructured(profile.id, userPrompt, Stage1BriefSchema, {
@@ -146,6 +148,32 @@ export async function analyseRole(letterId: string): Promise<Stage1Result> {
       temperature: 0,
       maxOutputTokens: 600,
     })
+
+    // Fire-and-forget: suggest new role if job title not already tracked
+    const { letter } = inputs
+    const jobTitle = letter.jobTitle ?? letter.jobApplication?.title
+    if (jobTitle) {
+      const spSettings = await prisma.userSettings.findUnique({
+        where: { profileId: profile.id },
+        select: { searchProfile: true },
+      })
+      const sp = normalizeSearchProfile(spSettings?.searchProfile)
+      if (sp.roles.length > 0) {
+        const titleLower = jobTitle.toLowerCase()
+        const alreadyTracked = sp.roles.some(
+          (r) => titleLower.includes(r.toLowerCase()) || r.toLowerCase().includes(titleLower),
+        )
+        if (!alreadyTracked) {
+          emitSuggestion(profile.id, {
+            field: 'roles',
+            suggestedValue: [...sp.roles, jobTitle],
+            reason: `You're writing a cover letter for "${jobTitle}" which isn't in your target roles.`,
+            source: 'cover-letter',
+          }).catch(() => { /* non-critical */ })
+        }
+      }
+    }
+
     return { ok: true, brief: result.object }
   } catch (err) {
     if (err instanceof LLMError) return { ok: false, error: err.kind, message: err.message }
@@ -163,7 +191,7 @@ export async function buildLetterArchitecture(
 
   const userPrompt = `# Stage 1 Brief\n\n${JSON.stringify(brief, null, 2)}`
   const stagePrompt = await loadPrompt('cl-stage2-architecture.md')
-  const system = composeSystem(inputs.writingCtx.rules, inputs.writingCtx.brief ?? '', stagePrompt)
+  const system = composeSystem(inputs.writingCtx.rules, inputs.writingCtx.brief, inputs.writingCtx.searchProfileSummary, stagePrompt)
 
   try {
     const result = await completeStructured(profile.id, userPrompt, Stage2ArchitectureSchema, {
@@ -194,7 +222,7 @@ export async function draftFromArchitecture(
   ].join('')
 
   const stagePrompt = await loadPrompt('cl-stage3-draft.md')
-  const system = composeSystem(writingCtx.rules, writingCtx.brief ?? '', stagePrompt)
+  const system = composeSystem(writingCtx.rules, writingCtx.brief, writingCtx.searchProfileSummary, stagePrompt)
 
   try {
     const result = await complete(profile.id, userPrompt, {
@@ -231,7 +259,7 @@ export async function reviewDraftPass(
   ].join('')
 
   const stagePrompt = await loadPrompt('cl-stage4-review.md')
-  const system = composeSystem(writingCtx.rules, writingCtx.brief ?? '', stagePrompt)
+  const system = composeSystem(writingCtx.rules, writingCtx.brief, writingCtx.searchProfileSummary, stagePrompt)
 
   try {
     const result = await completeStructured(profile.id, userPrompt, Stage4IssuesSchema, {
@@ -270,7 +298,7 @@ export async function finaliseFromReview(
   ].join('')
 
   const stagePrompt = await loadPrompt('cl-stage5-final.md')
-  const system = composeSystem(inputs.writingCtx.rules, inputs.writingCtx.brief ?? '', stagePrompt)
+  const system = composeSystem(inputs.writingCtx.rules, inputs.writingCtx.brief, inputs.writingCtx.searchProfileSummary, stagePrompt)
 
   try {
     const result = await complete(profile.id, userPrompt, {
@@ -309,7 +337,7 @@ export async function buildWithMe(
   }
 
   const systemPrompt = await loadGeneratePrompt()
-  const system = composeSystem(inputs.writingCtx.rules, inputs.writingCtx.brief ?? '', systemPrompt)
+  const system = composeSystem(inputs.writingCtx.rules, inputs.writingCtx.brief, inputs.writingCtx.searchProfileSummary, systemPrompt)
 
   try {
     const result = await complete(profile.id, userPrompt, {
@@ -349,7 +377,7 @@ export async function reviewLetter(letterId: string): Promise<ReviewResult> {
   }
 
   const systemPrompt = await loadReviewPrompt()
-  const system = composeSystem(inputs.writingCtx.rules, inputs.writingCtx.brief ?? '', systemPrompt)
+  const system = composeSystem(inputs.writingCtx.rules, inputs.writingCtx.brief, inputs.writingCtx.searchProfileSummary, systemPrompt)
 
   try {
     const result = await completeStructured(profile.id, userPrompt, ReviewOutputSchema, {

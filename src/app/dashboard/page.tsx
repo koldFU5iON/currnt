@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from "next/navigation"
-import { getOnboardingSettings } from "@/modules/onboarding/queries"
+import { getSearchProfile } from "@/modules/search-profile/queries"
+import { searchProfileHasContent } from "@/modules/search-profile/schema"
 import { getDashboardStats } from "@/modules/jobs/queries"
 import { StatsRow } from "./_components/StatsRow"
 import { PipelineCard } from "./_components/PipelineCard"
@@ -8,13 +9,13 @@ import { NeedsAttentionCard } from "./_components/NeedsAttentionCard"
 import { RecentActivityCard } from "./_components/RecentActivityCard"
 
 export default async function Page() {
-  const { profile, hasSignal, context } = await getOnboardingSettings()
+  const { profile, searchProfile } = await getSearchProfile()
 
-  if (!hasSignal) redirect("/dashboard/onboarding")
+  if (!searchProfileHasContent(searchProfile)) redirect("/dashboard/search-context")
 
   const stats = await getDashboardStats()
 
-  const displayName = context.preferredName || profile.name || "there"
+  const displayName = searchProfile.preferredName || profile.name || "there"
 
   return (
     <div className="p-4 md:p-8 space-y-5 max-w-6xl">

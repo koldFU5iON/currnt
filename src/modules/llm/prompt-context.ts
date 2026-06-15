@@ -1,10 +1,12 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { prisma } from '@/lib/db'
+import { normalizeSearchProfile } from '@/modules/search-profile/schema'
 
 export type WritingContext = {
   rules: string
   brief: string | null
+  searchProfileSummary: string | null
 }
 
 export async function loadWritingRules(): Promise<string> {
@@ -47,10 +49,23 @@ export async function loadWritingContext(profileId: string): Promise<WritingCont
     loadWritingRules().catch(() => ''),
     prisma.userSettings.findUnique({
       where: { profileId },
-      select: { writingBrief: true },
+      select: { writingBrief: true, searchProfile: true },
     }),
   ])
-  return { rules, brief: settings?.writingBrief ?? null }
+
+  const sp = normalizeSearchProfile(settings?.searchProfile)
+  const lines: string[] = []
+  if (sp.roles.length > 0)    lines.push(`Target roles: ${sp.roles.join(', ')}`)
+  if (sp.careerGoals)         lines.push(`Career goals: ${sp.careerGoals}`)
+  if (sp.pivotContext)        lines.push(`Career change context: ${sp.pivotContext}`)
+  if (sp.remotePreference)    lines.push(`Remote preference: ${sp.remotePreference}`)
+  if (sp.countries.length > 0) lines.push(`Countries: ${sp.countries.join(', ')}`)
+
+  return {
+    rules,
+    brief: settings?.writingBrief ?? null,
+    searchProfileSummary: lines.length > 0 ? lines.join('\n') : null,
+  }
 }
 
 export function composeSystem(...parts: (string | null | undefined)[]): string {

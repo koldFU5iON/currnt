@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db'
 import { requireProfile } from '@/lib/session'
 import { decrypt } from '@/lib/encryption'
 import { BOARD_PROVIDERS, normalizeJobBoardApiKeys } from './schema'
+import { normalizeSearchProfile } from '@/modules/search-profile/schema'
 
 export async function ensureBoardSources(profileId: string): Promise<void> {
   await Promise.all(
@@ -25,15 +26,19 @@ export async function getBoardSources() {
   })
 }
 
-export async function getJobHuntSearch() {
+export async function getSearchCriteriaForScanner() {
   const { profile } = await requireProfile()
   const settings = await prisma.userSettings.findUnique({
     where: { profileId: profile.id },
-    select: { jobHuntSearch: true, onboardingContext: true },
+    select: { searchProfile: true },
   })
+  const sp = normalizeSearchProfile(settings?.searchProfile)
   return {
-    jobHuntSearch: settings?.jobHuntSearch ?? null,
-    onboardingContext: settings?.onboardingContext ?? null,
+    profile,
+    roles: sp.roles,
+    countries: sp.countries,
+    remotePreference: sp.remotePreference,
+    minSalary: sp.salaryBand?.min ?? null,
   }
 }
 

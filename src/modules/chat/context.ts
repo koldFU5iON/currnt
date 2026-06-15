@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/db'
 import { loadMemorySummaries } from './memory'
-import { normalizeOnboardingContext } from '@/modules/onboarding/schema'
+import { normalizeSearchProfile } from '@/modules/search-profile/schema'
 import type { PageContext } from './schema'
 
 const PERSONA_DIRECTIVE = `You are a focused career coach embedded in the user's job search workspace. \
@@ -62,7 +62,7 @@ async function buildProfileOverview(profileId: string): Promise<string> {
         take: 1,
         select: { role: true, company: true },
       },
-      settings: { select: { onboardingContext: true } },
+      settings: { select: { searchProfile: true } },
     },
   })
   if (!profile) return 'Profile not found.'
@@ -77,7 +77,7 @@ async function buildProfileOverview(profileId: string): Promise<string> {
     ? `${profile.experiences[0].role} at ${profile.experiences[0].company}`
     : null
 
-  const ctx = normalizeOnboardingContext(profile.settings?.onboardingContext)
+  const ctx = normalizeSearchProfile(profile.settings?.searchProfile)
 
   return [
     `Name: ${profile.name}`,
@@ -85,10 +85,12 @@ async function buildProfileOverview(profileId: string): Promise<string> {
     profile.location ? `Location: ${profile.location}` : null,
     currentRole ? `Most recent role: ${currentRole}` : null,
     topSkills ? `Top skills: ${topSkills}` : null,
-    ctx.targetRole ? `Target role: ${ctx.targetRole}` : null,
-    ctx.industries ? `Target industries: ${ctx.industries}` : null,
-    ctx.workPreferences ? `Work preferences: ${ctx.workPreferences}` : null,
-    ctx.extraContext ? `<user_context>${ctx.extraContext}</user_context>` : null,
+    ctx.roles.length > 0   ? `Target roles: ${ctx.roles.join(', ')}` : null,
+    ctx.countries.length > 0 ? `Countries: ${ctx.countries.join(', ')}` : null,
+    ctx.remotePreference   ? `Remote preference: ${ctx.remotePreference}` : null,
+    ctx.careerGoals        ? `Career goals: ${ctx.careerGoals}` : null,
+    ctx.pivotContext       ? `Career change context: ${ctx.pivotContext}` : null,
+    ctx.extraContext       ? `<user_context>${ctx.extraContext}</user_context>` : null,
   ]
     .filter(Boolean)
     .join('\n')
