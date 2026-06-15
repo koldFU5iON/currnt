@@ -36,7 +36,7 @@ type AddCompanyResult = { ok: true; watchId: string } | { ok: false; error: stri
 
 // Extracts ATS provider + board slug directly from a known ATS URL without
 // any scraping — covers board URLs, careers pages, and specific job links.
-function detectAtsBoardFromUrl(url: string): { provider: 'greenhouse' | 'lever' | 'ashby' | 'successfactors' | 'workday'; boardSlug: string } | null {
+function detectAtsBoardFromUrl(url: string): { provider: 'greenhouse' | 'lever' | 'ashby' | 'successfactors' | 'workday' | 'smartrecruiters'; boardSlug: string } | null {
   const gh = url.match(/(?:boards|job-boards)\.greenhouse\.io\/([^/?#]+)/i)
   if (gh) return { provider: 'greenhouse', boardSlug: gh[1] }
   const lv = url.match(/jobs\.lever\.co\/([^/?#]+)/i)
@@ -51,6 +51,14 @@ function detectAtsBoardFromUrl(url: string): { provider: 'greenhouse' | 'lever' 
   // boardSlug encodes both subdomain and board: "logitech.wd5/Logitech"
   const wd = url.match(/([a-zA-Z0-9-]+\.[a-zA-Z0-9]+)\.myworkdayjobs\.com\/([^/?#\s]+)/i)
   if (wd) return { provider: 'workday', boardSlug: `${wd[1].toLowerCase()}/${wd[2]}` }
+  // SmartRecruiters: jobs.smartrecruiters.com/company/{Slug} (oneclick-ui path)
+  // or jobs.smartrecruiters.com/{Slug}/... (direct job board path)
+  const srCompany = url.match(/jobs\.smartrecruiters\.com\/(?:[\w-]+\/)?company\/([a-zA-Z0-9][a-zA-Z0-9_-]+)/i)
+  if (srCompany) return { provider: 'smartrecruiters', boardSlug: srCompany[1] }
+  const srDirect = url.match(/jobs\.smartrecruiters\.com\/([a-zA-Z][a-zA-Z0-9_-]+)(?:\/|[?#]|$)/i)
+  if (srDirect && !['oneclick-ui', 'api', 'widget', 'static'].includes(srDirect[1].toLowerCase())) {
+    return { provider: 'smartrecruiters', boardSlug: srDirect[1] }
+  }
   return null
 }
 
