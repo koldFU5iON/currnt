@@ -16,7 +16,7 @@ vi.mock('@/lib/db', () => ({
       createMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
     userSettings: {
-      findUnique: vi.fn().mockResolvedValue({ jobHuntSearch: null, jobBoardApiKeys: null }),
+      findUnique: vi.fn().mockResolvedValue({ searchProfile: null, jobBoardApiKeys: null }),
       upsert: vi.fn(),
     },
   },

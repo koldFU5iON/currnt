@@ -3,9 +3,45 @@
 import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Check, X } from 'lucide-react'
+import { Check, X, Download, FileJson, FileText } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { updateContactField, type ContactField } from '@/modules/profile/actions'
 import { ImportProfileDialog } from './ImportProfileDialog'
+
+function ExportProfileDropdown() {
+  function download(format: 'md' | 'json') {
+    const a = document.createElement('a')
+    a.href = `/api/profile/export?format=${format}`
+    a.download = `profile.${format}`
+    a.click()
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger>
+        <Button size="sm" variant="outline" className="gap-1.5">
+          <Download className="size-3.5" />
+          Export
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => download('md')}>
+          <FileText className="size-3.5" />
+          Markdown
+        </DropdownMenuItem>
+        <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => download('json')}>
+          <FileJson className="size-3.5" />
+          JSON
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
 
 type EditableHeaderFieldProps = {
   field: ContactField
@@ -98,7 +134,8 @@ export function ProfileHeader({ name, headline }: ProfileHeaderProps) {
           className="text-sm text-muted-foreground"
         />
       </div>
-      <div className="shrink-0 mt-1">
+      <div className="shrink-0 mt-1 flex items-center gap-2">
+        <ExportProfileDropdown />
         <ImportProfileDialog />
       </div>
     </div>
