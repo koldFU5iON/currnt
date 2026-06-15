@@ -8,7 +8,7 @@ import { buildSystemPrompt } from '@/modules/chat/context'
 import { createChatTools } from '@/modules/chat/tools'
 import { PageContextSchema } from '@/modules/chat/schema'
 
-export const maxDuration = 60
+export const maxDuration = 120
 
 export async function POST(request: Request) {
   let profileId: string
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     messages: modelMessages,
     tools: createChatTools(profileId),
     stopWhen: stepCountIs(5),
-    maxOutputTokens: 2048,
+    maxOutputTokens: 4096,
     // Anthropic-specific cost optimisations: cache the system prompt (~10% cost
     // on repeated turns) and auto-compact the conversation when it grows large,
     // keeping a synthesised brief instead of raw tool results.
