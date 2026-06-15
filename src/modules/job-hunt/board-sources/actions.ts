@@ -8,9 +8,9 @@ import { decrypt } from '@/lib/encryption'
 import {
   JobHuntSearchCriteriaSchema,
   normalizeJobBoardApiKeys,
-  normalizeJobHuntSearch,
   type JobHuntSearchCriteria,
 } from './schema'
+import { normalizeSearchProfile } from '@/modules/search-profile/schema'
 import { getBoardAdapter } from '../board-adapters/index'
 import type { ScanResult } from '../schema'
 
@@ -51,7 +51,7 @@ export async function scanBoardSource(sourceId: string): Promise<ScanResult> {
     }),
     prisma.userSettings.findUnique({
       where: { profileId: profile.id },
-      select: { jobHuntSearch: true, jobBoardApiKeys: true },
+      select: { searchProfile: true, jobBoardApiKeys: true },
     }),
   ])
 
@@ -69,7 +69,13 @@ export async function scanBoardSource(sourceId: string): Promise<ScanResult> {
 
   if (!adapter.isAvailable(apiKey)) return { ok: false, error: 'no_ats_detected' }
 
-  const criteria = normalizeJobHuntSearch(settings?.jobHuntSearch)
+  const sp = normalizeSearchProfile(settings?.searchProfile)
+  const criteria: JobHuntSearchCriteria = {
+    roles: sp.roles,
+    locations: sp.countries,
+    datePosted: 'last30',
+    minSalary: sp.salaryBand?.min ?? null,
+  }
 
   let listings
   try {
