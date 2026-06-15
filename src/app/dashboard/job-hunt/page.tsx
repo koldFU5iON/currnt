@@ -1,23 +1,27 @@
 import Link from 'next/link'
 import { ContentContainer } from '@/app/components/ContentContainer'
 import { requireProfile } from '@/lib/session'
-import { getWatchlist, getDiscoveredJobs } from '@/modules/job-hunt/queries'
+import { getWatchlist, getDiscoveredJobs, getScanSummary } from '@/modules/job-hunt/queries'
 import { getBoardSources, getSearchCriteriaForScanner, getJobBoardKeyStatus } from '@/modules/job-hunt/board-sources/queries'
+import { getManualBoards } from '@/modules/job-hunt/manual-boards/queries'
 import { Watchlist } from './_components/watchlist'
 import { DiscoveredJobs } from './_components/discovered-jobs'
 import { JobBoardSources } from './_components/job-board-sources'
+import { ScanStatusBar } from './_components/scan-status-bar'
 import { Settings2 } from 'lucide-react'
 import { buttonVariants } from '@/components/ui/button'
 
 export default async function JobHuntPage() {
   await requireProfile()
 
-  const [watches, jobs, boardSources, criteria, keyStatus] = await Promise.all([
+  const [watches, jobs, boardSources, criteria, keyStatus, summary, manualBoards] = await Promise.all([
     getWatchlist(),
     getDiscoveredJobs(),
     getBoardSources(),
     getSearchCriteriaForScanner(),
     getJobBoardKeyStatus(),
+    getScanSummary(),
+    getManualBoards(),
   ])
 
   const availableProviders = new Set<string>([
@@ -60,13 +64,16 @@ export default async function JobHuntPage() {
         </Link>
       </div>
 
+      {/* Sync status bar */}
+      <ScanStatusBar summary={summary} />
+
       <div className="grid grid-cols-1 lg:grid-cols-[280px_280px_1fr] gap-6 items-start">
         <aside className="space-y-6 lg:sticky lg:top-6">
           <Watchlist watches={watches} />
         </aside>
 
         <aside className="lg:sticky lg:top-6">
-          <JobBoardSources sources={boardSources} availableProviders={availableProviders} />
+          <JobBoardSources sources={boardSources} availableProviders={availableProviders} manualBoards={manualBoards} />
         </aside>
 
         <div className="min-w-0">

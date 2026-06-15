@@ -1,6 +1,6 @@
-import type { JobBoardSource } from '@prisma/client'
+import type { JobBoardSource, ManualJobBoard } from '@prisma/client'
 import { BoardSourceRow } from './board-source-row'
-import { ManualSourcesTile } from './manual-sources-tile'
+import { ManualBoardsSection } from './manual-boards-section'
 
 const FREE_PROVIDERS = ['remotive', 'remoteok', 'adzuna'] as const
 const PAID_PROVIDERS = ['jsearch'] as const
@@ -8,9 +8,10 @@ const PAID_PROVIDERS = ['jsearch'] as const
 type Props = {
   sources: JobBoardSource[]
   availableProviders: Set<string>
+  manualBoards: ManualJobBoard[]
 }
 
-export function JobBoardSources({ sources, availableProviders }: Props) {
+export function JobBoardSources({ sources, availableProviders, manualBoards }: Props) {
   const byProvider = Object.fromEntries(sources.map((s) => [s.provider, s]))
 
   return (
@@ -47,7 +48,7 @@ export function JobBoardSources({ sources, availableProviders }: Props) {
         })}
 
         <div className="pt-2">
-          <ManualSourcesTile />
+          <ManualBoardsSection boards={manualBoards} />
         </div>
       </div>
     </section>

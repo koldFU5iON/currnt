@@ -31,12 +31,26 @@ model JobBoardSource {
   provider      String
   enabled       Boolean   @default(true)
   lastScannedAt DateTime?
+  lastScanError String?
   createdAt     DateTime  @default(now())
 
   profile        Profile         @relation(fields: [profileId], references: [id], onDelete: Cascade)
   discoveredJobs DiscoveredJob[]
 
   @@unique([profileId, provider])
+  @@index([profileId])
+}
+
+model ManualJobBoard {
+  id        String   @id @default(cuid())
+  profileId String
+  category  String
+  name      String
+  url       String
+  createdAt DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
   @@index([profileId])
 }
 

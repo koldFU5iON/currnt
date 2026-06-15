@@ -2,6 +2,23 @@
 import { prisma } from '@/lib/db'
 import { requireProfile } from '@/lib/session'
 
+export async function getScanSummary() {
+  const { profile } = await requireProfile()
+  const startOfToday = new Date()
+  startOfToday.setHours(0, 0, 0, 0)
+
+  const [companiesScanned, companiesFailed, boardsScanned, boardsFailed, jobsToday] =
+    await prisma.$transaction([
+      prisma.companyWatch.count({ where: { profileId: profile.id, lastScannedAt: { not: null } } }),
+      prisma.companyWatch.count({ where: { profileId: profile.id, lastScanError: { not: null } } }),
+      prisma.jobBoardSource.count({ where: { profileId: profile.id, lastScannedAt: { not: null } } }),
+      prisma.jobBoardSource.count({ where: { profileId: profile.id, lastScanError: { not: null } } }),
+      prisma.discoveredJob.count({ where: { profileId: profile.id, createdAt: { gte: startOfToday } } }),
+    ])
+
+  return { companiesScanned, companiesFailed, boardsScanned, boardsFailed, jobsToday }
+}
+
 export async function getWatchlist() {
   const { profile } = await requireProfile()
   return prisma.companyWatch.findMany({
