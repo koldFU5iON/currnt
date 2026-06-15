@@ -17,6 +17,7 @@ const PROVIDER_LABELS: Record<string, string> = {
   successfactors:  'SuccessFactors',
   workday:         'Workday',
   smartrecruiters: 'SmartRecruiters',
+  bamboohr:        'BambooHR',
   unknown:         'Unknown',
 }
 

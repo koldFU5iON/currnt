@@ -330,6 +330,62 @@ describe('addCompany — SuccessFactors URL fast-path', () => {
   })
 })
 
+describe('addCompany — SuccessFactors EU URL fast-path', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  it('detects SuccessFactors EU domain from company= query param', async () => {
+    vi.mocked(prisma.companyWatch.create).mockResolvedValueOnce({ id: 'watch-sf-eu' } as never)
+
+    const result = await addCompany({
+      name: 'EY',
+      website: 'https://career5.successfactors.eu/careers?company=EYHRISPRD1',
+      searchLocations: [],
+      includeRemote: true,
+    })
+
+    expect(result.ok).toBe(true)
+    expect(mockDiscoverAts).not.toHaveBeenCalled()
+    expect(vi.mocked(prisma.companyWatch.create)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          atsProvider: 'successfactors',
+          boardSlug: 'EYHRISPRD1',
+          confidence: 1,
+          status: 'active',
+        }),
+      }),
+    )
+  })
+})
+
+describe('addCompany — BambooHR URL fast-path', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  it('detects BambooHR from subdomain URL', async () => {
+    vi.mocked(prisma.companyWatch.create).mockResolvedValueOnce({ id: 'watch-bhr' } as never)
+
+    const result = await addCompany({
+      name: 'Waystone',
+      website: 'https://waystone.bamboohr.com/careers/1507',
+      searchLocations: [],
+      includeRemote: true,
+    })
+
+    expect(result.ok).toBe(true)
+    expect(mockDiscoverAts).not.toHaveBeenCalled()
+    expect(vi.mocked(prisma.companyWatch.create)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          atsProvider: 'bamboohr',
+          boardSlug: 'waystone',
+          confidence: 1,
+          status: 'active',
+        }),
+      }),
+    )
+  })
+})
+
 describe('removeWatch', () => {
   it('calls deleteMany with profileId guard', async () => {
     vi.mocked(prisma.companyWatch.deleteMany).mockResolvedValueOnce({ count: 1 })
