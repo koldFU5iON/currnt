@@ -9,6 +9,7 @@ vi.mock('@/lib/db', () => ({
       create: vi.fn(),
       findFirst: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
       deleteMany: vi.fn(),
     },
     discoveredJob: {
@@ -62,7 +63,6 @@ const mockCreate = vi.mocked(prisma.companyWatch.create)
 const mockFindFirst = vi.mocked(prisma.companyWatch.findFirst)
 const mockJobCreate = vi.mocked(prisma.jobApplication.create)
 const mockDiscoveredFindFirst = vi.mocked(prisma.discoveredJob.findFirst)
-const mockDiscoveredUpdate = vi.mocked(prisma.discoveredJob.update)
 
 describe('addCompany', () => {
   beforeEach(() => { vi.clearAllMocks() })

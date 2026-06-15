@@ -13,6 +13,7 @@ model CompanyWatch {
   searchLocations String[]  @default([])
   includeRemote   Boolean   @default(true)
   lastScannedAt   DateTime?
+  lastScanError   String?
   createdAt       DateTime  @default(now())
 
   profile        Profile         @relation(fields: [profileId], references: [id], onDelete: Cascade)
