@@ -85,6 +85,10 @@ export async function scanBoardSource(sourceId: string): Promise<ScanResult> {
     if (err instanceof Error && err.message === 'key_invalid') {
       return { ok: false, error: 'key_invalid' }
     }
+    await prisma.jobBoardSource.update({
+      where: { id: sourceId },
+      data: { lastScanError: err instanceof Error ? err.message : 'fetch_failed', lastScannedAt: new Date() },
+    })
     return { ok: false, error: 'fetch_failed' }
   }
 
@@ -114,7 +118,7 @@ export async function scanBoardSource(sourceId: string): Promise<ScanResult> {
 
   await prisma.jobBoardSource.update({
     where: { id: sourceId },
-    data: { lastScannedAt: new Date() },
+    data: { lastScannedAt: new Date(), lastScanError: null },
   })
 
   revalidatePath('/dashboard/job-hunt')

@@ -37,6 +37,7 @@ model Profile {
   companyWatches CompanyWatch[]
   discoveredJobs DiscoveredJob[]
   jobBoardSources JobBoardSource[]
+  manualJobBoards ManualJobBoard[]
 }
 
 model Skill {
