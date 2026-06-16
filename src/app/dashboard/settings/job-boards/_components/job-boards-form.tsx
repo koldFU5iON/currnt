@@ -76,15 +76,15 @@ export function JobBoardsForm({ adzunaConfigured, jSearchConfigured }: Props) {
       {/* JSearch */}
       <div className="space-y-3">
         <div>
-          <h3 className="text-sm font-semibold">JSearch (RapidAPI)</h3>
+          <h3 className="text-sm font-semibold">JSearch</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Searches LinkedIn, Indeed, and Glassdoor globally. Requires your own RapidAPI key — free tier available.
+            Searches LinkedIn, Indeed, and Glassdoor globally. Requires your own API key — free tier available at openwebninja.com.
           </p>
         </div>
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="jsearch-key">RapidAPI Key</Label>
+            <Label htmlFor="jsearch-key">API Key</Label>
             {keyConfigured && (
               <Badge variant="outline" className="gap-1 text-xs text-emerald-600 border-emerald-300">
                 <Check size={11} /> Saved
@@ -98,7 +98,7 @@ export function JobBoardsForm({ adzunaConfigured, jSearchConfigured }: Props) {
               value={jSearchKey}
               onChange={(e) => setJSearchKey(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-              placeholder={keyConfigured ? '•••••••• (leave blank to keep existing)' : 'Your RapidAPI key…'}
+              placeholder={keyConfigured ? '•••••••• (leave blank to keep existing)' : 'Your JSearch API key…'}
               autoComplete="off"
               disabled={saving}
               className="border-0 rounded-none flex-1 font-mono focus-visible:ring-0 focus-visible:ring-offset-0"
