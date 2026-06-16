@@ -17,10 +17,9 @@ async function fetchForQuery(
   dateFilter: string,
 ): Promise<Record<string, unknown>[]> {
   const params = new URLSearchParams({ query, date_posted: dateFilter, num_pages: '1' })
-  const res = await fetch(`https://jsearch.p.rapidapi.com/search?${params}`, {
+  const res = await fetch(`https://api.openwebninja.com/jsearch/search?${params}`, {
     headers: {
-      'X-RapidAPI-Key': apiKey,
-      'X-RapidAPI-Host': 'jsearch.p.rapidapi.com',
+      'x-api-key': apiKey,
     },
     signal: AbortSignal.timeout(15_000),
   })

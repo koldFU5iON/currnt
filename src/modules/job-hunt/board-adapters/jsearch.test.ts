@@ -17,7 +17,7 @@ beforeEach(() => mockFetch.mockReset())
 
 describe('isAvailable', () => {
   it('returns true when apiKey is provided', () => {
-    expect(isAvailable('rapidapi-key-abc')).toBe(true)
+    expect(isAvailable('jsearch-key-abc')).toBe(true)
   })
 
   it('returns false when apiKey is null', () => {
