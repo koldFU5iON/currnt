@@ -3,6 +3,10 @@ import type {
   KeywordCoverageDetail,
   KeywordMatch,
   ImpliedKeywordMatch,
+  TitleAlignmentDetail,
+  SectionCompletenessDetail,
+  SenioritySignalDetail,
+  ATSScoreBreakdown,
 } from './ats-score-schema'
 
 // ── Stop words ───────────────────────────────────────────────────────────────
@@ -329,5 +333,193 @@ export function scoreKeywordCoverage(
     missingRequired,
     missingPreferred,
     missingImplied,
+  }
+}
+
+// ── Dimension 2: Title Alignment (weight: 0.20) ───────────────────────────────
+
+export function scoreTitleAlignment(
+  cvContent: CVDocumentContent,
+  jdTitle: string | null,
+): TitleAlignmentDetail {
+  const WEIGHT = 0.20
+
+  const mostRecentExp = cvContent.sections
+    .filter(s => s.visible && s.type === 'experience')
+    .at(0)
+
+  const cvTitle = mostRecentExp?.type === 'experience'
+    ? mostRecentExp.data.titles[0] ?? null
+    : null
+
+  if (!jdTitle || !cvTitle) {
+    return {
+      score: 50, weight: WEIGHT, weightedContribution: 50 * WEIGHT,
+      jdTitle: jdTitle ?? null, cvTitle: cvTitle ?? null, matchedTokens: [],
+    }
+  }
+
+  const jdTokens = new Set(tokenize(jdTitle))
+  const cvTokens = new Set(tokenize(cvTitle))
+
+  const intersection = [...jdTokens].filter(t => cvTokens.has(t))
+  const union = new Set([...jdTokens, ...cvTokens])
+
+  const jaccard = union.size === 0 ? 0 : intersection.length / union.size
+  const score = Math.round(jaccard * 100)
+
+  return {
+    score,
+    weight: WEIGHT,
+    weightedContribution: score * WEIGHT,
+    jdTitle,
+    cvTitle,
+    matchedTokens: intersection,
+  }
+}
+
+// ── Dimension 3: Section Completeness (weight: 0.20) ─────────────────────────
+
+// Baseline sections assumed present on any CV — excluded from contextual scoring
+const COMPLETENESS_BASELINE = new Set(['skills', 'experience'])
+
+// Maps inferExpectedSections output strings → actual CVSection type discriminant
+const SECTION_TYPE_MAP: Record<string, string> = {
+  certifications: 'certification',
+}
+
+export function scoreSectionCompleteness(
+  cvContent: CVDocumentContent,
+  jdText: string,
+): SectionCompletenessDetail {
+  const WEIGHT = 0.20
+  const allExpected = inferExpectedSections(jdText)
+  // Only score contextual sections — baseline sections are assumed on every CV
+  const expectedSections = allExpected.filter(s => !COMPLETENESS_BASELINE.has(s))
+
+  if (expectedSections.length === 0) {
+    return {
+      score: 100, weight: WEIGHT, weightedContribution: 100 * WEIGHT,
+      expectedSections: [], presentSections: [], missingSections: [],
+    }
+  }
+
+  const visibleTypes = new Set(
+    cvContent.sections.filter(s => s.visible).map(s => s.type),
+  )
+
+  const presentSections: string[] = []
+  const missingSections: string[] = []
+
+  for (const expected of expectedSections) {
+    const sectionType = SECTION_TYPE_MAP[expected] ?? expected
+    // skills and tools are interchangeable for completeness purposes
+    const found = expected === 'skills'
+      ? visibleTypes.has('skills') || visibleTypes.has('tools')
+      : expected === 'tools'
+      ? visibleTypes.has('tools') || visibleTypes.has('skills')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      : visibleTypes.has(sectionType as any)
+
+    if (found) presentSections.push(expected)
+    else missingSections.push(expected)
+  }
+
+  const score = Math.round((presentSections.length / expectedSections.length) * 100)
+
+  return {
+    score,
+    weight: WEIGHT,
+    weightedContribution: score * WEIGHT,
+    expectedSections,
+    presentSections,
+    missingSections,
+  }
+}
+
+// ── Dimension 4: Seniority Signal (weight: 0.15) ─────────────────────────────
+
+export function scoreSenioritySignal(
+  cvContent: CVDocumentContent,
+  jdText: string,
+): SenioritySignalDetail {
+  const WEIGHT = 0.15
+
+  const cvTotalYears = cvContent.sections
+    .filter(s => s.visible && s.type === 'experience')
+    .reduce((sum, s) => {
+      if (s.type !== 'experience') return sum
+      return sum + parseDurationToYears(s.data.duration)
+    }, 0)
+
+  const jdRequiredYears = extractJDYearsRequired(jdText)
+
+  if (jdRequiredYears !== null) {
+    const score = Math.min(100, Math.round((cvTotalYears / jdRequiredYears) * 100))
+    return {
+      score, weight: WEIGHT, weightedContribution: score * WEIGHT,
+      jdRequiredYears, cvTotalYears, seniorityBasis: 'years',
+    }
+  }
+
+  // Keyword-based seniority: compare JD seniority level to CV's most recent title seniority
+  const jdSeniorityLevel = extractJDSeniorityLevel(jdText)
+  const cvSeniorityLevel = extractJDSeniorityLevel(
+    cvContent.sections
+      .filter(s => s.visible && s.type === 'experience')
+      .flatMap(s => s.type === 'experience' ? s.data.titles : [])
+      .join(' '),
+  )
+
+  if (jdSeniorityLevel === null || cvSeniorityLevel === null) {
+    return {
+      score: 60, weight: WEIGHT, weightedContribution: 60 * WEIGHT,
+      jdRequiredYears: null, cvTotalYears, seniorityBasis: 'neutral',
+    }
+  }
+
+  const diff = Math.abs(jdSeniorityLevel - cvSeniorityLevel)
+  const score = diff === 0 ? 100 : diff === 1 ? 70 : 40
+
+  return {
+    score, weight: WEIGHT, weightedContribution: score * WEIGHT,
+    jdRequiredYears: null, cvTotalYears, seniorityBasis: 'keywords',
+  }
+}
+
+// ── Score aggregation ─────────────────────────────────────────────────────────
+
+function deriveLabel(score: number): ATSScoreBreakdown['label'] {
+  if (score >= 85) return 'excellent'
+  if (score >= 70) return 'strong'
+  if (score >= 55) return 'good'
+  if (score >= 40) return 'fair'
+  return 'poor'
+}
+
+export function scoreATS(
+  cvContent: CVDocumentContent,
+  jobDescription: string,
+  impliedKeywords: string[],
+): ATSScoreBreakdown {
+  const { required, preferred } = extractJDKeywords(jobDescription)
+  const jdTitle = extractJDTitle(jobDescription)
+
+  const keywordCoverage = scoreKeywordCoverage(cvContent, required, preferred, impliedKeywords)
+  const titleAlignment = scoreTitleAlignment(cvContent, jdTitle)
+  const sectionCompleteness = scoreSectionCompleteness(cvContent, jobDescription)
+  const senioritySignal = scoreSenioritySignal(cvContent, jobDescription)
+
+  const finalScore = Math.round(
+    keywordCoverage.weightedContribution +
+    titleAlignment.weightedContribution +
+    sectionCompleteness.weightedContribution +
+    senioritySignal.weightedContribution,
+  )
+
+  return {
+    finalScore: Math.min(100, Math.max(0, finalScore)),
+    label: deriveLabel(finalScore),
+    dimensions: { keywordCoverage, titleAlignment, sectionCompleteness, senioritySignal },
   }
 }

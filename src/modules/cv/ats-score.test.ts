@@ -10,6 +10,10 @@ import {
   extractCVSectionTokens,
   parseDurationToYears,
   scoreKeywordCoverage,
+  scoreTitleAlignment,
+  scoreSectionCompleteness,
+  scoreSenioritySignal,
+  scoreATS,
 } from './ats-score'
 import type { CVDocumentContent } from './schema'
 
@@ -251,5 +255,212 @@ describe('scoreKeywordCoverage', () => {
   it('returns 0 when no keywords match', () => {
     const result = scoreKeywordCoverage(cvContent, ['cobol', 'fortran'], [], [])
     expect(result.score).toBe(0)
+  })
+})
+
+describe('scoreTitleAlignment', () => {
+  const cvWithTitle: CVDocumentContent = {
+    version: 1,
+    sections: [
+      {
+        id: 's1', type: 'experience', visible: true,
+        data: {
+          company: 'Acme', titles: ['Senior Software Engineer'],
+          location: 'London', duration: 'Jan 2020 – Present',
+          description: '', outcomes: [],
+        },
+      },
+    ],
+  }
+
+  it('scores 100 for identical titles', () => {
+    const result = scoreTitleAlignment(cvWithTitle, 'Senior Software Engineer')
+    expect(result.score).toBe(100)
+  })
+
+  it('scores high for closely related titles', () => {
+    const result = scoreTitleAlignment(cvWithTitle, 'Senior Backend Engineer')
+    expect(result.score).toBeGreaterThanOrEqual(50)
+  })
+
+  it('scores 50 when jdTitle is null', () => {
+    const result = scoreTitleAlignment(cvWithTitle, null)
+    expect(result.score).toBe(50)
+  })
+
+  it('populates jdTitle and cvTitle', () => {
+    const result = scoreTitleAlignment(cvWithTitle, 'Lead Engineer')
+    expect(result.jdTitle).toBe('Lead Engineer')
+    expect(result.cvTitle).toBe('Senior Software Engineer')
+  })
+
+  it('scores 0 for completely unrelated titles', () => {
+    const result = scoreTitleAlignment(cvWithTitle, 'Chief Financial Officer')
+    expect(result.score).toBe(0)
+  })
+})
+
+describe('scoreSectionCompleteness', () => {
+  it('scores 100 when no sections expected', () => {
+    const cv: CVDocumentContent = { version: 1, sections: [] }
+    const result = scoreSectionCompleteness(cv, 'We are looking for a great team member.')
+    expect(result.score).toBe(100)
+  })
+
+  it('expects skills or tools for technical JDs', () => {
+    const cv: CVDocumentContent = { version: 1, sections: [] }
+    const result = scoreSectionCompleteness(cv, 'We need a senior software engineer with React.')
+    expect(result.expectedSections.some(s => s === 'skills' || s === 'tools')).toBe(true)
+  })
+
+  it('scores 100 when all expected sections are present and visible', () => {
+    const cv: CVDocumentContent = {
+      version: 1,
+      sections: [
+        { id: 's1', type: 'skills', visible: true, data: { items: ['TypeScript'] } },
+      ],
+    }
+    const result = scoreSectionCompleteness(cv, 'Senior software engineer with TypeScript required.')
+    const expected = result.expectedSections.filter(s => s === 'skills' || s === 'tools')
+    const present = result.presentSections
+    expect(expected.every(s => present.includes(s))).toBe(true)
+  })
+
+  it('scores lower when expected sections are missing', () => {
+    const cv: CVDocumentContent = { version: 1, sections: [] }
+    const result = scoreSectionCompleteness(cv, 'Senior software engineer with React required.')
+    expect(result.score).toBeLessThan(100)
+    expect(result.missingSections.length).toBeGreaterThan(0)
+  })
+})
+
+describe('scoreSenioritySignal', () => {
+  const cvWithExperience: CVDocumentContent = {
+    version: 1,
+    sections: [
+      {
+        id: 's1', type: 'experience', visible: true,
+        data: {
+          company: 'Acme', titles: ['Senior Engineer'],
+          location: 'London', duration: 'Jan 2018 – Dec 2022',
+          description: '', outcomes: [],
+        },
+      },
+      {
+        id: 's2', type: 'experience', visible: true,
+        data: {
+          company: 'Beta', titles: ['Junior Developer'],
+          location: 'London', duration: 'Jan 2016 – Dec 2017',
+          description: '', outcomes: [],
+        },
+      },
+    ],
+  }
+
+  it('scores 100 when CV years exceed JD requirement', () => {
+    const result = scoreSenioritySignal(cvWithExperience, 'Minimum 3 years experience required.')
+    expect(result.score).toBe(100)
+    expect(result.seniorityBasis).toBe('years')
+  })
+
+  it('scores proportionally when CV years are below requirement', () => {
+    const result = scoreSenioritySignal(cvWithExperience, 'Minimum 10 years experience required.')
+    expect(result.score).toBeLessThan(100)
+    expect(result.jdRequiredYears).toBe(10)
+  })
+
+  it('uses keyword matching when no year requirement found', () => {
+    const result = scoreSenioritySignal(cvWithExperience, 'We need a senior software engineer.')
+    expect(result.seniorityBasis).toBe('keywords')
+    expect(result.score).toBe(100)
+  })
+
+  it('returns neutral score when no year requirement and no seniority keywords', () => {
+    const result = scoreSenioritySignal(cvWithExperience, 'We need a great communicator.')
+    expect(result.seniorityBasis).toBe('neutral')
+    expect(result.score).toBe(60)
+  })
+
+  it('reports total CV years', () => {
+    const result = scoreSenioritySignal(cvWithExperience, 'Minimum 3 years required.')
+    // Jan 2018–Dec 2022 = ~4y + Jan 2016–Dec 2017 = ~2y → ~6y total
+    expect(result.cvTotalYears).toBeGreaterThan(4)
+  })
+})
+
+describe('scoreATS (integration)', () => {
+  const wellMatchedCV: CVDocumentContent = {
+    version: 1,
+    sections: [
+      { id: 's1', type: 'skills', visible: true, data: { items: ['TypeScript', 'React', 'Node.js', 'GraphQL'] } },
+      { id: 's2', type: 'tools', visible: true, data: { items: ['Docker', 'AWS', 'PostgreSQL'] } },
+      {
+        id: 's3', type: 'experience', visible: true,
+        data: {
+          company: 'Acme', titles: ['Senior Software Engineer'],
+          location: 'London', duration: 'Jan 2019 – Present',
+          description: 'Led backend development using TypeScript and Node.js.',
+          outcomes: ['Reduced API latency by 40%', 'Introduced React component library'],
+        },
+      },
+    ],
+  }
+
+  const matchingJD = `
+    Job Title: Senior Software Engineer
+
+    We are looking for a Senior Software Engineer with 5+ years of experience.
+
+    Requirements (must have):
+    - TypeScript required
+    - React is required
+    - Node.js experience essential
+
+    Nice to have:
+    - Docker preferred
+    - GraphQL is a bonus
+  `
+
+  it('returns a finalScore between 0 and 100', () => {
+    const result = scoreATS(wellMatchedCV, matchingJD, [])
+    expect(result.finalScore).toBeGreaterThanOrEqual(0)
+    expect(result.finalScore).toBeLessThanOrEqual(100)
+  })
+
+  it('produces a high score for a well-matched CV', () => {
+    const result = scoreATS(wellMatchedCV, matchingJD, [])
+    expect(result.finalScore).toBeGreaterThan(70)
+  })
+
+  it('assigns the correct label', () => {
+    const result = scoreATS(wellMatchedCV, matchingJD, [])
+    expect(['poor', 'fair', 'good', 'strong', 'excellent']).toContain(result.label)
+  })
+
+  it('weighted contributions sum to finalScore', () => {
+    const result = scoreATS(wellMatchedCV, matchingJD, [])
+    const sumContributions = Object.values(result.dimensions)
+      .reduce((s, d) => s + d.weightedContribution, 0)
+    expect(Math.round(sumContributions)).toBe(result.finalScore)
+  })
+
+  it('produces a poor score for an unrelated CV', () => {
+    const mismatchedCV: CVDocumentContent = {
+      version: 1,
+      sections: [
+        { id: 's1', type: 'skills', visible: true, data: { items: ['Photoshop', 'Illustrator', 'InDesign'] } },
+        {
+          id: 's2', type: 'experience', visible: true,
+          data: {
+            company: 'Design Co', titles: ['Graphic Designer'],
+            location: 'London', duration: 'Jan 2020 – Present',
+            description: 'Brand design and print production.',
+            outcomes: [],
+          },
+        },
+      ],
+    }
+    const result = scoreATS(mismatchedCV, matchingJD, [])
+    expect(result.finalScore).toBeLessThan(50)
   })
 })
