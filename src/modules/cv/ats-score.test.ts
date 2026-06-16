@@ -7,7 +7,10 @@ import {
   extractJDYearsRequired,
   extractJDSeniorityLevel,
   inferExpectedSections,
+  extractCVSectionTokens,
+  parseDurationToYears,
 } from './ats-score'
+import type { CVDocumentContent } from './schema'
 
 describe('normalizeText', () => {
   it('lowercases and strips punctuation', () => {
@@ -121,5 +124,86 @@ describe('inferExpectedSections', () => {
   it('includes certifications section when certs are mentioned', () => {
     const jd = 'AWS certification preferred'
     expect(inferExpectedSections(jd)).toContain('certifications')
+  })
+})
+
+const MOCK_CV: CVDocumentContent = {
+  version: 1,
+  sections: [
+    {
+      id: 's1', type: 'skills', visible: true,
+      data: { items: ['TypeScript', 'React', 'Node.js'] },
+    },
+    {
+      id: 's2', type: 'tools', visible: true,
+      data: { items: ['Docker', 'AWS'] },
+    },
+    {
+      id: 's3', type: 'experience', visible: true,
+      data: {
+        company: 'Acme Corp', titles: ['Senior Software Engineer'],
+        location: 'London', duration: 'Jan 2020 – Dec 2023',
+        description: 'Led backend services migration to microservices.',
+        outcomes: ['Reduced latency by 40%', 'Introduced TypeScript across the team'],
+      },
+    },
+    {
+      id: 's4', type: 'experience', visible: false,
+      data: {
+        company: 'Hidden Corp', titles: ['Junior Developer'],
+        location: 'London', duration: '2018 – 2019',
+        description: 'Hidden content.',
+        outcomes: [],
+      },
+    },
+  ],
+}
+
+describe('extractCVSectionTokens', () => {
+  it('extracts skills with weight 1.0', () => {
+    const tokens = extractCVSectionTokens(MOCK_CV)
+    const skillToken = tokens.find(t => t.text === 'typescript' && t.sectionType === 'skills')
+    expect(skillToken).toBeDefined()
+    expect(skillToken?.weight).toBe(1.0)
+  })
+
+  it('extracts tools with weight 1.0', () => {
+    const tokens = extractCVSectionTokens(MOCK_CV)
+    const toolToken = tokens.find(t => t.text === 'docker' && t.sectionType === 'tools')
+    expect(toolToken).toBeDefined()
+    expect(toolToken?.weight).toBe(1.0)
+  })
+
+  it('extracts experience titles with weight 0.9', () => {
+    const tokens = extractCVSectionTokens(MOCK_CV)
+    const titleTokens = tokens.filter(t => t.sectionType === 'exp-title')
+    expect(titleTokens.some(t => t.text.includes('senior software engineer'))).toBe(true)
+    expect(titleTokens[0]?.weight).toBe(0.9)
+  })
+
+  it('excludes non-visible sections', () => {
+    const tokens = extractCVSectionTokens(MOCK_CV)
+    expect(tokens.some(t => t.text.includes('hidden'))).toBe(false)
+  })
+})
+
+describe('parseDurationToYears', () => {
+  it('parses month-year range', () => {
+    const years = parseDurationToYears('Jan 2020 – Dec 2023')
+    expect(years).toBeCloseTo(3.9, 0)
+  })
+
+  it('handles "present" as end date', () => {
+    const years = parseDurationToYears('Jan 2020 – Present')
+    expect(years).toBeGreaterThan(0)
+  })
+
+  it('parses year-only range using midpoint', () => {
+    const years = parseDurationToYears('2018 – 2022')
+    expect(years).toBeCloseTo(4, 0)
+  })
+
+  it('returns 0 for unparseable strings', () => {
+    expect(parseDurationToYears('unknown')).toBe(0)
   })
 })

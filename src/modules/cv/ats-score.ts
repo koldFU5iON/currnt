@@ -1,4 +1,4 @@
-// No imports needed for Task 2 — all pure string/regex logic
+import type { CVDocumentContent } from './schema'
 
 // ── Stop words ───────────────────────────────────────────────────────────────
 
@@ -125,4 +125,98 @@ export function inferExpectedSections(jdText: string): string[] {
   }
 
   return [...new Set(sections)]
+}
+
+// ── CV text extraction ───────────────────────────────────────────────────────
+
+export type SectionToken = {
+  text: string
+  sectionType: string
+  weight: number
+}
+
+export function extractCVSectionTokens(cvContent: CVDocumentContent): SectionToken[] {
+  const tokens: SectionToken[] = []
+
+  for (const section of cvContent.sections.filter(s => s.visible)) {
+    switch (section.type) {
+      case 'skills':
+        for (const item of section.data.items) {
+          tokens.push({ text: item.toLowerCase(), sectionType: 'skills', weight: 1.0 })
+        }
+        break
+      case 'tools':
+        for (const item of section.data.items) {
+          tokens.push({ text: item.toLowerCase(), sectionType: 'tools', weight: 1.0 })
+        }
+        break
+      case 'competencies':
+        for (const item of section.data.items) {
+          tokens.push({ text: item.toLowerCase(), sectionType: 'competencies', weight: 0.9 })
+        }
+        break
+      case 'capabilities':
+        for (const item of section.data.items) {
+          tokens.push({ text: item.toLowerCase(), sectionType: 'capabilities', weight: 0.9 })
+        }
+        break
+      case 'experience': {
+        const d = section.data
+        const titleText = d.titles.join(' ').toLowerCase()
+        tokens.push({ text: titleText, sectionType: 'exp-title', weight: 0.9 })
+        const bodyText = [d.description, ...d.outcomes].join(' ').toLowerCase()
+        tokens.push({ text: bodyText, sectionType: 'exp-body', weight: 0.7 })
+        break
+      }
+      case 'profile':
+        tokens.push({ text: section.data.content.toLowerCase(), sectionType: 'profile', weight: 0.6 })
+        break
+      case 'education': {
+        const d = section.data
+        const text = [d.qualification, d.field, d.institution].filter(Boolean).join(' ').toLowerCase()
+        tokens.push({ text, sectionType: 'education', weight: 0.5 })
+        break
+      }
+      case 'certification':
+        tokens.push({ text: section.data.name.toLowerCase(), sectionType: 'certification', weight: 0.5 })
+        break
+      // header, languages: intentionally skipped — not scored by ATS engine
+    }
+  }
+
+  return tokens
+}
+
+export function parseDurationToYears(duration: string): number {
+  const MONTH_MAP: Record<string, number> = {
+    jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+    jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+  }
+
+  const parts = duration.split(/\s*[–—-]\s*/)
+  if (parts.length < 2) return 0
+  const [startStr, endStr] = parts
+
+  function parseDate(s: string): Date | null {
+    const lower = s.toLowerCase().trim()
+    if (['present', 'current', 'now', 'today'].includes(lower)) return new Date()
+
+    const monthYear = lower.match(/([a-z]{3})\s+(\d{4})/)
+    if (monthYear) {
+      const month = MONTH_MAP[monthYear[1]]
+      const year = parseInt(monthYear[2], 10)
+      if (month !== undefined && !isNaN(year)) return new Date(year, month, 1)
+    }
+
+    const yearOnly = lower.match(/^(\d{4})$/)
+    if (yearOnly) return new Date(parseInt(yearOnly[1], 10), 6, 1)
+
+    return null
+  }
+
+  const start = parseDate(startStr)
+  const end = parseDate(endStr)
+  if (!start || !end) return 0
+
+  return Math.max(0, (end.getTime() - start.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
 }
