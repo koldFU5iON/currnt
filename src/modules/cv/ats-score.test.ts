@@ -9,6 +9,7 @@ import {
   inferExpectedSections,
   extractCVSectionTokens,
   parseDurationToYears,
+  scoreKeywordCoverage,
 } from './ats-score'
 import type { CVDocumentContent } from './schema'
 
@@ -205,5 +206,50 @@ describe('parseDurationToYears', () => {
 
   it('returns 0 for unparseable strings', () => {
     expect(parseDurationToYears('unknown')).toBe(0)
+  })
+})
+
+describe('scoreKeywordCoverage', () => {
+  const cvContent: CVDocumentContent = {
+    version: 1,
+    sections: [
+      { id: 's1', type: 'skills', visible: true, data: { items: ['TypeScript', 'React'] } },
+      { id: 's2', type: 'tools', visible: true, data: { items: ['Docker'] } },
+      {
+        id: 's3', type: 'experience', visible: true,
+        data: {
+          company: 'Acme', titles: ['Senior Software Engineer'],
+          location: 'London', duration: 'Jan 2020 – Dec 2023',
+          description: 'Built microservices with Node.js.',
+          outcomes: ['Led team of 5 engineers'],
+        },
+      },
+    ],
+  }
+
+  it('matches required keywords in skills section', () => {
+    const result = scoreKeywordCoverage(cvContent, ['typescript', 'react'], [], [])
+    expect(result.matchedRequired.some(m => m.keyword === 'typescript')).toBe(true)
+    expect(result.score).toBeGreaterThan(50)
+  })
+
+  it('reports missing required keywords', () => {
+    const result = scoreKeywordCoverage(cvContent, ['typescript', 'kubernetes'], [], [])
+    expect(result.missingRequired).toContain('kubernetes')
+  })
+
+  it('matches implied keywords', () => {
+    const result = scoreKeywordCoverage(cvContent, [], [], ['docker'])
+    expect(result.matchedImplied.some(m => m.keyword === 'docker')).toBe(true)
+  })
+
+  it('returns 100 when CV matches all required keywords', () => {
+    const result = scoreKeywordCoverage(cvContent, ['typescript'], [], [])
+    expect(result.score).toBe(100)
+  })
+
+  it('returns 0 when no keywords match', () => {
+    const result = scoreKeywordCoverage(cvContent, ['cobol', 'fortran'], [], [])
+    expect(result.score).toBe(0)
   })
 })

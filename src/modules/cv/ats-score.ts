@@ -1,4 +1,9 @@
 import type { CVDocumentContent } from './schema'
+import type {
+  KeywordCoverageDetail,
+  KeywordMatch,
+  ImpliedKeywordMatch,
+} from './ats-score-schema'
 
 // ── Stop words ───────────────────────────────────────────────────────────────
 
@@ -219,4 +224,110 @@ export function parseDurationToYears(duration: string): number {
   if (!start || !end) return 0
 
   return Math.max(0, (end.getTime() - start.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+}
+
+// ── Keyword matching helper ───────────────────────────────────────────────────
+
+function keywordMatchesToken(keyword: string, token: SectionToken): boolean {
+  const kw = normalizeText(keyword)
+  if (kw.length < 3) return false
+  const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return new RegExp(`\\b${escaped}\\b`).test(token.text)
+}
+
+function findBestMatch(
+  keyword: string,
+  sectionTokens: SectionToken[],
+): { section: string; sectionWeight: number } | null {
+  let best: { section: string; sectionWeight: number } | null = null
+  for (const token of sectionTokens) {
+    if (keywordMatchesToken(keyword, token)) {
+      if (!best || token.weight > best.sectionWeight) {
+        best = { section: token.sectionType, sectionWeight: token.weight }
+      }
+    }
+  }
+  return best
+}
+
+// ── Dimension 1: Keyword Coverage (weight: 0.45) ─────────────────────────────
+
+export function scoreKeywordCoverage(
+  cvContent: CVDocumentContent,
+  requiredKeywords: string[],
+  preferredKeywords: string[],
+  impliedKeywords: string[],
+): KeywordCoverageDetail {
+  const WEIGHT = 0.45
+  const sectionTokens = extractCVSectionTokens(cvContent)
+
+  const matchedRequired: KeywordMatch[] = []
+  const missingRequired: string[] = []
+  const matchedPreferred: KeywordMatch[] = []
+  const missingPreferred: string[] = []
+  const matchedImplied: ImpliedKeywordMatch[] = []
+  const missingImplied: string[] = []
+
+  for (const kw of requiredKeywords) {
+    const match = findBestMatch(kw, sectionTokens)
+    if (match) matchedRequired.push({ keyword: kw, ...match })
+    else missingRequired.push(kw)
+  }
+
+  for (const kw of preferredKeywords) {
+    const match = findBestMatch(kw, sectionTokens)
+    if (match) matchedPreferred.push({ keyword: kw, ...match })
+    else missingPreferred.push(kw)
+  }
+
+  for (const kw of impliedKeywords) {
+    const match = findBestMatch(kw, sectionTokens)
+    if (match) matchedImplied.push({ keyword: kw, section: match.section })
+    else missingImplied.push(kw)
+  }
+
+  const totalRequired = requiredKeywords.length
+  const totalPreferred = preferredKeywords.length
+  const totalImplied = impliedKeywords.length
+
+  // Required contributes 70% of score, section-weighted (skills match > body match)
+  const requiredScore = totalRequired === 0
+    ? 1
+    : matchedRequired.reduce((s, m) => s + m.sectionWeight, 0) / totalRequired
+
+  // Preferred explicit: section-weighted match rate
+  const preferredExplicitScore = totalPreferred === 0
+    ? 1
+    : matchedPreferred.reduce((s, m) => s + m.sectionWeight, 0) / totalPreferred
+
+  // Implied: flat match rate (no section weight — they're bonus signals), capped at 0.5
+  const impliedScore = totalImplied === 0
+    ? 1
+    : (matchedImplied.length / totalImplied) * 0.5
+
+  // Preferred score blends explicit preferred (75%) and implied (25%)
+  const preferredScore = totalPreferred === 0 && totalImplied === 0
+    ? 1
+    : preferredExplicitScore * 0.75 + impliedScore * 0.25
+
+  // Only include preferredScore in the blend when there ARE preferred/implied keywords
+  const hasPreferredOrImplied = totalPreferred > 0 || totalImplied > 0
+
+  const raw = hasPreferredOrImplied
+    ? (requiredScore * 0.70 + preferredScore * 0.30) * 100
+    : requiredScore * 100
+
+  const score = Math.min(100, Math.max(0, Math.round(raw)))
+
+  return {
+    score,
+    weight: WEIGHT,
+    weightedContribution: score * WEIGHT,
+    matchedRequired,
+    matchedPreferred,
+    matchedImplied,
+    missingRequired,
+    missingPreferred,
+    missingImplied,
+  }
 }
