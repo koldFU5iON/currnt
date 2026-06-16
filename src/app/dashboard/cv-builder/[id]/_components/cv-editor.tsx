@@ -30,6 +30,7 @@ import { SkillsBlock } from './blocks/skills-block'
 import { ToolsBlock } from './blocks/tools-block'
 import { LanguagesBlock } from './blocks/languages-block'
 import { MarkdownProse } from '@/components/ui/markdown-prose'
+import { ATSScorePanel } from './ats-score-panel'
 import type { CVDocumentContent, CVSection } from '@/modules/cv/schema'
 import type { JobFit } from '@/app/types/job-application'
 
@@ -58,6 +59,7 @@ export function CvEditor({ cv }: Props) {
   const [showConfirm, setShowConfirm] = useState(false)
   const [showExport, setShowExport] = useState(false)
   const [jobPanelOpen, setJobPanelOpen] = useState(false)
+  const [atsPanelOpen, setAtsPanelOpen] = useState(false)
 
   const { openPanel } = usePageContext()
   const router = useRouter()
@@ -254,6 +256,12 @@ export function CvEditor({ cv }: Props) {
               </button>
             )}
             <button
+              onClick={() => setAtsPanelOpen(o => !o)}
+              className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
+            >
+              ATS ▸
+            </button>
+            <button
               onClick={() => router.refresh()}
               className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
               title="Reload CV from server"
@@ -353,6 +361,27 @@ export function CvEditor({ cv }: Props) {
                   View job →
                 </Link>
               </div>
+            </div>
+          )}
+          {atsPanelOpen && (
+            <div className="absolute inset-y-0 right-0 z-10 flex w-[42%] min-w-[260px] max-w-[480px] flex-col border-l bg-background overflow-y-auto p-4 print:hidden">
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-sm font-semibold">ATS Score</span>
+                <button
+                  type="button"
+                  onClick={() => setAtsPanelOpen(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                  aria-label="Close ATS panel"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+              <ATSScorePanel
+                cvId={cv.id}
+                cvTitle={cv.jobTitle ?? 'CV'}
+                cvCompany={cv.company}
+                hasJobDescription={!!(cv.jobApplication?.jobDescription)}
+              />
             </div>
           )}
           <SectionRail sections={content.sections} onToggleVisibility={handleToggleVisibility} />
