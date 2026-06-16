@@ -1,4 +1,4 @@
-import type { CVDocumentContent } from './schema'
+import type { CVDocumentContent, CVSection } from './schema'
 import type {
   KeywordCoverageDetail,
   KeywordMatch,
@@ -418,8 +418,7 @@ export function scoreSectionCompleteness(
       ? visibleTypes.has('skills') || visibleTypes.has('tools')
       : expected === 'tools'
       ? visibleTypes.has('tools') || visibleTypes.has('skills')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      : visibleTypes.has(sectionType as any)
+      : visibleTypes.has(sectionType as CVSection['type'])
 
     if (found) presentSections.push(expected)
     else missingSections.push(expected)
