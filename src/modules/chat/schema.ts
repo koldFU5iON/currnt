@@ -6,6 +6,7 @@ export const PageContextSchema = z.discriminatedUnion('type', [
     cvId: z.string(),
     title: z.string(),
     company: z.string().optional(),
+    atsScore: z.string().optional(),
   }),
   z.object({
     type: z.literal('job_fit'),
