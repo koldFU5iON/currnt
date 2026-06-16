@@ -12,20 +12,95 @@ import type {
 // ── Stop words ───────────────────────────────────────────────────────────────
 
 const STOP_WORDS = new Set([
+  // Function words / prepositions / conjunctions
   'a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
   'of', 'with', 'by', 'from', 'up', 'about', 'into', 'through', 'during',
+  'against', 'between', 'out', 'off', 'over', 'under', 'per', 'via',
+  'upon', 'across', 'along', 'among', 'within', 'without', 'toward',
+  'towards', 'beyond', 'below', 'above', 'behind', 'around', 'beside',
+
+  // Auxiliary / modal verbs
   'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had',
   'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might',
   'shall', 'can', 'need', 'dare', 'ought', 'used', 'able',
-  'you', 'your', 'we', 'our', 'they', 'their', 'it', 'its',
-  'this', 'that', 'these', 'those', 'who', 'what', 'which', 'when',
-  'where', 'why', 'how', 'not', 'no', 'nor', 'so', 'yet', 'both',
-  'either', 'neither', 'as', 'if', 'then', 'than', 'because', 'while',
-  'although', 'though', 'since', 'unless', 'until', 'after', 'before',
-  'role', 'job', 'position', 'candidate', 'applicant', 'apply',
+
+  // Pronouns
+  'you', 'your', 'we', 'our', 'they', 'their', 'it', 'its', 'his', 'her',
+  'hers', 'him', 'them', 'us', 'who', 'whom', 'whose', 'me', 'my', 'mine',
+  'he', 'she',
+
+  // Demonstratives / interrogatives / connectors
+  'this', 'that', 'these', 'those', 'what', 'which', 'when', 'where', 'why',
+  'how', 'not', 'no', 'nor', 'so', 'yet', 'both', 'either', 'neither',
+  'as', 'if', 'then', 'than', 'because', 'while', 'although', 'though',
+  'since', 'unless', 'until', 'after', 'before', 'some', 'any', 'all',
+  'each', 'every', 'few', 'more', 'most', 'other', 'such', 'own', 'same',
+  'another', 'much', 'many', 'less', 'least', 'even', 'also', 'just',
+  'still', 'already', 'ever', 'never', 'always', 'often', 'sometimes',
+  'usually', 'here', 'there', 'now', 'then', 'very', 'really', 'quite',
+  'rather', 'especially', 'particularly', 'generally', 'typically', 'well',
+
+  // Common non-technical verbs (but NOT 'work' or 'ability' — preserved for test compat)
+  'get', 'give', 'take', 'make', 'let', 'put', 'see', 'look', 'feel',
+  'seem', 'become', 'keep', 'turn', 'try', 'ask', 'say', 'tell', 'call',
+  'come', 'go', 'move', 'run', 'bring', 'happen', 'set', 'meet', 'follow',
+  'start', 'stop', 'open', 'close', 'allow', 'begin', 'end', 'find', 'show',
+  'hold', 'join', 'seek', 'want', 'know', 'think', 'believe', 'mean', 'own',
+  'serve', 'help', 'use', 'apply', 'ensure', 'enable', 'share', 'inform',
+  'create', 'build', 'grow', 'improve', 'provide', 'include', 'drive',
+  'lead', 'solve', 'learn', 'send', 'receive', 'produce', 'perform',
+  'report', 'represent', 'engage', 'contribute', 'communicate', 'collaborate',
+  'coordinate', 'facilitate', 'participate', 'navigate', 'leverage',
+  'demonstrate', 'define', 'identify', 'deliver', 'manage', 'support',
+  'maintain', 'develop', 'execute',
+
+  // Common adjectives / descriptors
+  'new', 'old', 'big', 'small', 'large', 'long', 'short', 'high', 'low',
+  'next', 'last', 'right', 'best', 'real', 'full', 'hard', 'early', 'clear',
+  'free', 'easy', 'true', 'fast', 'deep', 'wide', 'safe', 'far', 'bad',
+  'ready', 'light', 'top', 'current', 'recent', 'major', 'whole', 'entire',
+  'various', 'diverse', 'broad', 'global', 'local', 'unique', 'common',
+  'typical', 'standard', 'direct', 'simple', 'complex', 'flexible',
+  'robust', 'reliable', 'stable', 'effective', 'efficient', 'significant',
+  'important', 'relevant', 'specific', 'general', 'additional', 'available',
+  'responsible', 'similar', 'related', 'certain', 'necessary', 'possible',
+  'likely', 'different', 'successful', 'exceptional', 'innovative',
+  'inclusive', 'ambitious', 'autonomous', 'passionate', 'proactive',
+  'collaborative', 'comfortable', 'ambiguous', 'genuine', 'meaningful',
+  'independent', 'dynamic', 'diverse', 'critical', 'multiple', 'several',
+
+  // Common non-technical nouns
+  'people', 'time', 'way', 'life', 'world', 'hand', 'part', 'place', 'case',
+  'week', 'day', 'month', 'point', 'fact', 'number', 'line', 'home', 'side',
+  'kind', 'thing', 'things', 'member', 'members', 'area', 'areas', 'type',
+  'types', 'list', 'group', 'groups', 'level', 'levels', 'rate', 'range',
+  'value', 'values', 'goal', 'goals', 'focus', 'issue', 'issues', 'impact',
+  'path', 'step', 'steps', 'style', 'process', 'moment', 'direction',
+  'sense', 'potential', 'person', 'individual', 'someone', 'anyone',
+  'everyone', 'something', 'everything', 'anything', 'nothing', 'others',
+  'effort', 'efforts', 'result', 'results', 'approach', 'context', 'culture',
+  'mission', 'vision', 'values', 'opportunity', 'growth', 'success',
+
+  // JD signal words that are boilerplate (the keyword follows, not "essential" itself)
+  'essential', 'must', 'mandatory', 'crucial', 'needed', 'needed',
+
+  // JD boilerplate / HR terms
+  'role', 'job', 'position', 'candidate', 'applicant', 'hire', 'hiring',
+  'recruit', 'department', 'office', 'location', 'remote', 'hybrid',
+  'onsite', 'visa', 'sponsorship', 'compensation', 'salary', 'equity',
+  'commission', 'benefits', 'healthcare', 'insurance', 'perks', 'workplace',
+  'diversity', 'inclusion', 'equal', 'accommodation', 'disability', 'veteran',
+  'interview', 'assessment', 'screening', 'background', 'check', 'offer',
+  'deadline', 'qualified', 'combination', 'study', 'degree', 'bachelor',
+  'master', 'education', 'training', 'credential',
   'team', 'company', 'organization', 'strong', 'good', 'excellent', 'great',
   'skills', 'knowledge', 'understanding', 'experience', 'years',
   'minimum', 'required', 'preferred', 'ideally', 'plus', 'bonus', 'etc',
+
+  // Discourse markers
+  'including', 'following', 'example', 'examples', 'however', 'therefore',
+  'furthermore', 'moreover', 'additionally', 'consequently', 'otherwise',
+  'instead', 'whereas', 'regardless', 'despite',
 ])
 
 // ── Seniority levels ──────────────────────────────────────────────────────────
@@ -50,15 +125,19 @@ export function tokenize(text: string): string[] {
   if (!text.trim()) return []
   return normalizeText(text)
     .split(' ')
-    .filter(token => token.length > 1 && !STOP_WORDS.has(token))
+    .filter(token => token.length > 2 && !STOP_WORDS.has(token))
 }
 
 // ── JD parsing ───────────────────────────────────────────────────────────────
 
-// Regex patterns for JD section markers
-const REQUIRED_SECTION_RE = /(?:requirements?|qualifications?|must\s+have|essential|you\s+(?:will\s+)?need|what\s+we(?:'re|\s+are)\s+looking\s+for)\s*:?\s*\n/i
-const PREFERRED_SECTION_RE = /(?:nice\s+to\s+have|preferred|bonus|desirable|plus(?:es)?|would\s+be\s+great|ideal(?:ly)?)\s*:?\s*\n/i
+// Regex patterns for JD section markers — match any line containing the keyword
+// so headers like "## Requirements:", "Basic Qualifications", "**Must Have**" all work.
+const REQUIRED_SECTION_RE = /^[^\n]*\b(?:requirements?|qualifications?|basic\s+qualifications?|minimum\s+qualifications?|required\s+qualifications?|key\s+requirements?|core\s+requirements?|must\s+have|what\s+(?:we(?:'re|\s+are)\s+looking\s+for|you(?:'ll|\s+will)\s+(?:need|bring|have))|what\s+we\s+need|about\s+you)\b[^\n]*\n/im
+const PREFERRED_SECTION_RE = /^[^\n]*\b(?:nice\s+to\s+have|preferred\s+qualifications?|plus(?:es)?|would\s+be\s+great|ideal(?:ly)?)\b[^\n]*\n/im
 const NEXT_SECTION_RE = /^(?:#+\s|\*\*|__|\w[^\n]*:\s*$)/m
+
+// Signal words in individual bullet lines that mark a bullet as "preferred" (not required)
+const PREFERRED_BULLET_SIGNAL_RE = /\b(?:prefer(?:red)?|bonus|nice\s+to\s+have|ideal|optional|helpful|advantageous)\b/i
 
 function extractSection(jdText: string, startPattern: RegExp): string | null {
   const match = startPattern.exec(jdText)
@@ -69,21 +148,48 @@ function extractSection(jdText: string, startPattern: RegExp): string | null {
   return nextMatch ? remaining.slice(0, nextMatch.index) : remaining
 }
 
+// Fallback when no structured section headers are detected: extract tokens only
+// from bullet-pointed lines. JD requirements are almost always bulleted; prose
+// sections (company intro, benefits copy) rarely are, so this filters the noise
+// that caused the original "hundreds of common words" bug.
+function extractKeywordsFromBullets(jdText: string): { required: string[]; preferred: string[] } {
+  const BULLET_RE = /^[ \t]*[-*•·]\s+(.+)$/
+
+  const required: string[] = []
+  const preferred: string[] = []
+
+  for (const line of jdText.split('\n')) {
+    const match = BULLET_RE.exec(line)
+    if (!match) continue
+    const content = match[1]
+    const tokens = tokenize(content)
+    if (PREFERRED_BULLET_SIGNAL_RE.test(content)) {
+      preferred.push(...tokens)
+    } else {
+      required.push(...tokens)
+    }
+  }
+
+  const requiredSet = new Set(required)
+  return {
+    required: [...requiredSet],
+    preferred: [...new Set(preferred)].filter(t => !requiredSet.has(t)),
+  }
+}
+
 export function extractJDKeywords(jdText: string): { required: string[]; preferred: string[] } {
   const requiredSection = extractSection(jdText, REQUIRED_SECTION_RE)
   const preferredSection = extractSection(jdText, PREFERRED_SECTION_RE)
 
+  if (!requiredSection && !preferredSection) {
+    return extractKeywordsFromBullets(jdText)
+  }
+
   const requiredTokens = requiredSection ? tokenize(requiredSection) : []
   const requiredSet = new Set(requiredTokens)
-
   const preferredTokens = preferredSection
     ? tokenize(preferredSection).filter(t => !requiredSet.has(t))
     : []
-
-  // If no explicit sections found, tokenize the whole JD as required
-  if (!requiredSection && !preferredSection) {
-    return { required: tokenize(jdText), preferred: [] }
-  }
 
   return { required: requiredTokens, preferred: preferredTokens }
 }

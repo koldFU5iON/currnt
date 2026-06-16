@@ -75,6 +75,25 @@ describe('extractJDKeywords', () => {
     expect(required).not.toContain('to')
     expect(required).not.toContain('with')
   })
+
+  it('falls back to bullet extraction when no section headers found', () => {
+    const jd = [
+      'About Acme Corp — we build reliable software for the world.',
+      '- TypeScript is our primary language',
+      '- Experience with React required',
+      '- Kubernetes preferred',
+    ].join('\n')
+    const { required, preferred } = extractJDKeywords(jd)
+    // Bullet content is extracted
+    expect(required).toContain('typescript')
+    expect(required).toContain('react')
+    // Prose content is NOT extracted (not a bullet line)
+    expect(required).not.toContain('acme')
+    expect(required).not.toContain('reliable')
+    // "preferred" signal on bullet → goes to preferred, not required
+    expect(preferred).toContain('kubernetes')
+    expect(required).not.toContain('kubernetes')
+  })
 })
 
 describe('extractJDTitle', () => {
