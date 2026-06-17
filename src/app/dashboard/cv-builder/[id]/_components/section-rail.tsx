@@ -15,6 +15,7 @@ const SECTION_LABELS: Record<CVSection['type'], string> = {
   skills: 'Skills',
   tools: 'Tools',
   languages: 'Languages',
+  custom: 'Custom',
 }
 
 const LABEL_COLORS: Record<string, string> = {
@@ -29,6 +30,7 @@ function getSectionLabel(section: CVSection): string {
   if (section.type === 'experience') return section.data.company || 'Experience'
   if (section.type === 'education') return section.data.institution || 'Education'
   if (section.type === 'certification') return section.data.name || 'Certification'
+  if (section.type === 'custom') return section.data.heading || 'Custom'
   return SECTION_LABELS[section.type] ?? section.type
 }
 

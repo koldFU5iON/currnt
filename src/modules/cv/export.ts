@@ -68,5 +68,12 @@ function sectionToMarkdown(section: CVSection): string {
       return `## Tools\n\n${section.data.items.join(", ")}`
     case "languages":
       return `## Languages\n\n${section.data.items.map(l => `${l.name} (${l.proficiency})`).join(", ")}`
+    case "custom": {
+      const { heading, subtype, content, items } = section.data
+      if (subtype === 'list' && items && items.length > 0) {
+        return `## ${heading}\n\n${items.map(i => `- ${i}`).join("\n")}`
+      }
+      return `## ${heading}\n\n${content ?? ''}`
+    }
   }
 }
