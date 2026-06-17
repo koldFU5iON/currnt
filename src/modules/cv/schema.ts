@@ -4,6 +4,7 @@ export const HeaderDataSchema = z.object({
   name: z.string(),
   headline: z.string(),
   subHeadline: z.string().nullish(),
+  location: z.string().nullish(),
   contact: z.object({
     email: z.string().nullish(),
     phone: z.string().nullish(),

@@ -31,7 +31,7 @@ export function HeaderBlock({ section, onUpdate }: Props) {
     setEditing(false)
   }
 
-  const { name, headline, subHeadline, contact } = section.data
+  const { name, headline, subHeadline, location, contact } = section.data
 
   const contactItems = [
     contact.email,
@@ -47,6 +47,9 @@ export function HeaderBlock({ section, onUpdate }: Props) {
         <p className="cv-headline">{headline}</p>
         {subHeadline && (
           <p className="cv-headline font-medium">{subHeadline}</p>
+        )}
+        {location && (
+          <p className="cv-contact pt-0.5">{location}</p>
         )}
         {contactItems.length > 0 && (
           <p className="cv-contact pt-1">
@@ -78,6 +81,15 @@ export function HeaderBlock({ section, onUpdate }: Props) {
           <input
             value={draft.subHeadline ?? ''}
             onChange={e => setDraft({ ...draft, subHeadline: e.target.value || undefined })}
+            className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm outline-none focus:ring-1 focus:ring-ring"
+          />
+        </div>
+        <div className="col-span-2 space-y-1">
+          <label className="text-xs text-muted-foreground">Location / Availability (optional)</label>
+          <input
+            value={draft.location ?? ''}
+            onChange={e => setDraft({ ...draft, location: e.target.value || undefined })}
+            placeholder="Based in Dublin · Willing to relocate · EU citizen"
             className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm outline-none focus:ring-1 focus:ring-ring"
           />
         </div>

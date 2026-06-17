@@ -66,6 +66,32 @@ describe("sectionToPlainText", () => {
   })
 })
 
+describe("toMarkdown — location line", () => {
+  it('includes location between sub-headline and contact', () => {
+    const doc: CVDocumentContent = {
+      version: 1,
+      sections: [{
+        id: '1',
+        type: 'header',
+        visible: true,
+        data: {
+          name: 'Ada Lovelace',
+          headline: 'Engineer',
+          subHeadline: 'PhD',
+          location: 'London · Willing to relocate',
+          contact: { email: 'ada@example.com', phone: null, linkedin: null, website: null },
+        },
+      }],
+    }
+    const md = toMarkdown(doc)
+    const lines = md.split('\n')
+    const locationIdx = lines.findIndex(l => l.includes('London'))
+    const contactIdx = lines.findIndex(l => l.includes('ada@example.com'))
+    expect(locationIdx).toBeGreaterThan(-1)
+    expect(locationIdx).toBeLessThan(contactIdx)
+  })
+})
+
 describe("sectionToPlainText — additional sections", () => {
   it("renders education", () => {
     const section: CVSection = {

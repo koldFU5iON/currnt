@@ -19,13 +19,14 @@ export function sectionToPlainText(section: CVSection): string {
 function sectionToMarkdown(section: CVSection): string {
   switch (section.type) {
     case "header": {
-      const { name, headline, subHeadline, contact } = section.data
+      const { name, headline, subHeadline, location, contact } = section.data
       const contactLine = [contact.email, contact.phone, contact.linkedin, contact.website]
         .filter(Boolean).join(" · ")
       return [
         `# ${name}`,
         headline,
         subHeadline,
+        location,
         contactLine,
       ].filter(Boolean).join("\n")
     }

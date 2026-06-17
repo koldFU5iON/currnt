@@ -195,6 +195,7 @@ export function CVPDFDocument({ cv }: { cv: CVWithMeta }) {
               <Text style={s.name}>{d.name}</Text>
               <Text style={s.headline}>{d.headline}</Text>
               {d.subHeadline ? <Text style={s.subheadline}>{d.subHeadline}</Text> : null}
+              {d.location ? <Text style={s.contact}>{d.location}</Text> : null}
               {contactItems.length > 0 ? <Text style={s.contact}>{contactItems.join(' · ')}</Text> : null}
             </View>
           )
