@@ -68,6 +68,7 @@ export function SearchContextForm({ initialProfile, initialSuggestions }: Props)
     <div className="space-y-4">
       <SuggestionsPanel
         suggestions={suggestions}
+        currentProfile={profile}
         onAccepted={onSuggestionAccepted}
         onDismissed={onSuggestionDismissed}
       />
