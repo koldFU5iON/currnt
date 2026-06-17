@@ -42,20 +42,25 @@ type Props = {
   atsRunning: boolean
   onRunATS: () => void
   onOpenATS: () => void
-  onAddCustomSection: (heading: string, subtype: 'text' | 'list') => void
+  onAddCustomSection: (heading: string, subtype: 'text' | 'list') => Promise<void>
+  hasJobDescription: boolean
 }
 
-export function SectionRail({ sections, onToggleVisibility, atsResult, atsRunning, onRunATS, onOpenATS, onAddCustomSection }: Props) {
+export function SectionRail({ sections, onToggleVisibility, atsResult, atsRunning, onRunATS, onOpenATS, onAddCustomSection, hasJobDescription }: Props) {
   const [addingSection, setAddingSection] = useState(false)
   const [newHeading, setNewHeading] = useState('')
   const [newSubtype, setNewSubtype] = useState<'text' | 'list'>('text')
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!newHeading.trim()) return
-    onAddCustomSection(newHeading.trim(), newSubtype)
-    setNewHeading('')
-    setNewSubtype('text')
-    setAddingSection(false)
+    try {
+      await onAddCustomSection(newHeading.trim(), newSubtype)
+      setNewHeading('')
+      setNewSubtype('text')
+      setAddingSection(false)
+    } catch {
+      // error already toasted by the caller (CvEditor.handleAddCustomSection)
+    }
   }
 
   return (
@@ -151,9 +156,11 @@ export function SectionRail({ sections, onToggleVisibility, atsResult, atsRunnin
           </button>
         ) : (
           <button
+            type="button"
             onClick={onRunATS}
-            disabled={atsRunning}
-            className="flex w-full items-center justify-center gap-1.5 rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted disabled:opacity-50"
+            disabled={atsRunning || !hasJobDescription}
+            title={!hasJobDescription ? 'Attach a job description to enable ATS scoring' : undefined}
+            className="flex w-full items-center justify-center gap-1.5 rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {atsRunning
               ? <><Loader2 className="size-3 animate-spin" />Checking…</>

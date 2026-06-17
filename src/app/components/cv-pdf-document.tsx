@@ -224,7 +224,7 @@ export function CVPDFDocument({ cv }: { cv: CVWithMeta }) {
 
         {body.map((section, i) => {
           const label = getSectionLabel(section)
-          const isFirst = !seenTypes.has(section.type)
+          const isFirst = section.type === 'custom' ? true : !seenTypes.has(section.type)
           seenTypes.add(section.type)
           // Compact sections (certs, skills rows, languages) that stack without a
           // sub-heading get much tighter spacing than full sections like experience.
