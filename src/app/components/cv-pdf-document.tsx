@@ -1,6 +1,6 @@
 import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer'
 import type { CVWithMeta } from '../dashboard/cv-builder/[id]/_components/cv-editor'
-import type { CVSection, HeaderData, ExperienceData, EducationData, CertificationData, LanguagesData } from '@/modules/cv/schema'
+import type { CVSection, HeaderData, ExperienceData, EducationData, CertificationData, LanguagesData, CustomData } from '@/modules/cv/schema'
 
 const SECTION_LABELS: Record<string, string> = {
   profile: 'Profile',
@@ -111,6 +111,11 @@ function TwoColList({ items }: { items: string[] }) {
   )
 }
 
+function getSectionLabel(section: CVSection): string | undefined {
+  if (section.type === 'custom') return (section.data as CustomData).heading
+  return SECTION_LABELS[section.type]
+}
+
 function SectionBody({ section }: { section: CVSection }) {
   switch (section.type) {
     case 'profile':
@@ -172,6 +177,22 @@ function SectionBody({ section }: { section: CVSection }) {
       return <Text>{d.items.map(l => `${l.name} (${l.proficiency})`).join(' / ')}</Text>
     }
 
+    case 'custom': {
+      const d = section.data as CustomData
+      return d.subtype === 'text'
+        ? <Text>{d.content ?? ''}</Text>
+        : (
+          <View>
+            {(d.items ?? []).map((item, i) => (
+              <View key={i} style={s.bullet}>
+                <Text style={s.bulletDash}>-</Text>
+                <Text style={s.bulletText}>{item}</Text>
+              </View>
+            ))}
+          </View>
+        )
+    }
+
     default:
       return null
   }
@@ -202,7 +223,7 @@ export function CVPDFDocument({ cv }: { cv: CVWithMeta }) {
         })()}
 
         {body.map((section, i) => {
-          const label = SECTION_LABELS[section.type]
+          const label = getSectionLabel(section)
           const isFirst = !seenTypes.has(section.type)
           seenTypes.add(section.type)
           // Compact sections (certs, skills rows, languages) that stack without a

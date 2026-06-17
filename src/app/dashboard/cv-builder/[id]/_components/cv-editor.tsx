@@ -15,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { updateSection, toggleVisibility, regenerateCVContent } from '@/modules/cv/actions'
+import { updateSection, toggleVisibility, regenerateCVContent, addCustomSection } from '@/modules/cv/actions'
 import { runATSScore } from '@/modules/cv/ats-score-action'
 import type { ATSScoreResult } from '@/modules/cv/ats-score-schema'
 import { toMarkdown, toText, sectionToPlainText } from '@/modules/cv/export'
@@ -31,6 +31,7 @@ import { CertificationBlock } from './blocks/certification-block'
 import { SkillsBlock } from './blocks/skills-block'
 import { ToolsBlock } from './blocks/tools-block'
 import { LanguagesBlock } from './blocks/languages-block'
+import { CustomBlock } from './blocks/custom-block'
 import { MarkdownProse } from '@/components/ui/markdown-prose'
 import { ATSScorePanel } from './ats-score-panel'
 import type { CVDocumentContent, CVSection } from '@/modules/cv/schema'
@@ -131,6 +132,15 @@ export function CvEditor({ cv }: Props) {
         toast.error('Failed to save changes. Please try again.')
       }
     })
+  }
+
+  async function handleAddCustomSection(heading: string, subtype: 'text' | 'list') {
+    try {
+      const newSection = await addCustomSection(cv.id, heading, subtype)
+      setContent(c => ({ ...c, sections: [...c.sections, newSection] }))
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to add section')
+    }
   }
 
   async function handleRunATS() {
@@ -414,6 +424,7 @@ export function CvEditor({ cv }: Props) {
             atsRunning={atsRunning}
             onRunATS={handleRunATS}
             onOpenATS={() => setAtsPanelOpen(true)}
+            onAddCustomSection={handleAddCustomSection}
           />
         </div>
       </div>
@@ -433,5 +444,6 @@ function renderBlock(section: CVSection, onUpdate: (s: CVSection) => void, showH
     case 'skills': return <SkillsBlock section={section} onUpdate={onUpdate} showHeading={showHeading} />
     case 'tools': return <ToolsBlock section={section} onUpdate={onUpdate} showHeading={showHeading} />
     case 'languages': return <LanguagesBlock section={section} onUpdate={onUpdate} showHeading={showHeading} />
+    case 'custom': return <CustomBlock section={section} onUpdate={onUpdate} showHeading={showHeading} />
   }
 }
