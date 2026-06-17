@@ -6,6 +6,42 @@ import { Bot, Check, Copy, User, Loader2, ChevronRight } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { cn } from '@/lib/utils'
+import type React from 'react'
+
+function extractText(node: React.ReactNode): string {
+  if (typeof node === 'string') return node
+  if (Array.isArray(node)) return node.map(extractText).join('')
+  if (node && typeof node === 'object' && 'props' in node) {
+    return extractText((node as React.ReactElement<{ children?: React.ReactNode }>).props.children)
+  }
+  return ''
+}
+
+function CodeBlock({ children }: { children: React.ReactNode }) {
+  const [copied, setCopied] = useState(false)
+
+  function handleCopy() {
+    navigator.clipboard.writeText(extractText(children)).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }).catch(() => {})
+  }
+
+  return (
+    <div className="group/code relative my-2">
+      <pre className="overflow-x-auto rounded-md bg-black/10 p-2 pr-8 text-xs dark:bg-white/10">
+        {children}
+      </pre>
+      <button
+        onClick={handleCopy}
+        className="absolute right-1.5 top-1.5 rounded p-1 text-muted-foreground/60 opacity-0 transition-opacity group-hover/code:opacity-100 hover:bg-black/10 hover:text-muted-foreground"
+        aria-label="Copy code"
+      >
+        {copied ? <Check className="size-3 text-green-500" /> : <Copy className="size-3" />}
+      </button>
+    </div>
+  )
+}
 import { patchCVSectionData } from '@/modules/cv/actions'
 import { patchProfileField, createTool } from '@/modules/profile/actions'
 import { updateBlock } from '@/modules/interview-prep/actions'
@@ -96,48 +132,47 @@ export function ChatMessage({ message, onToolOutput }: ChatMessageProps) {
         {message.parts?.map((part, i) => {
           if (isTextUIPart(part)) {
             return (
-              <div
-                key={`text-${i}`}
-                className={cn(
-                  'group/msg relative rounded-2xl px-3.5 py-2 text-sm leading-relaxed',
-                  isUser
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-foreground',
-                )}
-              >
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    p: ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
-                    ul: ({ children }) => <ul className="mb-1 ml-4 list-disc last:mb-0">{children}</ul>,
-                    ol: ({ children }) => <ol className="mb-1 ml-4 list-decimal last:mb-0">{children}</ol>,
-                    li: ({ children }) => <li className="mb-0.5">{children}</li>,
-                    strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
-                    code: ({ children }) => (
-                      <code className="rounded bg-black/10 px-1 py-0.5 text-xs font-mono dark:bg-white/10">
-                        {children}
-                      </code>
-                    ),
-                    pre: ({ children }) => (
-                      <pre className="my-2 overflow-x-auto rounded-md bg-black/10 p-2 text-xs dark:bg-white/10">
-                        {children}
-                      </pre>
-                    ),
-                  }}
+              <div key={`text-${i}`} className="group/msg">
+                <div
+                  className={cn(
+                    'rounded-2xl px-3.5 py-2 text-sm leading-relaxed',
+                    isUser
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-foreground',
+                  )}
                 >
-                  {part.text}
-                </ReactMarkdown>
-                {!isUser && (
-                  <button
-                    onClick={() => handleCopy(part.text, i)}
-                    className="absolute bottom-1 right-1.5 rounded p-0.5 text-muted-foreground/50 opacity-100 transition-opacity hover:bg-black/5 hover:text-muted-foreground sm:opacity-0 sm:group-hover/msg:opacity-100"
-                    aria-label="Copy message"
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      p: ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
+                      ul: ({ children }) => <ul className="mb-1 ml-4 list-disc last:mb-0">{children}</ul>,
+                      ol: ({ children }) => <ol className="mb-1 ml-4 list-decimal last:mb-0">{children}</ol>,
+                      li: ({ children }) => <li className="mb-0.5">{children}</li>,
+                      strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                      code: ({ children }) => (
+                        <code className="rounded bg-black/10 px-1 py-0.5 text-xs font-mono dark:bg-white/10">
+                          {children}
+                        </code>
+                      ),
+                      pre: ({ children }) => <CodeBlock>{children}</CodeBlock>,
+                    }}
                   >
-                    {copiedIdx === i
-                      ? <Check className="size-3 text-green-500" />
-                      : <Copy className="size-3" />
-                    }
-                  </button>
+                    {part.text}
+                  </ReactMarkdown>
+                </div>
+                {!isUser && (
+                  <div className="mt-1 flex gap-1 opacity-0 transition-opacity group-hover/msg:opacity-100">
+                    <button
+                      onClick={() => handleCopy(part.text, i)}
+                      className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+                      aria-label="Copy message"
+                    >
+                      {copiedIdx === i
+                        ? <><Check className="size-3 text-green-500" /><span>Copied</span></>
+                        : <><Copy className="size-3" /><span>Copy</span></>
+                      }
+                    </button>
+                  </div>
                 )}
               </div>
             )

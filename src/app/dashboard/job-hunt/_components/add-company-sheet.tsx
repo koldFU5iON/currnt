@@ -17,14 +17,20 @@ import { LocationTagsInput } from './location-tags-input'
 import { addCompany } from '@/modules/job-hunt/actions'
 import { AddCompanyInputSchema, type AddCompanyInput } from '@/modules/job-hunt/schema'
 
-export function AddCompanySheet() {
+export function AddCompanySheet({
+  defaultLocations = [],
+  defaultRemote = true,
+}: {
+  defaultLocations?: string[]
+  defaultRemote?: boolean
+}) {
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
 
   const form = useForm<AddCompanyInput>({
     resolver: zodResolver(AddCompanyInputSchema) as never,
-    defaultValues: { name: '', website: '', searchLocations: [], includeRemote: true },
+    defaultValues: { name: '', website: '', searchLocations: defaultLocations, includeRemote: defaultRemote },
   })
 
   function onSubmit(data: AddCompanyInput) {
