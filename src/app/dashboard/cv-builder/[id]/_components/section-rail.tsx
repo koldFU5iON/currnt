@@ -1,7 +1,8 @@
 'use client'
 
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import type { CVSection } from '@/modules/cv/schema'
+import type { ATSScoreResult } from '@/modules/cv/ats-score-schema'
 
 const SECTION_LABELS: Record<CVSection['type'], string> = {
   header: 'Header',
@@ -16,6 +17,14 @@ const SECTION_LABELS: Record<CVSection['type'], string> = {
   languages: 'Languages',
 }
 
+const LABEL_COLORS: Record<string, string> = {
+  excellent: 'text-emerald-600',
+  strong:    'text-green-600',
+  good:      'text-amber-600',
+  fair:      'text-orange-500',
+  poor:      'text-red-500',
+}
+
 function getSectionLabel(section: CVSection): string {
   if (section.type === 'experience') return section.data.company || 'Experience'
   if (section.type === 'education') return section.data.institution || 'Education'
@@ -26,9 +35,13 @@ function getSectionLabel(section: CVSection): string {
 type Props = {
   sections: CVSection[]
   onToggleVisibility: (id: string) => void
+  atsResult: ATSScoreResult | null
+  atsRunning: boolean
+  onRunATS: () => void
+  onOpenATS: () => void
 }
 
-export function SectionRail({ sections, onToggleVisibility }: Props) {
+export function SectionRail({ sections, onToggleVisibility, atsResult, atsRunning, onRunATS, onOpenATS }: Props) {
   return (
     <div className="hidden md:block w-48 shrink-0 overflow-y-auto border-l border-border bg-muted/20 p-4 print:hidden">
       <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -57,17 +70,36 @@ export function SectionRail({ sections, onToggleVisibility }: Props) {
         ))}
       </div>
 
-      {/* ATS stub — Phase 2 */}
-      <div className="mt-6 rounded-md border border-dashed border-border p-3">
+      {/* ATS compact widget */}
+      <div className="mt-6 rounded-md border border-border p-3">
         <p className="mb-2 text-xs font-medium text-muted-foreground">ATS Score</p>
-        <div className="mb-2 h-1.5 w-full rounded-full bg-muted" />
-        <button
-          disabled
-          className="w-full rounded px-2 py-1 text-xs text-muted-foreground opacity-50"
-          title="Coming soon"
-        >
-          Run analysis →
-        </button>
+        {atsResult ? (
+          <button onClick={onOpenATS} className="w-full text-left">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm font-bold tabular-nums">{atsResult.breakdown.finalScore}</span>
+              <span className={`text-xs font-medium capitalize ${LABEL_COLORS[atsResult.breakdown.label] ?? ''}`}>
+                {atsResult.breakdown.label}
+              </span>
+            </div>
+            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full rounded-full bg-foreground/70 transition-all"
+                style={{ width: `${atsResult.breakdown.finalScore}%` }}
+              />
+            </div>
+            <p className="mt-1.5 text-xs text-muted-foreground">View full report →</p>
+          </button>
+        ) : (
+          <button
+            onClick={onRunATS}
+            disabled={atsRunning}
+            className="flex w-full items-center justify-center gap-1.5 rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted disabled:opacity-50"
+          >
+            {atsRunning
+              ? <><Loader2 className="size-3 animate-spin" />Checking…</>
+              : 'Run analysis →'}
+          </button>
+        )}
       </div>
     </div>
   )

@@ -16,6 +16,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { updateSection, toggleVisibility, regenerateCVContent } from '@/modules/cv/actions'
+import { runATSScore } from '@/modules/cv/ats-score-action'
+import type { ATSScoreResult } from '@/modules/cv/ats-score-schema'
 import { toMarkdown, toText, sectionToPlainText } from '@/modules/cv/export'
 import { SectionRail } from './section-rail'
 import { CvBlock } from './cv-block'
@@ -60,6 +62,8 @@ export function CvEditor({ cv }: Props) {
   const [showExport, setShowExport] = useState(false)
   const [jobPanelOpen, setJobPanelOpen] = useState(false)
   const [atsPanelOpen, setAtsPanelOpen] = useState(false)
+  const [atsResult, setAtsResult] = useState<ATSScoreResult | null>(null)
+  const [atsRunning, setAtsRunning] = useState(false)
 
   const { openPanel } = usePageContext()
   const router = useRouter()
@@ -127,6 +131,17 @@ export function CvEditor({ cv }: Props) {
         toast.error('Failed to save changes. Please try again.')
       }
     })
+  }
+
+  async function handleRunATS() {
+    setAtsRunning(true)
+    const res = await runATSScore(cv.id)
+    if (res.ok) {
+      setAtsResult(res.result)
+    } else {
+      toast.error(res.message)
+    }
+    setAtsRunning(false)
   }
 
   function handleCopySection(section: CVSection) {
@@ -381,10 +396,20 @@ export function CvEditor({ cv }: Props) {
                 cvTitle={cv.jobTitle ?? 'CV'}
                 cvCompany={cv.company}
                 hasJobDescription={!!(cv.jobApplication?.jobDescription)}
+                result={atsResult}
+                isPending={atsRunning}
+                onRun={handleRunATS}
               />
             </div>
           )}
-          <SectionRail sections={content.sections} onToggleVisibility={handleToggleVisibility} />
+          <SectionRail
+            sections={content.sections}
+            onToggleVisibility={handleToggleVisibility}
+            atsResult={atsResult}
+            atsRunning={atsRunning}
+            onRunATS={handleRunATS}
+            onOpenATS={() => setAtsPanelOpen(true)}
+          />
         </div>
       </div>
     </>

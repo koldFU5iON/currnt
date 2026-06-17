@@ -1,9 +1,7 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { ShieldCheck, Loader2, MessageSquare, ChevronDown, ChevronUp } from 'lucide-react'
-import { toast } from 'sonner'
-import { runATSScore } from '@/modules/cv/ats-score-action'
 import { serializeATSScoreForContext } from '@/modules/cv/ats-score-schema'
 import { usePageContext } from '@/lib/context/page-context'
 import type { ATSScoreResult } from '@/modules/cv/ats-score-schema'
@@ -13,6 +11,9 @@ type Props = {
   cvTitle: string
   cvCompany?: string | null
   hasJobDescription: boolean
+  result: ATSScoreResult | null
+  isPending: boolean
+  onRun: () => void
 }
 
 const LABEL_COLORS: Record<string, string> = {
@@ -30,23 +31,9 @@ const DIMENSION_LABELS: Record<string, string> = {
   senioritySignal:     'Seniority Signal',
 }
 
-export function ATSScorePanel({ cvId, cvTitle, cvCompany, hasJobDescription }: Props) {
-  const [result, setResult] = useState<ATSScoreResult | null>(null)
+export function ATSScorePanel({ cvId, cvTitle, cvCompany, hasJobDescription, result, isPending, onRun }: Props) {
   const [showDetail, setShowDetail] = useState(false)
-  const [isPending, startTransition] = useTransition()
   const { setContext, openPanel } = usePageContext()
-
-  function handleRun() {
-    startTransition(async () => {
-      const res = await runATSScore(cvId)
-      if (!res.ok) {
-        toast.error(res.message)
-        return
-      }
-      setResult(res.result)
-      setShowDetail(true)
-    })
-  }
 
   function handleDiscussWithCoach() {
     if (!result) return
@@ -67,7 +54,7 @@ export function ATSScorePanel({ cvId, cvTitle, cvCompany, hasJobDescription }: P
       {/* Trigger */}
       <div className="flex items-center gap-2">
         <button
-          onClick={handleRun}
+          onClick={onRun}
           disabled={isPending || !hasJobDescription}
           title={!hasJobDescription ? 'Attach a job description to enable ATS scoring' : undefined}
           className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
@@ -136,7 +123,6 @@ export function ATSScorePanel({ cvId, cvTitle, cvCompany, hasJobDescription }: P
                 </div>
               ))}
 
-              {/* Missing required keywords */}
               {breakdown.dimensions.keywordCoverage.missingRequired.length > 0 && (
                 <div className="mt-1">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
@@ -155,7 +141,6 @@ export function ATSScorePanel({ cvId, cvTitle, cvCompany, hasJobDescription }: P
                 </div>
               )}
 
-              {/* AI interpretation */}
               {result?.interpretation && (
                 <div className="mt-1 border-t border-border pt-2">
                   <p className="text-xs text-muted-foreground leading-relaxed">
