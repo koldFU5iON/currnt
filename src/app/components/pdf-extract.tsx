@@ -32,6 +32,7 @@ export function PDFDocument({ cv }: Props) {
             <h1 className="text-[22pt] font-bold leading-none">{d.name}</h1>
             <p className="mt-0.5 text-[11pt]">{d.headline}</p>
             {d.subHeadline && <p className="text-[10pt] font-medium">{d.subHeadline}</p>}
+            {d.location && <p className="text-[10pt]">{d.location}</p>}
             {contactItems.length > 0 && (
               <p className="mt-1 text-[9pt] text-gray-600">{contactItems.join(' · ')}</p>
             )}

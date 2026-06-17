@@ -10,7 +10,7 @@ import { JobAnalysisSchema, type JobAnalysis } from '@/modules/jobs/schema'
 
 const SCHEMA_HINT = `
 Section types and their data shapes:
-- header:        { name, headline, subHeadline?, contact: { email?, phone?, linkedin?, website? } }
+- header:        { name, headline, subHeadline?, location?, contact: { email?, phone?, linkedin?, website? } }
 - profile:       { content }  -- prose, Markdown allowed
 - competencies:  { items: string[] }
 - capabilities:  { items: string[] }
