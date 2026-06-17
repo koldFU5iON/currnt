@@ -135,13 +135,18 @@ export function CvEditor({ cv }: Props) {
 
   async function handleRunATS() {
     setAtsRunning(true)
-    const res = await runATSScore(cv.id)
-    if (res.ok) {
-      setAtsResult(res.result)
-    } else {
-      toast.error(res.message)
+    try {
+      const res = await runATSScore(cv.id)
+      if (res.ok) {
+        setAtsResult(res.result)
+      } else {
+        toast.error(res.message)
+      }
+    } catch {
+      toast.error('ATS check failed. Please try again.')
+    } finally {
+      setAtsRunning(false)
     }
-    setAtsRunning(false)
   }
 
   function handleCopySection(section: CVSection) {
