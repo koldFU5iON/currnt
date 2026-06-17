@@ -154,6 +154,40 @@ export async function deleteCV(cvId: string): Promise<void> {
   revalidatePath('/dashboard/cv-builder')
 }
 
+export async function addCustomSection(
+  cvId: string,
+  heading: string,
+  subtype: 'text' | 'list',
+): Promise<CVSection> {
+  const { profile } = await requireProfile()
+  const doc = await prisma.cVDocument.findFirst({
+    where: { id: cvId, profileId: profile.id },
+    select: { id: true, generatedContent: true },
+  })
+  if (!doc) throw new Error('CV not found')
+
+  const content = parseCVContent(doc.generatedContent)
+  const newSection: CVSection = {
+    id: crypto.randomUUID(),
+    type: 'custom',
+    visible: true,
+    data: {
+      heading,
+      subtype,
+      content: subtype === 'text' ? '' : null,
+      items: subtype === 'list' ? [] : null,
+    },
+  }
+  content.sections.push(newSection)
+
+  await prisma.cVDocument.update({
+    where: { id: cvId },
+    data: { generatedContent: JSON.stringify(content) },
+  })
+  revalidatePath(`/dashboard/cv-builder/${cvId}`)
+  return newSection
+}
+
 export async function regenerateCVContent(cvId: string): Promise<CVDocumentContent> {
   const { profile } = await requireProfile()
   const doc = await prisma.cVDocument.findFirst({

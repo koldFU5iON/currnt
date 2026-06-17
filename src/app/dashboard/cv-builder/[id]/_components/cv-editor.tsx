@@ -15,7 +15,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { updateSection, toggleVisibility, regenerateCVContent } from '@/modules/cv/actions'
+import { updateSection, toggleVisibility, regenerateCVContent, addCustomSection } from '@/modules/cv/actions'
+import { runATSScore } from '@/modules/cv/ats-score-action'
+import type { ATSScoreResult } from '@/modules/cv/ats-score-schema'
 import { toMarkdown, toText, sectionToPlainText } from '@/modules/cv/export'
 import { SectionRail } from './section-rail'
 import { CvBlock } from './cv-block'
@@ -29,6 +31,7 @@ import { CertificationBlock } from './blocks/certification-block'
 import { SkillsBlock } from './blocks/skills-block'
 import { ToolsBlock } from './blocks/tools-block'
 import { LanguagesBlock } from './blocks/languages-block'
+import { CustomBlock } from './blocks/custom-block'
 import { MarkdownProse } from '@/components/ui/markdown-prose'
 import { ATSScorePanel } from './ats-score-panel'
 import type { CVDocumentContent, CVSection } from '@/modules/cv/schema'
@@ -60,6 +63,8 @@ export function CvEditor({ cv }: Props) {
   const [showExport, setShowExport] = useState(false)
   const [jobPanelOpen, setJobPanelOpen] = useState(false)
   const [atsPanelOpen, setAtsPanelOpen] = useState(false)
+  const [atsResult, setAtsResult] = useState<ATSScoreResult | null>(null)
+  const [atsRunning, setAtsRunning] = useState(false)
 
   const { openPanel } = usePageContext()
   const router = useRouter()
@@ -127,6 +132,31 @@ export function CvEditor({ cv }: Props) {
         toast.error('Failed to save changes. Please try again.')
       }
     })
+  }
+
+  async function handleAddCustomSection(heading: string, subtype: 'text' | 'list') {
+    try {
+      const newSection = await addCustomSection(cv.id, heading, subtype)
+      setContent(c => ({ ...c, sections: [...c.sections, newSection] }))
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to add section')
+    }
+  }
+
+  async function handleRunATS() {
+    setAtsRunning(true)
+    try {
+      const res = await runATSScore(cv.id)
+      if (res.ok) {
+        setAtsResult(res.result)
+      } else {
+        toast.error(res.message)
+      }
+    } catch {
+      toast.error('ATS check failed. Please try again.')
+    } finally {
+      setAtsRunning(false)
+    }
   }
 
   function handleCopySection(section: CVSection) {
@@ -381,10 +411,22 @@ export function CvEditor({ cv }: Props) {
                 cvTitle={cv.jobTitle ?? 'CV'}
                 cvCompany={cv.company}
                 hasJobDescription={!!(cv.jobApplication?.jobDescription)}
+                result={atsResult}
+                isPending={atsRunning}
+                onRun={handleRunATS}
               />
             </div>
           )}
-          <SectionRail sections={content.sections} onToggleVisibility={handleToggleVisibility} />
+          <SectionRail
+            sections={content.sections}
+            onToggleVisibility={handleToggleVisibility}
+            atsResult={atsResult}
+            atsRunning={atsRunning}
+            onRunATS={handleRunATS}
+            onOpenATS={() => setAtsPanelOpen(true)}
+            onAddCustomSection={handleAddCustomSection}
+            hasJobDescription={!!(cv.jobApplication?.jobDescription)}
+          />
         </div>
       </div>
     </>
@@ -403,5 +445,6 @@ function renderBlock(section: CVSection, onUpdate: (s: CVSection) => void, showH
     case 'skills': return <SkillsBlock section={section} onUpdate={onUpdate} showHeading={showHeading} />
     case 'tools': return <ToolsBlock section={section} onUpdate={onUpdate} showHeading={showHeading} />
     case 'languages': return <LanguagesBlock section={section} onUpdate={onUpdate} showHeading={showHeading} />
+    case 'custom': return <CustomBlock section={section} onUpdate={onUpdate} showHeading={showHeading} />
   }
 }

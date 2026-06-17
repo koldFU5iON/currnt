@@ -4,6 +4,7 @@ export const HeaderDataSchema = z.object({
   name: z.string(),
   headline: z.string(),
   subHeadline: z.string().nullish(),
+  location: z.string().nullish(),
   contact: z.object({
     email: z.string().nullish(),
     phone: z.string().nullish(),
@@ -46,6 +47,13 @@ export const LanguagesDataSchema = z.object({
   items: z.array(z.object({ name: z.string(), proficiency: z.string() })),
 })
 
+export const CustomDataSchema = z.object({
+  heading: z.string(),
+  subtype: z.enum(['text', 'list']),
+  content: z.string().nullish(),
+  items: z.array(z.string()).nullish(),
+})
+
 export const CVSectionSchema = z.discriminatedUnion("type", [
   z.object({ id: z.string(), type: z.literal("header"),        visible: z.boolean(), data: HeaderDataSchema }),
   z.object({ id: z.string(), type: z.literal("profile"),       visible: z.boolean(), data: ProfileDataSchema }),
@@ -57,6 +65,7 @@ export const CVSectionSchema = z.discriminatedUnion("type", [
   z.object({ id: z.string(), type: z.literal("skills"),        visible: z.boolean(), data: SkillsDataSchema }),
   z.object({ id: z.string(), type: z.literal("tools"),         visible: z.boolean(), data: ToolsDataSchema }),
   z.object({ id: z.string(), type: z.literal("languages"),     visible: z.boolean(), data: LanguagesDataSchema }),
+  z.object({ id: z.string(), type: z.literal("custom"),        visible: z.boolean(), data: CustomDataSchema }),
 ])
 
 export const CVDocumentContentSchema = z.object({
@@ -71,6 +80,7 @@ export type ExperienceData = z.infer<typeof ExperienceDataSchema>
 export type EducationData = z.infer<typeof EducationDataSchema>
 export type CertificationData = z.infer<typeof CertificationDataSchema>
 export type LanguagesData = z.infer<typeof LanguagesDataSchema>
+export type CustomData = z.infer<typeof CustomDataSchema>
 
 export function parseCVContent(raw: string): CVDocumentContent {
   try {

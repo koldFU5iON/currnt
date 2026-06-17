@@ -58,4 +58,36 @@ describe("parseCVContent", () => {
     const doc = { version: 1, sections: [headerSection] }
     expect(parseCVContent(JSON.stringify(doc)).sections).toHaveLength(1)
   })
+
+  it('parses a custom text section', () => {
+    const raw = JSON.stringify({
+      version: 1,
+      sections: [{
+        id: 'abc',
+        type: 'custom',
+        visible: true,
+        data: { heading: 'Publications', subtype: 'text', content: 'My paper.', items: null },
+      }],
+    })
+    const result = parseCVContent(raw)
+    expect(result.sections).toHaveLength(1)
+    expect(result.sections[0].type).toBe('custom')
+  })
+
+  it('parses a custom list section', () => {
+    const raw = JSON.stringify({
+      version: 1,
+      sections: [{
+        id: 'xyz',
+        type: 'custom',
+        visible: true,
+        data: { heading: 'Tools', subtype: 'list', content: null, items: ['Figma', 'Notion'] },
+      }],
+    })
+    const result = parseCVContent(raw)
+    expect(result.sections[0].type).toBe('custom')
+    if (result.sections[0].type === 'custom') {
+      expect(result.sections[0].data.items).toEqual(['Figma', 'Notion'])
+    }
+  })
 })

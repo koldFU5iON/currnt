@@ -19,13 +19,14 @@ export function sectionToPlainText(section: CVSection): string {
 function sectionToMarkdown(section: CVSection): string {
   switch (section.type) {
     case "header": {
-      const { name, headline, subHeadline, contact } = section.data
+      const { name, headline, subHeadline, location, contact } = section.data
       const contactLine = [contact.email, contact.phone, contact.linkedin, contact.website]
         .filter(Boolean).join(" · ")
       return [
         `# ${name}`,
         headline,
         subHeadline,
+        location,
         contactLine,
       ].filter(Boolean).join("\n")
     }
@@ -67,5 +68,12 @@ function sectionToMarkdown(section: CVSection): string {
       return `## Tools\n\n${section.data.items.join(", ")}`
     case "languages":
       return `## Languages\n\n${section.data.items.map(l => `${l.name} (${l.proficiency})`).join(", ")}`
+    case "custom": {
+      const { heading, subtype, content, items } = section.data
+      if (subtype === 'list' && items && items.length > 0) {
+        return `## ${heading}\n\n${items.map(i => `- ${i}`).join("\n")}`
+      }
+      return `## ${heading}\n\n${content ?? ''}`
+    }
   }
 }

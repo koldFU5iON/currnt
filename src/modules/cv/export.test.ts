@@ -66,6 +66,79 @@ describe("sectionToPlainText", () => {
   })
 })
 
+describe("toMarkdown — location line", () => {
+  it('includes location between sub-headline and contact', () => {
+    const doc: CVDocumentContent = {
+      version: 1,
+      sections: [{
+        id: '1',
+        type: 'header',
+        visible: true,
+        data: {
+          name: 'Ada Lovelace',
+          headline: 'Engineer',
+          subHeadline: 'PhD',
+          location: 'London · Willing to relocate',
+          contact: { email: 'ada@example.com', phone: null, linkedin: null, website: null },
+        },
+      }],
+    }
+    const md = toMarkdown(doc)
+    const lines = md.split('\n')
+    const locationIdx = lines.findIndex(l => l.includes('London'))
+    const contactIdx = lines.findIndex(l => l.includes('ada@example.com'))
+    expect(locationIdx).toBeGreaterThan(-1)
+    expect(locationIdx).toBeLessThan(contactIdx)
+  })
+})
+
+describe("toMarkdown — custom sections", () => {
+  it('serialises a custom text section to markdown', () => {
+    const doc: CVDocumentContent = {
+      version: 1,
+      sections: [{
+        id: '1',
+        type: 'custom',
+        visible: true,
+        data: { heading: 'Publications', subtype: 'text', content: 'My paper on ML.', items: null },
+      }],
+    }
+    const md = toMarkdown(doc)
+    expect(md).toContain('## Publications')
+    expect(md).toContain('My paper on ML.')
+  })
+
+  it('serialises a custom list section to markdown', () => {
+    const doc: CVDocumentContent = {
+      version: 1,
+      sections: [{
+        id: '2',
+        type: 'custom',
+        visible: true,
+        data: { heading: 'Tools', subtype: 'list', content: null, items: ['Figma', 'Notion'] },
+      }],
+    }
+    const md = toMarkdown(doc)
+    expect(md).toContain('## Tools')
+    expect(md).toContain('- Figma')
+    expect(md).toContain('- Notion')
+  })
+
+  it('serialises a custom list section with empty items to markdown', () => {
+    const doc: CVDocumentContent = {
+      version: 1,
+      sections: [{
+        id: '3',
+        type: 'custom',
+        visible: true,
+        data: { heading: 'Awards', subtype: 'list', content: null, items: [] },
+      }],
+    }
+    const md = toMarkdown(doc)
+    expect(md).toContain('## Awards')
+  })
+})
+
 describe("sectionToPlainText — additional sections", () => {
   it("renders education", () => {
     const section: CVSection = {
