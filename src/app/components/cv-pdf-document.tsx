@@ -112,7 +112,7 @@ function TwoColList({ items }: { items: string[] }) {
 }
 
 function getSectionLabel(section: CVSection): string | undefined {
-  if (section.type === 'custom') return (section.data as CustomData).heading
+  if (section.type === 'custom') return (section.data as CustomData).heading || 'Custom'
   return SECTION_LABELS[section.type]
 }
 
