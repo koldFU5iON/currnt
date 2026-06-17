@@ -166,7 +166,7 @@ export function BatchCaptureDialog({
             <p className="text-xs text-muted-foreground text-right">
               {processedCount} / {urls.length} processed
             </p>
-            <div className="max-h-72 overflow-y-auto space-y-1 pr-1">
+            <div className="max-h-72 overflow-y-auto overflow-x-hidden space-y-1 pr-1">
               {urls.map((url, i) => {
                 const s = statuses.get(i) ?? { status: 'pending' as const }
                 return (

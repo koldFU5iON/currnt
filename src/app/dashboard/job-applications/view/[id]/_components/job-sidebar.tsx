@@ -1,9 +1,9 @@
 import Link from "next/link"
-import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { buttonVariants } from "@/components/ui/button"
 import { type Job } from "@/app/types/job-application"
 import { JobFit } from "@/app/dashboard/job-applications/_components/job-fit"
+import { StatusDropdown } from "@/app/dashboard/job-applications/_components/status-dropdown"
 import { formatDate, cn } from "@/lib/utils"
 import { FileText, Mail, ClipboardList } from "lucide-react"
 
@@ -26,7 +26,7 @@ export function JobSidebar({ job, hasLLMKey }: Props) {
         <CardContent className="flex flex-col gap-3 pt-4">
           <div className="space-y-1">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Status</p>
-            <Badge variant="secondary" className="w-fit capitalize">{job.status}</Badge>
+            <StatusDropdown jobId={job.id} status={job.status} />
           </div>
           <div className="space-y-1">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Progress</p>

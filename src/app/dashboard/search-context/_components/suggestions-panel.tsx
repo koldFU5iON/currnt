@@ -10,6 +10,7 @@ import type { SearchSuggestion, SearchProfile, SalaryBand } from '@/modules/sear
 
 type Props = {
   suggestions: SearchSuggestion[]
+  currentProfile: SearchProfile
   onAccepted: (id: string, field: keyof SearchProfile, value: unknown) => void
   onDismissed: (id: string) => void
 }
@@ -21,16 +22,21 @@ const SOURCE_LABELS: Record<SearchSuggestion['source'], string> = {
   'interview-prep': 'interview prep',
 }
 
-function formatSuggestedValue(field: keyof SearchProfile, value: unknown): string {
+function formatSuggestedValue(field: keyof SearchProfile, value: unknown, currentProfile: SearchProfile): string {
   if (field === 'salaryBand' && value && typeof value === 'object') {
     return formatSalaryBand(value as SalaryBand)
   }
-  if (Array.isArray(value)) return value.join(', ')
+  if (Array.isArray(value)) {
+    const current = currentProfile[field]
+    const existing = new Set(Array.isArray(current) ? current : [])
+    const newItems = value.filter((item) => !existing.has(item))
+    return (newItems.length > 0 ? newItems : value).join(', ')
+  }
   if (typeof value === 'string') return value
   return String(value)
 }
 
-export function SuggestionsPanel({ suggestions, onAccepted, onDismissed }: Props) {
+export function SuggestionsPanel({ suggestions, currentProfile, onAccepted, onDismissed }: Props) {
   const [expanded, setExpanded] = useState(false)
   const [pending, startTransition] = useTransition()
 
@@ -86,7 +92,7 @@ export function SuggestionsPanel({ suggestions, onAccepted, onDismissed }: Props
                   </Badge>
                 </div>
                 <p className="text-sm font-medium">
-                  Add {formatSuggestedValue(suggestion.field, suggestion.suggestedValue)}
+                  Add {formatSuggestedValue(suggestion.field, suggestion.suggestedValue, currentProfile)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">{suggestion.reason}</p>
               </div>

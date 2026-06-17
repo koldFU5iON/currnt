@@ -126,14 +126,39 @@ export function ATSScorePanel({ cvId, cvTitle, cvCompany, hasJobDescription, res
               {breakdown.dimensions.keywordCoverage.missingRequired.length > 0 && (
                 <div className="mt-1">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
-                    Missing required keywords
+                    Missing required
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {breakdown.dimensions.keywordCoverage.missingRequired.map(kw => (
-                      <span
-                        key={kw}
-                        className="rounded-sm bg-destructive/10 px-1.5 py-0.5 text-[11px] text-destructive"
-                      >
+                      <span key={kw} className="rounded-sm bg-destructive/10 px-1.5 py-0.5 text-[11px] text-destructive">
+                        {kw}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {breakdown.dimensions.keywordCoverage.missingPreferred.length > 0 && (
+                <div className="mt-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+                    Missing preferred
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {breakdown.dimensions.keywordCoverage.missingPreferred.map(kw => (
+                      <span key={kw} className="rounded-sm bg-amber-500/10 px-1.5 py-0.5 text-[11px] text-amber-600 dark:text-amber-400">
+                        {kw}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {breakdown.dimensions.keywordCoverage.missingImplied.length > 0 && (
+                <div className="mt-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+                    Missing implied
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {breakdown.dimensions.keywordCoverage.missingImplied.map(kw => (
+                      <span key={kw} className="rounded-sm bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">
                         {kw}
                       </span>
                     ))}
