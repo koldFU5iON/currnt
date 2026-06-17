@@ -19,7 +19,15 @@ function isFailed(w: CompanyWatch) {
   return w.status !== 'active' || !!w.lastScanError
 }
 
-export function Watchlist({ watches }: { watches: CompanyWatch[] }) {
+export function Watchlist({
+  watches,
+  defaultLocations = [],
+  defaultRemote = true,
+}: {
+  watches: CompanyWatch[]
+  defaultLocations?: string[]
+  defaultRemote?: boolean
+}) {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
   const [page, setPage] = useState(1)
@@ -61,7 +69,7 @@ export function Watchlist({ watches }: { watches: CompanyWatch[] }) {
               : `${watches.length} compan${watches.length === 1 ? 'y' : 'ies'} monitored`}
           </p>
         </div>
-        <AddCompanySheet />
+        <AddCompanySheet defaultLocations={defaultLocations} defaultRemote={defaultRemote} />
       </div>
 
       {watches.length > 0 && (

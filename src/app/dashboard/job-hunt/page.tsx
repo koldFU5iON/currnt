@@ -69,7 +69,11 @@ export default async function JobHuntPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-[280px_280px_1fr] gap-6 items-start">
         <aside className="space-y-6 lg:sticky lg:top-6">
-          <Watchlist watches={watches} />
+          <Watchlist
+            watches={watches}
+            defaultLocations={criteria.countries}
+            defaultRemote={criteria.remotePreference !== 'onsite'}
+          />
         </aside>
 
         <aside className="lg:sticky lg:top-6">
