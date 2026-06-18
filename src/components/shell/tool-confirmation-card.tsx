@@ -111,7 +111,7 @@ export function ToolConfirmationCard({ toolName, args, onAccept, onReject, write
       {toolName === 'propose_cover_letter_section_update' && (
         <>
           <p className="mb-1 text-[10px] text-muted-foreground">
-            Paragraph {(args.sectionIndex as number) + 1}
+            Paragraph {args.sectionIndex != null ? (args.sectionIndex as number) + 1 : '?'}
           </p>
           <div className="mb-2 rounded-md bg-red-50 px-2.5 py-1.5 text-xs text-red-700 line-through dark:bg-red-950 dark:text-red-400">
             {String(args.currentContent)}
