@@ -10,13 +10,14 @@ import { getOnboardingStatus } from '@/modules/onboarding/queries'
 
 export default async function Layout({ children }: { children: React.ReactNode }) {
   const { profile } = await requireProfile()
-  const [activeJobs, suggestionCount, onboardingStatus] = await Promise.all([
+
+  const onboardingStatus = await getOnboardingStatus(profile.id)
+  if (!onboardingStatus.isComplete) redirect('/onboarding')
+
+  const [activeJobs, suggestionCount] = await Promise.all([
     getActiveJobsForNav(profile.id),
     getSuggestionCount(profile.id),
-    getOnboardingStatus(profile.id),
   ])
-
-  if (!onboardingStatus.isComplete) redirect('/onboarding')
 
   return (
     <SidebarProvider>
