@@ -1,7 +1,5 @@
 import Link from 'next/link'
-import { redirect } from "next/navigation"
 import { getSearchProfile } from "@/modules/search-profile/queries"
-import { searchProfileHasContent } from "@/modules/search-profile/schema"
 import { getDashboardStats } from "@/modules/jobs/queries"
 import { StatsRow } from "./_components/StatsRow"
 import { PipelineCard } from "./_components/PipelineCard"
@@ -10,9 +8,6 @@ import { RecentActivityCard } from "./_components/RecentActivityCard"
 
 export default async function Page() {
   const { profile, searchProfile } = await getSearchProfile()
-
-  if (!searchProfileHasContent(searchProfile)) redirect("/dashboard/search-context")
-
   const stats = await getDashboardStats()
 
   const displayName = searchProfile.preferredName || profile.name || "there"
