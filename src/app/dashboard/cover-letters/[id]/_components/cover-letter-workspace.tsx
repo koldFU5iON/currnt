@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -42,6 +43,7 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
     try { return !!localStorage.getItem(BRAINDUMP_KEY) } catch { return false }
   })
   const isMobile = useIsMobile()
+  const router = useRouter()
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const braindumpDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [debouncedBraindump, setDebouncedBraindump] = useState(braindump)
@@ -68,6 +70,18 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
     window.addEventListener('cover-letter-updated', handleCoverLetterUpdated)
     return () => window.removeEventListener('cover-letter-updated', handleCoverLetterUpdated)
   }, [letter.id])
+
+  useEffect(() => {
+    function handleSectionUpdated(e: Event) {
+      const detail = (e as CustomEvent<{ letterId: string; sectionId: string; proposedContent: string }>).detail
+      if (detail.letterId !== letter.id) return
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      router.refresh()
+      setSaveState('saved')
+    }
+    window.addEventListener('cover-letter-section-updated', handleSectionUpdated)
+    return () => window.removeEventListener('cover-letter-section-updated', handleSectionUpdated)
+  }, [letter.id, router])
 
   const save = useCallback(async (value: string) => {
     setSaveState('saving')
