@@ -103,7 +103,7 @@ export async function updateCoverLetterSection(
   letterId: string,
   sectionId: string,
   newContent: string,
-): Promise<void> {
+): Promise<string> {
   const { profile } = await requireProfile()
   const letter = await prisma.coverLetterDocument.findFirst({
     where: { id: letterId, profileId: profile.id },
@@ -120,6 +120,8 @@ export async function updateCoverLetterSection(
     data: { content, sections: JSON.stringify(sections) },
   })
   revalidatePath('/dashboard/cover-letters')
+  revalidatePath(`/dashboard/cover-letters/${letterId}`)
+  return content
 }
 
 export async function deleteCoverLetter(id: string): Promise<void> {

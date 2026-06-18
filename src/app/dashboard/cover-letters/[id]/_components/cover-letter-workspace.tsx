@@ -73,9 +73,10 @@ export function CoverLetterWorkspace({ letter }: { letter: CoverLetterWithJob })
 
   useEffect(() => {
     function handleSectionUpdated(e: Event) {
-      const detail = (e as CustomEvent<{ letterId: string; sectionId: string; proposedContent: string }>).detail
+      const detail = (e as CustomEvent<{ letterId: string; sectionId: string; proposedContent: string; newContent: string }>).detail
       if (detail.letterId !== letter.id) return
       if (debounceRef.current) clearTimeout(debounceRef.current)
+      setContent(detail.newContent)
       router.refresh()
       setSaveState('saved')
     }

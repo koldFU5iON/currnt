@@ -49,7 +49,7 @@ import { updateCoverLetterContent, updateCoverLetterSection } from '@/modules/co
 import { ToolConfirmationCard } from './tool-confirmation-card'
 import { FeedbackSubmissionCard } from './feedback-submission-card'
 
-function buildWriteAction(toolName: string, args: Record<string, unknown>): (() => Promise<void>) | undefined {
+function buildWriteAction(toolName: string, args: Record<string, unknown>): (() => Promise<string | void>) | undefined {
   if (toolName === 'propose_cv_update') {
     return () => patchCVSectionData(
       args.cvId as string,

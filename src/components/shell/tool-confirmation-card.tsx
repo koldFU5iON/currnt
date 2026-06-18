@@ -43,7 +43,7 @@ type Props = {
   args: Record<string, unknown>
   onAccept: () => void
   onReject: () => void
-  writeAction?: () => Promise<void>
+  writeAction?: () => Promise<string | void>
 }
 
 const TOOL_LABELS: Record<string, string> = {
@@ -64,7 +64,7 @@ export function ToolConfirmationCard({ toolName, args, onAccept, onReject, write
     if (!writeAction) { onAccept(); return }
     setPending(true)
     try {
-      await writeAction()
+      const result = await writeAction()
       if (toolName === 'propose_cv_update') {
         window.dispatchEvent(new CustomEvent('cv-section-updated', {
           detail: { sectionId: args.sectionId, proposedData: args.proposedData },
@@ -81,6 +81,7 @@ export function ToolConfirmationCard({ toolName, args, onAccept, onReject, write
             letterId: args.letterId,
             sectionId: args.sectionId,
             proposedContent: args.proposedContent,
+            newContent: result,
           },
         }))
       }
