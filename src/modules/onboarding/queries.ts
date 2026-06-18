@@ -31,3 +31,13 @@ export async function getOnboardingSettings() {
     hasSignal,
   }
 }
+
+export async function getOnboardingStatus(profileId: string): Promise<{ isComplete: boolean }> {
+  const settings = await prisma.userSettings.findUnique({
+    where: { profileId },
+    select: { onboardingCompletedAt: true, onboardingSkippedAt: true },
+  })
+  return {
+    isComplete: Boolean(settings?.onboardingCompletedAt || settings?.onboardingSkippedAt),
+  }
+}
