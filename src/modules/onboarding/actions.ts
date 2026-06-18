@@ -97,3 +97,21 @@ export async function clearOnboardingContext() {
   revalidatePath("/dashboard/onboarding")
   redirect("/dashboard/onboarding")
 }
+
+export async function completeOnboarding(destination: string) {
+  const { profile } = await requireProfile()
+
+  await prisma.userSettings.upsert({
+    where: { profileId: profile.id },
+    create: {
+      profileId: profile.id,
+      onboardingCompletedAt: new Date(),
+    },
+    update: {
+      onboardingCompletedAt: new Date(),
+    },
+  })
+
+  revalidatePath('/dashboard')
+  redirect(destination)
+}
