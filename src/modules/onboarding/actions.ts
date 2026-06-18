@@ -98,8 +98,18 @@ export async function clearOnboardingContext() {
   redirect("/dashboard/onboarding")
 }
 
+const ONBOARDING_DESTINATIONS = [
+  '/dashboard',
+  '/dashboard/job-applications',
+  '/dashboard/job-hunt',
+] as const
+
 export async function completeOnboarding(destination: string) {
   const { profile } = await requireProfile()
+
+  const safeDestination = (ONBOARDING_DESTINATIONS as readonly string[]).includes(destination)
+    ? destination
+    : '/dashboard'
 
   await prisma.userSettings.upsert({
     where: { profileId: profile.id },
@@ -113,5 +123,5 @@ export async function completeOnboarding(destination: string) {
   })
 
   revalidatePath('/dashboard')
-  redirect(destination)
+  redirect(safeDestination)
 }
