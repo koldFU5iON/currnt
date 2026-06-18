@@ -8,7 +8,7 @@ import { Button, buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { EditJobDialog } from "@/app/dashboard/job-applications/_components/edit-job-dialog"
 
-export function JobDetailHeader({ job }: { job: Job }) {
+export function JobDetailHeader({ job, hasLLMKey }: { job: Job; hasLLMKey: boolean }) {
   const [editOpen, setEditOpen] = useState(false)
 
   return (
@@ -47,7 +47,7 @@ export function JobDetailHeader({ job }: { job: Job }) {
         </div>
       </div>
 
-      <EditJobDialog job={job} open={editOpen} onOpenChange={setEditOpen} />
+      <EditJobDialog job={job} open={editOpen} onOpenChange={setEditOpen} hasLLMKey={hasLLMKey} />
     </>
   )
 }

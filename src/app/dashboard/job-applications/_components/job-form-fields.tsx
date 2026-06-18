@@ -3,18 +3,29 @@
 import { Controller, useFormContext, useWatch } from 'react-hook-form'
 import { Loader2, RefreshCw, Sparkles, SquareArrowOutUpRight } from 'lucide-react'
 import { Field, FieldLabel, FieldError } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
 import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from '@/components/ui/input-group'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { FormField } from '../create/_components/form-field'
+import { SalaryPopover } from './salary-popover'
 import { SOURCE_OPTIONS } from '@/modules/jobs/schema'
 import { cn } from '@/lib/utils'
+import type { SalaryEstimate } from '@/app/types/job-application'
+
+type SalaryPopoverProps = {
+  jobId: string
+  initialEstimate: SalaryEstimate | null
+  hasJD: boolean
+  hasLLMKey: boolean
+}
 
 type JobFormFieldsProps = {
   isExtracting: boolean
   onExtract: () => void
   showReExtractLabel?: boolean
   showOpenLink?: boolean
+  salaryPopoverProps?: SalaryPopoverProps
 }
 
 export function JobFormFields({
@@ -22,6 +33,7 @@ export function JobFormFields({
   onExtract,
   showReExtractLabel = false,
   showOpenLink = false,
+  salaryPopoverProps,
 }: JobFormFieldsProps) {
   const { control, watch } = useFormContext()
   const isRecruitmentAgency = useWatch({ control, name: 'isRecruitmentAgency' })
@@ -117,7 +129,20 @@ export function JobFormFields({
 
       <div className="grid grid-cols-2 gap-4">
         <FormField name="datePublished" label="Date Published" type="date" />
-        <FormField name="salaryBand" label="Salary Band" placeholder="e.g. $120k–$160k" />
+        <Controller
+          name="salaryBand"
+          control={control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <div className="flex items-center justify-between">
+                <FieldLabel>Salary Band</FieldLabel>
+                {salaryPopoverProps && <SalaryPopover {...salaryPopoverProps} />}
+              </div>
+              <Input {...field} placeholder="e.g. $120k–$160k" aria-invalid={fieldState.invalid} />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
+          )}
+        />
       </div>
 
       <FormField

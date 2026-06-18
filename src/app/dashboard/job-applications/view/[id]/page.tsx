@@ -30,7 +30,7 @@ export default async function ViewJobPage({
       <JobPageContext jobId={job.id} title={job.title} company={job.company} status={job.status} />
 
       {/* Full-width header */}
-      <JobDetailHeader job={job} />
+      <JobDetailHeader job={job} hasLLMKey={hasLLMKey} />
 
       {/* Three-column workspace */}
       <div className="grid flex-1 grid-cols-[200px_1fr_1fr] overflow-hidden">
