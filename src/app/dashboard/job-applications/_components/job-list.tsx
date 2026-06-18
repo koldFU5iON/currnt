@@ -387,6 +387,7 @@ export function JobList({ jobs, hasLLMKey, openCreate, initialCreateUrl }: {
           job={editing}
           open={!!editing}
           onOpenChange={(o) => { if (!o) setEditing(null) }}
+          hasLLMKey={hasLLMKey}
         />
       )}
 
