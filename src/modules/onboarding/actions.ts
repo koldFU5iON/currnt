@@ -98,8 +98,6 @@ export async function clearOnboardingContext() {
   redirect("/dashboard/onboarding")
 }
 
-// Saves onboarding context without redirecting — used by wizard steps
-// that call onNext() themselves after saving.
 export async function saveOnboardingContextData(data: Partial<OnboardingContext>) {
   const { profile } = await requireProfile()
 
