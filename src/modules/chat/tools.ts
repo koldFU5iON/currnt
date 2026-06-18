@@ -299,11 +299,14 @@ export function createChatTools(profileId: string) {
         await assertOwnership('coverLetterDocument', letterId, profileId)
         const letter = await prisma.coverLetterDocument.findUnique({ where: { id: letterId } })
         if (!letter) throw new Error('Cover letter not found')
+        let sections: Array<{ id: string; content: string }> = []
+        try { sections = JSON.parse(letter.sections) } catch { /* empty is fine */ }
         return {
           id: letter.id,
           company: letter.company,
           jobTitle: letter.jobTitle,
           content: letter.content,
+          sections,
         }
       },
     }),
@@ -359,6 +362,21 @@ export function createChatTools(profileId: string) {
           letterId: z.string().describe('The ID of the cover letter to update'),
           proposedContent: z.string().describe('The full proposed markdown content for the cover letter'),
           rationale: z.string().describe('Brief explanation of what changed and why'),
+        }),
+      ),
+    }),
+
+    propose_cover_letter_section_update: tool({
+      description:
+        "Propose a replacement for a single paragraph in a cover letter. Use this instead of propose_cover_letter_update when the user wants to change one paragraph — it is cheaper and non-destructive. Call get_cover_letter first to get section IDs. The user must confirm before the change is applied.",
+      inputSchema: zodSchema(
+        z.object({
+          letterId: z.string().describe('The ID of the cover letter'),
+          sectionId: z.string().describe('The id field of the section to replace'),
+          sectionIndex: z.number().int().describe('0-based index of the section, for display ("paragraph N of M")'),
+          currentContent: z.string().describe('The current text of the section'),
+          proposedContent: z.string().describe('The replacement paragraph text'),
+          rationale: z.string().describe('What changed and why'),
         }),
       ),
     }),
