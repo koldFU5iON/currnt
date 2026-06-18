@@ -146,7 +146,7 @@ export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArc
       </div>
 
       {/* Progress */}
-      <div className="px-3 py-2">
+      <div className="hidden lg:block px-3 py-2">
         <AppProgressBar progress={progress} jobId={id} />
       </div>
 
@@ -161,12 +161,12 @@ export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArc
       </div>
 
       {/* Applied date */}
-      <div className="px-3 py-2">
+      <div className="hidden lg:block px-3 py-2">
         <ApplicationDateBlock label="Applied" date={dateApplied} jobId={id} />
       </div>
 
       {/* Published date */}
-      <div className="px-3 py-2">
+      <div className="hidden xl:block px-3 py-2">
         <PostingAge
           datePublished={datePublished ?? null}
           dateApplied={dateApplied ?? null}
@@ -175,12 +175,12 @@ export function JobRow({ job, selected, busyLabel, onToggleSelect, onEdit, onArc
       </div>
 
       {/* Notes */}
-      <div className="flex items-center justify-center py-2">
+      <div className="hidden xl:flex items-center justify-center py-2">
         <JobNotes jobId={id} initialNotes={notes ?? null} initialIncludeInFit={notesIncludeInFit} />
       </div>
 
       {/* Last updated */}
-      <div className="px-3 py-2">
+      <div className="hidden xl:block px-3 py-2">
         <FreshnessChip lastUpdated={lastUpdated} status={status} />
       </div>
 

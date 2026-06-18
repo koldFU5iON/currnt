@@ -349,7 +349,7 @@ export function JobList({ jobs, hasLLMKey, openCreate, initialCreateUrl }: {
           </div>
 
           {/* Desktop grid — md and above */}
-          <div className="hidden md:grid grid-cols-[auto_1.5fr_auto_1fr_auto_auto_auto_auto_auto_auto_auto]">
+          <div className="hidden md:grid md:grid-cols-[auto_1.5fr_auto_auto_auto_auto] lg:grid-cols-[auto_1.5fr_auto_1fr_auto_auto_auto_auto] xl:grid-cols-[auto_1.5fr_auto_1fr_auto_auto_auto_auto_auto_auto_auto]">
             <ColHeaders
               isAllSelected={isAllSelected}
               isSomeSelected={isSomeSelected}
@@ -556,6 +556,18 @@ type ColHeadersProps = {
   onToggleAll: () => void
 }
 
+const COL_HEADERS = [
+  { label: "Role",      className: "" },
+  { label: "Status",    className: "" },
+  { label: "Progress",  className: "hidden lg:block" },
+  { label: "Salary",    className: "" },
+  { label: "Fit",       className: "" },
+  { label: "Applied",   className: "hidden lg:block" },
+  { label: "Published", className: "hidden xl:block" },
+  { label: "Notes",     className: "hidden xl:block" },
+  { label: "Updated",   className: "hidden xl:block" },
+] as const
+
 function ColHeaders({ isAllSelected, isSomeSelected, onToggleAll }: ColHeadersProps) {
   return (
     <div className="col-span-full grid grid-cols-subgrid border-b border-border/50">
@@ -567,8 +579,8 @@ function ColHeaders({ isAllSelected, isSomeSelected, onToggleAll }: ColHeadersPr
           aria-label={isAllSelected ? 'Deselect all' : 'Select all'}
         />
       </div>
-      {(["Role", "Status", "Progress", "Salary", "Fit", "Applied", "Published", "Notes", "Updated"] as const).map(label => (
-        <div key={label} className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/50">
+      {COL_HEADERS.map(({ label, className }) => (
+        <div key={label} className={`px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/50 ${className}`}>
           {label}
         </div>
       ))}

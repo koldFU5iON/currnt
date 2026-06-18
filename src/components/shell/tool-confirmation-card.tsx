@@ -43,7 +43,7 @@ type Props = {
   args: Record<string, unknown>
   onAccept: () => void
   onReject: () => void
-  writeAction?: () => Promise<void>
+  writeAction?: () => Promise<string | void>
 }
 
 const TOOL_LABELS: Record<string, string> = {
@@ -52,6 +52,7 @@ const TOOL_LABELS: Record<string, string> = {
   propose_cv_update: 'Update CV section',
   propose_prep_note_update: 'Update prep note',
   propose_cover_letter_update: 'Update cover letter',
+  propose_cover_letter_section_update: 'Update cover letter paragraph',
   submit_feedback: 'Submit feedback',
 }
 
@@ -63,7 +64,7 @@ export function ToolConfirmationCard({ toolName, args, onAccept, onReject, write
     if (!writeAction) { onAccept(); return }
     setPending(true)
     try {
-      await writeAction()
+      const result = await writeAction()
       if (toolName === 'propose_cv_update') {
         window.dispatchEvent(new CustomEvent('cv-section-updated', {
           detail: { sectionId: args.sectionId, proposedData: args.proposedData },
@@ -72,6 +73,16 @@ export function ToolConfirmationCard({ toolName, args, onAccept, onReject, write
       if (toolName === 'propose_cover_letter_update') {
         window.dispatchEvent(new CustomEvent('cover-letter-updated', {
           detail: { letterId: args.letterId, proposedContent: args.proposedContent },
+        }))
+      }
+      if (toolName === 'propose_cover_letter_section_update') {
+        window.dispatchEvent(new CustomEvent('cover-letter-section-updated', {
+          detail: {
+            letterId: args.letterId,
+            sectionId: args.sectionId,
+            proposedContent: args.proposedContent,
+            newContent: result,
+          },
         }))
       }
       onAccept()
@@ -88,7 +99,7 @@ export function ToolConfirmationCard({ toolName, args, onAccept, onReject, write
       {args.rationale != null && (
         <p className="mb-3 text-xs text-muted-foreground">{String(args.rationale)}</p>
       )}
-      {(args.currentValue ?? args.currentContent) !== undefined && (
+      {toolName !== 'propose_cover_letter_section_update' && (args.currentValue ?? args.currentContent) !== undefined && (
         <div className="mb-2 rounded-md bg-red-50 px-2.5 py-1.5 text-xs text-red-700 line-through dark:bg-red-950 dark:text-red-400">
           {String(args.currentValue ?? args.currentContent)}
         </div>
@@ -98,8 +109,22 @@ export function ToolConfirmationCard({ toolName, args, onAccept, onReject, write
           <MarkdownPreview content={String(args.proposedContent)} />
         </div>
       )}
+      {toolName === 'propose_cover_letter_section_update' && (
+        <>
+          <p className="mb-1 text-[10px] text-muted-foreground">
+            Paragraph {args.sectionIndex != null ? (args.sectionIndex as number) + 1 : '?'}
+          </p>
+          <div className="mb-2 rounded-md bg-red-50 px-2.5 py-1.5 text-xs text-red-700 line-through dark:bg-red-950 dark:text-red-400">
+            {String(args.currentContent)}
+          </div>
+          <div className="mb-3 rounded-md bg-green-50 px-2.5 py-1.5 text-xs text-green-700 dark:bg-green-950 dark:text-green-400">
+            {String(args.proposedContent)}
+          </div>
+        </>
+      )}
       {(() => {
         if (toolName === 'propose_cover_letter_update') return null
+        if (toolName === 'propose_cover_letter_section_update') return null
         const display = args.proposedValue ?? args.proposedContent ??
           (args.name != null ? `${args.name}${args.category ? ` · ${args.category}` : ''}` : undefined)
         return display !== undefined ? (

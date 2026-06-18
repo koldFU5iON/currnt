@@ -45,11 +45,11 @@ function CodeBlock({ children }: { children: React.ReactNode }) {
 import { patchCVSectionData } from '@/modules/cv/actions'
 import { patchProfileField, createTool } from '@/modules/profile/actions'
 import { updateBlock } from '@/modules/interview-prep/actions'
-import { updateCoverLetterContent } from '@/modules/cover-letters/actions'
+import { updateCoverLetterContent, updateCoverLetterSection } from '@/modules/cover-letters/actions'
 import { ToolConfirmationCard } from './tool-confirmation-card'
 import { FeedbackSubmissionCard } from './feedback-submission-card'
 
-function buildWriteAction(toolName: string, args: Record<string, unknown>): (() => Promise<void>) | undefined {
+function buildWriteAction(toolName: string, args: Record<string, unknown>): (() => Promise<string | void>) | undefined {
   if (toolName === 'propose_cv_update') {
     return () => patchCVSectionData(
       args.cvId as string,
@@ -73,6 +73,13 @@ function buildWriteAction(toolName: string, args: Record<string, unknown>): (() 
   if (toolName === 'propose_cover_letter_update') {
     return () => updateCoverLetterContent(
       args.letterId as string,
+      args.proposedContent as string,
+    )
+  }
+  if (toolName === 'propose_cover_letter_section_update') {
+    return () => updateCoverLetterSection(
+      args.letterId as string,
+      args.sectionId as string,
       args.proposedContent as string,
     )
   }
