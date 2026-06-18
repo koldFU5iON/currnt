@@ -65,35 +65,36 @@ export function Watchlist({
 
   return (
     <section>
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center gap-2 mb-3 group"
-        aria-expanded={open}
-      >
-        <h2 className="text-sm font-semibold">Watched Companies</h2>
-        <div className="flex items-center gap-1 ml-1">
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground">
-            {watches.length}
-          </span>
-          {working > 0 && (
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-green-500/10 text-green-600 dark:text-green-400">
-              ✓ {working}
+      <div className="w-full flex items-center gap-2 mb-3">
+        <button
+          onClick={() => setOpen(v => !v)}
+          className="flex items-center gap-2 flex-1 min-w-0 text-left"
+          aria-expanded={open}
+          aria-controls="watchlist-body"
+        >
+          <h2 className="text-sm font-semibold">Watched Companies</h2>
+          <div className="flex items-center gap-1 ml-1">
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground">
+              {watches.length}
             </span>
-          )}
-          {failed > 0 && (
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-destructive/10 text-destructive">
-              ✗ {failed}
-            </span>
-          )}
-        </div>
-        <div className="ml-auto flex items-center gap-2">
-          <AddCompanySheet defaultLocations={defaultLocations} defaultRemote={defaultRemote} />
-          <ChevronDown className={cn("size-3.5 text-muted-foreground/50 transition-transform duration-200 shrink-0", !open && "-rotate-90")} />
-        </div>
-      </button>
+            {working > 0 && (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-green-500/10 text-green-600 dark:text-green-400">
+                ✓ {working}
+              </span>
+            )}
+            {failed > 0 && (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-destructive/10 text-destructive">
+                ✗ {failed}
+              </span>
+            )}
+            <ChevronDown className={cn("size-3.5 text-muted-foreground/50 transition-transform duration-200 shrink-0 ml-1", !open && "rotate-90")} />
+          </div>
+        </button>
+        <AddCompanySheet defaultLocations={defaultLocations} defaultRemote={defaultRemote} />
+      </div>
 
       {open && (
-        <>
+        <div id="watchlist-body">
           {watches.length > 0 && (
             <div className="mb-3 space-y-2">
               <div className="relative">
@@ -174,7 +175,7 @@ export function Watchlist({
               </Button>
             </div>
           )}
-        </>
+        </div>
       )}
     </section>
   )
