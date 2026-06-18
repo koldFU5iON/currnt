@@ -26,6 +26,7 @@ type EditJobDialogProps = {
   job: Job
   open: boolean
   onOpenChange: (open: boolean) => void
+  hasLLMKey?: boolean
 }
 
 function valuesFromJob(job: Job): z.infer<typeof updateJobSchema> {
@@ -44,7 +45,7 @@ function valuesFromJob(job: Job): z.infer<typeof updateJobSchema> {
   }
 }
 
-export function EditJobDialog({ job, open, onOpenChange }: EditJobDialogProps) {
+export function EditJobDialog({ job, open, onOpenChange, hasLLMKey = false }: EditJobDialogProps) {
   const form = useForm<z.infer<typeof updateJobSchema>>({
     resolver: zodResolver(updateJobSchema),
     defaultValues: valuesFromJob(job),
@@ -105,6 +106,12 @@ export function EditJobDialog({ job, open, onOpenChange }: EditJobDialogProps) {
                 onExtract={handleExtract}
                 showReExtractLabel
                 showOpenLink
+                salaryPopoverProps={{
+                  jobId: job.id,
+                  initialEstimate: job.salaryEstimate ?? null,
+                  hasJD: !!job.jobDescription?.trim(),
+                  hasLLMKey,
+                }}
               />
             </div>
             <DialogFooter className="shrink-0 pt-4">

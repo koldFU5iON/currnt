@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { buttonVariants } from "@/components/ui/button"
 import { type Job } from "@/app/types/job-application"
 import { JobFit } from "@/app/dashboard/job-applications/_components/job-fit"
-import { SalaryEstimate } from "@/app/dashboard/job-applications/_components/salary-estimate"
+import { SalaryPopover } from "@/app/dashboard/job-applications/_components/salary-popover"
 import { StatusDropdown } from "@/app/dashboard/job-applications/_components/status-dropdown"
 import { formatDate, cn } from "@/lib/utils"
 import { FileText, Mail, ClipboardList } from "lucide-react"
@@ -41,6 +41,18 @@ export function JobSidebar({ job, hasLLMKey }: Props) {
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Last updated</p>
             <p className="text-sm font-medium">{formatDate(job.lastUpdated) ?? "—"}</p>
           </div>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Salary</p>
+              <SalaryPopover
+                jobId={job.id}
+                initialEstimate={job.salaryEstimate ?? null}
+                hasJD={!!job.jobDescription?.trim()}
+                hasLLMKey={hasLLMKey}
+              />
+            </div>
+            <p className="text-sm font-medium">{job.salaryBand ?? "—"}</p>
+          </div>
         </CardContent>
       </Card>
 
@@ -61,21 +73,6 @@ export function JobSidebar({ job, hasLLMKey }: Props) {
               {fitStrengthLabel(job.jobFit.rating)}
             </p>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Salary card */}
-      <Card>
-        <CardContent className="flex flex-col gap-2 pt-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {job.salaryEstimate?.source === 'extracted' ? 'Salary' : 'Salary estimate'}
-          </p>
-          <SalaryEstimate
-            jobId={job.id}
-            initialEstimate={job.salaryEstimate ?? null}
-            hasJD={!!job.jobDescription?.trim()}
-            hasLLMKey={hasLLMKey}
-          />
         </CardContent>
       </Card>
 
