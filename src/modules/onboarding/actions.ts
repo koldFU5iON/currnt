@@ -97,3 +97,59 @@ export async function clearOnboardingContext() {
   revalidatePath("/dashboard/onboarding")
   redirect("/dashboard/onboarding")
 }
+
+export async function saveOnboardingContextData(data: Partial<OnboardingContext>) {
+  const { profile } = await requireProfile()
+
+  const existing = await prisma.userSettings.findUnique({
+    where: { profileId: profile.id },
+    select: { onboardingContext: true },
+  })
+  const currentContext = normalizeOnboardingContext(existing?.onboardingContext)
+  const context = { ...currentContext, ...data }
+
+  await prisma.userSettings.upsert({
+    where: { profileId: profile.id },
+    create: {
+      profileId: profile.id,
+      onboardingContext: context,
+    },
+    update: {
+      onboardingContext: context,
+    },
+  })
+
+  revalidatePath("/dashboard")
+  revalidatePath("/dashboard/onboarding")
+}
+
+const ONBOARDING_DESTINATIONS = [
+  "/dashboard",
+  "/dashboard/job-applications",
+  "/dashboard/job-hunt",
+] as const
+
+export async function completeOnboarding(destination: string) {
+  const { profile } = await requireProfile()
+
+  const safeDestination = (ONBOARDING_DESTINATIONS as readonly string[]).includes(destination)
+    ? destination
+    : "/dashboard"
+
+  await prisma.userSettings.upsert({
+    where: { profileId: profile.id },
+    create: {
+      profileId: profile.id,
+      onboardingCompletedAt: new Date(),
+      onboardingSkippedAt: null,
+    },
+    update: {
+      onboardingCompletedAt: new Date(),
+      onboardingSkippedAt: null,
+    },
+  })
+
+  revalidatePath("/dashboard")
+  revalidatePath("/dashboard/onboarding")
+  redirect(safeDestination)
+}
