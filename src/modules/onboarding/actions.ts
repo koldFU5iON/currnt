@@ -98,6 +98,33 @@ export async function clearOnboardingContext() {
   redirect("/dashboard/onboarding")
 }
 
+// Saves onboarding context without redirecting — used by wizard steps
+// that call onNext() themselves after saving.
+export async function saveOnboardingContextData(data: Partial<OnboardingContext>) {
+  const { profile } = await requireProfile()
+
+  const existing = await prisma.userSettings.findUnique({
+    where: { profileId: profile.id },
+    select: { onboardingContext: true },
+  })
+  const currentContext = normalizeOnboardingContext(existing?.onboardingContext)
+  const context = { ...currentContext, ...data }
+
+  await prisma.userSettings.upsert({
+    where: { profileId: profile.id },
+    create: {
+      profileId: profile.id,
+      onboardingContext: context,
+    },
+    update: {
+      onboardingContext: context,
+    },
+  })
+
+  revalidatePath("/dashboard")
+  revalidatePath("/dashboard/onboarding")
+}
+
 const ONBOARDING_DESTINATIONS = [
   "/dashboard",
   "/dashboard/job-applications",
