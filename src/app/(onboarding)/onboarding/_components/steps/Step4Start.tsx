@@ -44,7 +44,7 @@ export function Step4Start() {
         <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-1">
           Get started
         </p>
-        <h2 className="text-xl font-bold tracking-tight">You're set — where do you want to start?</h2>
+        <h2 className="text-xl font-bold tracking-tight">You&apos;re set — where do you want to start?</h2>
         <p className="text-sm text-muted-foreground mt-1">
           Pick a starting point. You can always switch from the dashboard.
         </p>

@@ -244,7 +244,7 @@ export function Step1Ai({ initialStatus, onNext, onSkip }: Props) {
           onClick={onSkip}
           className="text-sm text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
         >
-          Skip — I'll set this up in Settings later
+          Skip — I&apos;ll set this up in Settings later
         </button>
         {keyConfigured && selectedModel && (
           <button
