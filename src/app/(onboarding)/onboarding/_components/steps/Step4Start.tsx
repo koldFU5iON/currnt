@@ -1,30 +1,30 @@
-'use client'
+"use client"
 
-import { useTransition } from 'react'
-import { Briefcase, Search, LayoutDashboard, Loader2 } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { completeOnboarding } from '@/modules/onboarding/actions'
+import { useTransition } from "react"
+import { Briefcase, Search, LayoutDashboard, Loader2 } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { completeOnboarding } from "@/modules/onboarding/actions"
 
 const OPTIONS = [
   {
-    destination: '/dashboard/job-applications',
+    destination: "/dashboard/job-applications",
     icon: Briefcase,
-    label: 'Track a job',
-    description: 'Add a role you\'re interested in and track your application progress.',
+    label: "Track a job",
+    description: "Add a role you're interested in and track your application progress.",
     primary: true,
   },
   {
-    destination: '/dashboard/job-hunt',
+    destination: "/dashboard/job-hunt",
     icon: Search,
-    label: 'Find roles',
-    description: 'Browse and score job listings against your profile.',
+    label: "Find roles",
+    description: "Browse and score job listings against your profile.",
     primary: false,
   },
   {
-    destination: '/dashboard',
+    destination: "/dashboard",
     icon: LayoutDashboard,
-    label: 'Go to dashboard',
-    description: 'Explore the dashboard and decide what to do next.',
+    label: "Go to dashboard",
+    description: "Explore the dashboard and decide what to do next.",
     primary: false,
   },
 ] as const
@@ -58,15 +58,15 @@ export function Step4Start() {
             onClick={() => handleChoose(destination)}
             disabled={pending}
             className={cn(
-              'w-full flex items-start gap-4 rounded-lg border p-4 text-left transition-colors disabled:opacity-60',
+              "w-full flex items-start gap-4 rounded-lg border p-4 text-left transition-colors disabled:opacity-60",
               primary
-                ? 'border-primary bg-primary/5 hover:bg-primary/10'
-                : 'border-border hover:border-primary/40 hover:bg-muted/50',
+                ? "border-primary bg-primary/5 hover:bg-primary/10"
+                : "border-border hover:border-primary/40 hover:bg-muted/50",
             )}
           >
-            <Icon size={20} className={cn('mt-0.5 shrink-0', primary ? 'text-primary' : 'text-muted-foreground')} />
+            <Icon size={20} className={cn("mt-0.5 shrink-0", primary ? "text-primary" : "text-muted-foreground")} />
             <div className="flex-1 min-w-0">
-              <p className={cn('text-sm font-semibold', primary ? 'text-primary' : 'text-foreground')}>
+              <p className={cn("text-sm font-semibold", primary ? "text-primary" : "text-foreground")}>
                 {label}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
