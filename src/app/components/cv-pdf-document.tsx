@@ -14,26 +14,33 @@ const SECTION_LABELS: Record<string, string> = {
   languages: 'Languages',
 }
 
+// Palette: charcoal text, amber accent on all structural lines + containers
+const CHARCOAL = '#2D2D2D'
+const AMBER = '#B8862E'
+const AMBER_WASH = '#FBF6EE'
+
+// Type scale: 9.5pt body, 9pt secondary (labels/dates/titles), 8.5pt micro (headings/contact)
 const s = StyleSheet.create({
   page: {
     fontFamily: 'Helvetica',
-    fontSize: 10,
-    color: '#000000',
+    fontSize: 9.5,
+    color: CHARCOAL,
     paddingTop: '14mm',
     paddingBottom: '14mm',
     paddingLeft: '14mm',
     paddingRight: '14mm',
-    lineHeight: 1.35,
+    lineHeight: 1.4,
   },
   header: {
     borderBottomWidth: 1.5,
-    borderBottomColor: '#000000',
+    borderBottomColor: AMBER,
     paddingBottom: 7,
     marginBottom: 12,
   },
   name: {
     fontSize: 20,
     fontFamily: 'Helvetica-Bold',
+    color: CHARCOAL,
     lineHeight: 1.1,
   },
   headline: {
@@ -51,21 +58,29 @@ const s = StyleSheet.create({
     marginTop: 4,
   },
   section: {
-    marginBottom: 10,
+    marginBottom: 11,
   },
   sectionCompact: {
-    marginBottom: 3,
+    marginBottom: 6,
   },
   sectionHeadingWrap: {
     borderBottomWidth: 1,
-    borderBottomColor: '#000000',
+    borderBottomColor: AMBER,
     paddingBottom: 2,
     marginBottom: 5,
   },
   sectionHeadingText: {
     fontSize: 8.5,
     fontFamily: 'Helvetica-Bold',
+    color: CHARCOAL,
     letterSpacing: 0.6,
+  },
+  tileWrap: {
+    backgroundColor: AMBER_WASH,
+    borderRadius: 4,
+    borderWidth: 0.5,
+    borderColor: AMBER,
+    padding: 8,
   },
   row: {
     flexDirection: 'row',
@@ -74,17 +89,18 @@ const s = StyleSheet.create({
   },
   bold: { fontFamily: 'Helvetica-Bold' },
   italic: { fontFamily: 'Helvetica-Oblique' },
+  // Secondary: job titles, dates, locations — intentionally smaller than body
   meta: { fontSize: 9, color: '#111111' },
   metaRight: { fontSize: 9, color: '#111111', flexShrink: 0, textAlign: 'right' },
-  job: { marginBottom: 8 },
-  bullet: { flexDirection: 'row', marginBottom: 1.5 },
-  // Fixed width for dash prefix so text aligns cleanly
-  bulletDash: { width: 10, fontSize: 9, color: '#111111' },
-  bulletText: { flex: 1, fontSize: 9 },
+  job: { marginBottom: 9 },
+  jobDesc: { marginTop: 3 },
+  bullet: { flexDirection: 'row', marginBottom: 2, marginTop: 1 },
+  bulletDash: { width: 10, color: '#333333' },
+  bulletText: { flex: 1 },
   // Two explicit columns side by side (flexWrap unreliable in react-pdf)
   twoColWrap: { flexDirection: 'row' },
   col: { flex: 1 },
-  colItem: { marginBottom: 2 },
+  colItem: { marginBottom: 2.5 },
 })
 
 function SectionHeading({ label }: { label: string }) {
@@ -123,7 +139,11 @@ function SectionBody({ section }: { section: CVSection }) {
 
     case 'competencies':
     case 'capabilities':
-      return <TwoColList items={section.data.items} />
+      return (
+        <View style={s.tileWrap}>
+          <TwoColList items={section.data.items} />
+        </View>
+      )
 
     case 'experience': {
       const d = section.data as ExperienceData
@@ -134,7 +154,7 @@ function SectionBody({ section }: { section: CVSection }) {
             <Text style={s.metaRight}>{d.duration} · {d.location}</Text>
           </View>
           <Text style={[s.meta, s.italic]}>{d.titles.join(' / ')}</Text>
-          {d.description ? <Text style={[s.meta, { marginTop: 2 }]}>{d.description}</Text> : null}
+          {d.description ? <Text style={s.jobDesc}>{d.description}</Text> : null}
           {d.outcomes.map((o, i) => (
             <View key={i} style={s.bullet}>
               <Text style={s.bulletDash}>-</Text>
@@ -169,8 +189,18 @@ function SectionBody({ section }: { section: CVSection }) {
     }
 
     case 'skills':
+      return (
+        <View style={s.tileWrap}>
+          <TwoColList items={section.data.items} />
+        </View>
+      )
+
     case 'tools':
-      return <Text>{section.data.items.join(' / ')}</Text>
+      return (
+        <View style={s.tileWrap}>
+          <TwoColList items={section.data.items} />
+        </View>
+      )
 
     case 'languages': {
       const d = section.data as LanguagesData
