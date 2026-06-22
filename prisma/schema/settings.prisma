@@ -27,6 +27,9 @@ model UserSettings {
   searchSuggestions Json?
   /// Encrypted API keys for paid job board sources. Shape: { jsearch?: string }
   jobBoardApiKeys   Json?
+  /// When true, the CV generation prompt instructs the LLM to merge multiple
+  /// roles at the same company into a single entry showing the promotion journey.
+  mergeRepeatedEmployers Boolean @default(false)
   writingBrief          String?
   onboardingCompletedAt DateTime?
   onboardingSkippedAt   DateTime?
