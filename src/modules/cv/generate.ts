@@ -42,7 +42,7 @@ export async function generateCVContent(
   profileId: string,
   jobApplicationId?: string,
 ): Promise<CVDocumentContent> {
-  const [snapshot, { rules, brief }, cvPrompt, jobApp] = await Promise.all([
+  const [snapshot, { rules, brief }, cvPrompt, jobApp, cvGenSettings] = await Promise.all([
     buildProfileSnapshot(profileId),
     loadWritingContext(profileId),
     loadCVPrompt(),
@@ -52,6 +52,10 @@ export async function generateCVContent(
           select: { jobDescription: true, title: true, company: true, jobAnalysis: true },
         })
       : Promise.resolve(null),
+    prisma.userSettings.findUnique({
+      where: { profileId },
+      select: { mergeRepeatedEmployers: true },
+    }),
   ])
 
   let jobContext: string
@@ -97,10 +101,18 @@ export async function generateCVContent(
     }
   }
 
+  const mergeInstruction = cvGenSettings?.mergeRepeatedEmployers
+    ? [
+        '== CV GENERATION PREFERENCES ==',
+        'Merge repeated employers: where the candidate held multiple roles at the same company, produce ONE experience section. Pack all role titles into the titles array ordered oldest → most recent. Span duration across the full tenure. Write one coherent description and merge all outcomes into a single outcomes list.',
+      ].join('\n')
+    : null
+
   const userMessage = [
     jobContext,
     analysis ? formatAnalysisContext(analysis) : null,
     atsContext ? formatATSContext(atsContext) : null,
+    mergeInstruction,
     '',
     '== CANDIDATE PROFILE ==',
     profileText,
