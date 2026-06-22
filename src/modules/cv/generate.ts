@@ -112,6 +112,7 @@ export async function generateCVContent(
     jobContext,
     analysis ? formatAnalysisContext(analysis) : null,
     atsContext ? formatATSContext(atsContext) : null,
+    mergeInstruction ? '' : null,
     mergeInstruction,
     '',
     '== CANDIDATE PROFILE ==',

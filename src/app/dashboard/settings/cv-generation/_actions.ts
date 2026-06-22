@@ -8,9 +8,10 @@ export async function updateCVGenerationSettings(data: {
   mergeRepeatedEmployers: boolean
 }): Promise<void> {
   const { profile } = await requireProfile()
-  await prisma.userSettings.update({
+  await prisma.userSettings.upsert({
     where: { profileId: profile.id },
-    data: { mergeRepeatedEmployers: data.mergeRepeatedEmployers },
+    create: { profileId: profile.id, mergeRepeatedEmployers: data.mergeRepeatedEmployers },
+    update: { mergeRepeatedEmployers: data.mergeRepeatedEmployers },
   })
   revalidatePath('/dashboard/settings/cv-generation')
 }
