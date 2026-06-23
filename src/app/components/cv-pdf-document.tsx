@@ -189,18 +189,10 @@ function SectionBody({ section }: { section: CVSection }) {
     }
 
     case 'skills':
-      return (
-        <View style={s.tileWrap}>
-          <TwoColList items={section.data.items} />
-        </View>
-      )
+      return <Text>{section.data.items.join(' · ')}</Text>
 
     case 'tools':
-      return (
-        <View style={s.tileWrap}>
-          <TwoColList items={section.data.items} />
-        </View>
-      )
+      return <Text>{section.data.items.join(' · ')}</Text>
 
     case 'languages': {
       const d = section.data as LanguagesData

@@ -1,10 +1,13 @@
 import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer'
 
+const CHARCOAL = '#2D2D2D'
+const AMBER = '#B8862E'
+
 const s = StyleSheet.create({
   page: {
     fontFamily: 'Helvetica',
     fontSize: 10.5,
-    color: '#000000',
+    color: CHARCOAL,
     paddingTop: '14mm',
     paddingBottom: '14mm',
     paddingLeft: '14mm',
@@ -14,6 +17,7 @@ const s = StyleSheet.create({
   h1: {
     fontSize: 20,
     fontFamily: 'Helvetica-Bold',
+    color: CHARCOAL,
     lineHeight: 1.1,
     marginBottom: 2,
   },
@@ -23,10 +27,10 @@ const s = StyleSheet.create({
     marginBottom: 1,
   },
   hr: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#000000',
+    borderBottomWidth: 1.5,
+    borderBottomColor: AMBER,
     marginTop: 8,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   para: {
     marginBottom: 6,
