@@ -6,6 +6,8 @@ AI is an optional reasoning and drafting partner. It helps the user work with a 
 
 The product should remain useful for people who do not configure an AI provider. They can build a profile, capture jobs, write documents, and export PDFs manually. AI should enrich these workflows, not gate them.
 
+For users who configure a provider, available models should be discovered from that provider and refreshed from AI settings rather than maintained as a fixed application snapshot. See [[03 Decisions/Provider Model Refresh|Provider Model Refresh]].
+
 ## How AI should behave
 
 - Be specific about the evidence it used.

@@ -36,3 +36,4 @@
 ## Confirmed decisions
 
 - [[03 Decisions/Initial Technology Baseline|Initial Technology Baseline]]
+- [[03 Decisions/Provider Model Refresh|Provider Model Refresh]]

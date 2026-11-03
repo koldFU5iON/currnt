@@ -40,5 +40,6 @@ Start currnt with a lean, proven application stack and add specialised packages 
 ## Related
 
 - [[02 Shared Capabilities/AI and Prompts|AI and Prompts]]
+- [[Provider Model Refresh]]
 - [[01 Product Areas/Application Documents|Application Documents]]
 - [[00 Foundations/Product Boundary|Product Boundary]]
